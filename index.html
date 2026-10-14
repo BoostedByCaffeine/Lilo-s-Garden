@@ -7,20 +7,24 @@
   
   <!-- Primary Meta Tags for GitHub Pages -->
   <meta name="title" content="Lilo's Garden — Cozy Pixel Virtual Pet Sandbox">
-  <meta name="description" content="A cozy pixel-art virtual pet garden sandbox honoring Lilo the pure white cat. Features procedural pixel art, interactive feeding, cat friends customizer, atmosphere lighting, and offline localStorage save.">
-  <meta name="theme-color" content="#162019">
+  <meta name="description" content="A modernized cozy pixel-art virtual pet garden tribute honoring Lilo the pure white cat. Features live Open-Meteo local weather, covered gazebo shelter, interactive feeding, cat friends customizer, procedural pixel art, and offline persistence.">
+  <meta name="theme-color" content="#141c16">
+
+  <!-- Global Favicon: Lilo's close-up pixelated head in a black circle -->
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAC/ElEQVR4nO2bvW7bQAzHL6/wB4EMXj04Y5agWb0I8GMEeQRrdNaMeYPuWTN0KTr5ETIWCDq5T9DAQwsXB9CpKujk+6DuwxIBLrYsHX++o3gkT6lJJokmAC0AWgF0D1AN0ANrzZ/p7xapxykmAC0BegRoC9AeoDlAFUB3AK0B2rCu+bOKr9nzb/Rvl6ntcBKArgF6AmgH0A0bePDUDd9jx/e8Tm2fUfjffgFoFmh0H4wZPyOfWcHr+pmnrrTRJp3zM9P6C3ZeFxENb6t+dp3C8EueilV7UE2RMvTEPSsey2Us428BejOt8wQAjv5Bj+l2aONX/IoKGewQAI6qx7Ya0vjO9W6SIQBY3P9CHAJPe+M/nxmA40yQWQ7s8N6EBzg0gAOPOdwxsoftDWz+k89f/2kADIF76jG/hBpfd73qCgFw4LH7xQkc4VkFORkDOLAN7hEjh5pigw2ScKjPrsYvXWL7AgDMnTZQ7PhEp2tiAAdrh8j7+Zk3gIjiCGBmlU/gxIPTfr4QANqmJxsAuyCPnS8ArbtTxi85BXWuAG56nSEnIZ3TWQUB0LY99gHYety0JABat30Aevf6ZwJgbzJ+4ZvYLAzAvDM05oTHyY3PGQCoOhMmXJq6kwSwef39oVdf3j9U6npPANrG+y4ANZeozh3AunOLzEVKr4pOYQC0jQ9RADSNsDHI9XppAOJLIFMAxiUg7gQzBWB0gvFeg839fUD+wBOA8TUYLxBKC6A7EFIxQ+G0ALpDYTVthqbt8JQQUZ4pse8/fyVRDwD9KTHlmRQtBIB1UtQ5LV4IALu0uPIojBQCwL5S7FoaKwCAW2lMORZHCwDgVhxVjuVxk376thfRkDF4l8eVQ4NExgD8GyQaEE62yGQKILxFRlk2Sbnqnx9Vp0o+Q6xJSlm0yWUIQK5NrgHB2CiZGQD5RskWBLGZMIAO1yrbgNDbLJ1I4zRLNyAY2+UTaNx2+RaIcR6YaEEY75GZpoz20FRbRntsrktGeXCyT0Z3dHaSAuQvZnOLrKXwJAwAAAAASUVORK5CYII=">
 
   <!-- Tailwind CSS CDN (Optional enhancement; all core styles are backed by Vanilla CSS) -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Google Fonts: Press Start 2P for pixel art retro headers & Inter for crisp legibility -->
+  <!-- Google Fonts: Press Start 2P for retro pixel headers & Inter for clean legibility -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
 
   <style>
     /* ==========================================================================
-       LILO'S GARDEN — COMPLETE VANILLA CSS DESIGN SYSTEM (STARDEW COZY AESTHETIC)
+       LILO'S GARDEN — MODERNIZED WARM FROSTED PARCHMENT DESIGN SYSTEM
        ========================================================================== */
     :root {
       --wood-dark: #3e2213;
@@ -33,6 +37,8 @@
       --lilo-blue: #29b6f6;
       --lilo-blue-dark: #0284c7;
       --grass-green: #478942;
+      --frosted-bg: rgba(254, 246, 230, 0.86);
+      --frosted-border: rgba(168, 108, 61, 0.45);
     }
 
     * {
@@ -75,35 +81,112 @@
       image-rendering: crisp-edges;
     }
 
-    /* Stardew-inspired Cozy Wooden UI Panels */
-    .stardew-panel {
-      background: linear-gradient(180deg, #fff9ea 0%, #f5e6c8 100%);
-      color: #3d2516;
-      border: 4px solid #5c3820;
-      box-shadow:
-        inset 0 0 0 2px #d9a76a,
-        0 14px 35px rgba(0, 0, 0, 0.65);
-      border-radius: 14px;
+    /* Top-Left Floating Whisper Pill */
+    .whisper-pill {
+      background: var(--frosted-bg);
+      border: 2px solid var(--frosted-border);
+      box-shadow: 
+        inset 0 1px 0 rgba(255, 255, 255, 0.75),
+        0 8px 24px rgba(0, 0, 0, 0.42);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-radius: 9999px;
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #3e2213;
+      font-size: 11px;
+      font-weight: 600;
+      pointer-events: auto;
+      transition: all 0.2s ease;
     }
 
-    .stardew-hud {
-      background: rgba(38, 24, 15, 0.9);
-      border: 2px solid #9c6639;
-      box-shadow:
-        inset 0 0 0 1px #472b16,
-        0 6px 18px rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border-radius: 12px;
+    .whisper-pill:hover {
+      box-shadow: 
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        0 10px 28px rgba(0, 0, 0, 0.52);
     }
 
-    /* Interactive Tactile Wood & Gold Buttons */
+    .whisper-btn {
+      background: rgba(235, 214, 184, 0.65);
+      border: 1px solid rgba(156, 102, 57, 0.4);
+      padding: 3px 9px;
+      border-radius: 9999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: #3e2213;
+      font-weight: 700;
+      font-size: 11px;
+      transition: background 0.15s ease, transform 0.08s ease;
+    }
+
+    .whisper-btn:hover {
+      background: rgba(235, 214, 184, 0.95);
+      transform: translateY(-1px);
+    }
+
+    .whisper-btn:active {
+      transform: translateY(1px);
+    }
+
+    .whisper-mood {
+      color: #5c3820;
+      white-space: nowrap;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .whisper-stat {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(41, 182, 246, 0.15);
+      border: 1px solid rgba(41, 182, 246, 0.35);
+      padding: 2px 7px;
+      border-radius: 9999px;
+      color: #0369a1;
+      font-weight: 700;
+      cursor: help;
+    }
+
+    .whisper-icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      padding: 2px;
+      line-height: 1;
+      transition: transform 0.12s ease;
+    }
+    .whisper-icon-btn:hover {
+      transform: scale(1.15);
+    }
+
+    /* Bottom Floating Cozy Dock */
+    .cozy-dock {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      pointer-events: auto;
+    }
+
+    /* Stardew-inspired Tactile Buttons */
     .stardew-btn {
       background: linear-gradient(180deg, #f7d486 0%, #e0a64b 100%);
       color: #3d2310;
       border: 2px solid #5c3618;
       box-shadow:
         inset 0 2px 0 rgba(255, 255, 255, 0.6),
+        0 4px 10px rgba(0, 0, 0, 0.45),
         0 3px 0 #3d2310;
       transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
       cursor: pointer;
@@ -120,32 +203,13 @@
         0 1px 0 #3d2310;
     }
 
-    .stardew-btn-blue {
-      background: linear-gradient(180deg, #8be0ff 0%, #3aa6dd 100%);
-      color: #0d2b3e;
-      border: 2px solid #154563;
-      box-shadow:
-        inset 0 2px 0 rgba(255, 255, 255, 0.7),
-        0 3px 0 #0f354d;
-      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
-      cursor: pointer;
-    }
-
-    .stardew-btn-blue:hover {
-      filter: brightness(1.06);
-    }
-
-    .stardew-btn-blue:active {
-      transform: translateY(2px);
-      box-shadow: 0 1px 0 #0f354d;
-    }
-
     .stardew-btn-green {
       background: linear-gradient(180deg, #a3e68c 0%, #5cb847 100%);
       color: #16360f;
       border: 2px solid #235418;
       box-shadow:
         inset 0 2px 0 rgba(255, 255, 255, 0.65),
+        0 4px 10px rgba(0, 0, 0, 0.45),
         0 3px 0 #183d10;
       transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
       cursor: pointer;
@@ -160,13 +224,46 @@
       box-shadow: 0 1px 0 #183d10;
     }
 
-    /* Modal Backdrop & Transitions */
+    .stardew-btn-blue {
+      background: linear-gradient(180deg, #8be0ff 0%, #3aa6dd 100%);
+      color: #0d2b3e;
+      border: 2px solid #154563;
+      box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 0.7),
+        0 4px 10px rgba(0, 0, 0, 0.45),
+        0 3px 0 #0f354d;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
+      cursor: pointer;
+    }
+
+    .stardew-btn-blue:hover {
+      filter: brightness(1.06);
+    }
+
+    .stardew-btn-blue:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #0f354d;
+    }
+
+    /* Modals (Warm Frosted Parchment Panels) */
+    .stardew-panel {
+      background: linear-gradient(180deg, rgba(255, 250, 238, 0.96) 0%, rgba(247, 233, 206, 0.96) 100%);
+      color: #3d2516;
+      border: 4px solid #5c3820;
+      box-shadow:
+        inset 0 0 0 2px #d9a76a,
+        0 18px 45px rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 16px;
+    }
+
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(5px);
-      -webkit-backdrop-filter: blur(5px);
+      background: rgba(8, 14, 10, 0.72);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
       z-index: 50;
       display: none;
       align-items: center;
@@ -184,7 +281,7 @@
       to { opacity: 1; transform: scale(1); }
     }
 
-    /* Custom Scrollbar for Parchment Modals */
+    /* Custom Parchment Scrollbars */
     ::-webkit-scrollbar {
       width: 7px;
       height: 7px;
@@ -204,82 +301,29 @@
 </head>
 <body class="w-screen h-screen flex flex-col justify-between items-center relative select-none">
 
-  <!-- ==================== TOP HUD BAR ==================== -->
-  <header class="w-full max-w-5xl px-3 pt-3 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
-    <!-- Left: Garden Title & Lilo Status Badge -->
-    <div class="stardew-hud px-3.5 py-2 flex items-center gap-3 pointer-events-auto">
-      <div class="w-9 h-9 rounded-lg bg-sky-900/80 border border-sky-400/60 flex items-center justify-center shadow-inner" title="Lilo the Pure White Cat">
-        <!-- Crisp Pixel Cat Portrait Icon -->
-        <svg viewBox="0 0 16 16" class="w-7 h-7" style="shape-rendering: crispEdges;">
-          <rect x="3" y="3" width="2" height="3" fill="#ffffff"/>
-          <rect x="11" y="3" width="2" height="3" fill="#ffffff"/>
-          <rect x="4" y="4" width="1" height="2" fill="#ff9ebb"/>
-          <rect x="11" y="4" width="1" height="2" fill="#ff9ebb"/>
-          <rect x="3" y="5" width="10" height="8" fill="#ffffff"/>
-          <rect x="3" y="11" width="10" height="2" fill="#dbe7f5"/>
-          <rect x="5" y="7" width="2" height="2" fill="#29b6f6"/>
-          <rect x="9" y="7" width="2" height="2" fill="#29b6f6"/>
-          <rect x="7" y="9" width="2" height="1" fill="#ff9ebb"/>
-        </svg>
-      </div>
-      <div>
-        <div class="flex items-center gap-2">
-          <h1 class="font-pixel text-xs sm:text-sm text-amber-200 tracking-wide">LILO'S GARDEN</h1>
-          <button id="timeBadge" class="text-[10px] font-semibold uppercase px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-200 border border-amber-400/40 cursor-pointer hover:bg-amber-500/35 transition" title="Click to cycle atmosphere (Day, Sunset, Night)">
-            ☀️ Sunny Day
-          </button>
-        </div>
-        <p id="statusTicker" class="text-[11px] text-amber-100/80 truncate max-w-[210px] sm:max-w-xs mt-0.5">
-          Lilo is enjoying the gentle breeze...
-        </p>
-      </div>
-    </div>
-
-    <!-- Right: Stats Counters & Action Buttons -->
-    <div class="flex items-center gap-2 pointer-events-auto flex-wrap">
-      <!-- Stats Pill -->
-      <div class="stardew-hud px-3 py-1.5 flex items-center gap-3 text-xs">
-        <div class="flex items-center gap-1.5" title="Total Pets Given">
-          <span class="text-rose-400 text-sm">♥</span>
-          <span class="text-amber-100/70 hidden sm:inline">Pets:</span>
-          <span id="statPets" class="font-pixel text-amber-200 text-xs">0</span>
-        </div>
-        <div class="h-4 w-[1px] bg-amber-700/60"></div>
-        <div class="flex items-center gap-1.5" title="Meals Shared at Food Bowl">
-          <span class="text-amber-300 text-sm">🐟</span>
-          <span class="text-amber-100/70 hidden sm:inline">Meals:</span>
-          <span id="statMeals" class="font-pixel text-amber-200 text-xs">0</span>
-        </div>
-        <div class="h-4 w-[1px] bg-amber-700/60"></div>
-        <div class="flex items-center gap-1.5" title="Cats in Garden">
-          <span class="text-sky-300 text-sm">🐾</span>
-          <span id="statCats" class="font-pixel text-amber-200 text-xs">1</span>
-        </div>
-      </div>
-
-      <!-- Atmosphere Toggle Button -->
-      <button id="btnAtmosphere" class="stardew-hud px-2.5 py-2 text-amber-200 hover:text-white transition text-xs font-medium flex items-center gap-1" title="Cycle Atmosphere Lighting">
-        <span id="atmosphereIcon">☀️</span>
+  <!-- ==================== TOP-LEFT FLOATING WHISPER PILL ==================== -->
+  <aside class="fixed top-3 left-3 z-30 pointer-events-none">
+    <div class="whisper-pill">
+      <!-- Weather Badge with Temperature & Sky (Click to cycle modes) -->
+      <button id="btnWeather" class="whisper-btn" title="Click to cycle: Auto Live GPS / Sunny / Cloudy / Rain / Night">
+        <span id="weatherIcon">☀️</span>
+        <span id="weatherText">24°C • Sunny Sky</span>
       </button>
 
-      <!-- Audio Synthesizer Toggle -->
-      <button id="btnAudio" class="stardew-hud px-2.5 py-2 text-amber-200 hover:text-white transition text-xs font-medium flex items-center gap-1" title="Toggle Cozy Synth Audio">
+      <!-- Live Mood Indicator -->
+      <span id="whisperMood" class="whisper-mood">Lilo: Enjoying the breeze</span>
+
+      <!-- Forget-Me-Not Bloom Counter (Grows every 3 pets) -->
+      <span id="whisperBlooms" class="whisper-stat" title="Forget-Me-Not blooms honoring Lilo (Grows every 3 pets!)">
+        💠 <b id="statBlooms">8</b>/24
+      </span>
+
+      <!-- Compact Audio Toggle -->
+      <button id="btnAudio" class="whisper-icon-btn" title="Toggle Cozy Synth Audio">
         <span id="audioIcon">🔊</span>
       </button>
-
-      <!-- Lilo's Tribute Button -->
-      <button id="btnOpenTribute" class="stardew-btn-blue rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1.5" title="Open Lilo's Memorial Tribute">
-        <span>💠</span>
-        <span>Lilo's Tribute</span>
-      </button>
-
-      <!-- Coding Agent Prompt / Spec Button -->
-      <button id="btnOpenPrompt" class="stardew-btn rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1.5" title="View & Copy Coding Agent Architecture Spec">
-        <span>📋</span>
-        <span class="hidden md:inline">Spec / Prompt</span>
-      </button>
     </div>
-  </header>
+  </aside>
 
   <!-- ==================== CENTER PIXEL GARDEN STAGE ==================== -->
   <main class="flex-1 w-full flex items-center justify-center p-2 sm:p-4 overflow-hidden relative">
@@ -287,49 +331,39 @@
       <!-- Internal Pixel Resolution: 360 x 220, scaled crisply -->
       <canvas id="gardenCanvas" width="360" height="220" class="block cursor-pointer touch-none"></canvas>
 
-      <!-- Floating Hint Overlay (Fades out after first interaction) -->
+      <!-- Floating Diegetic Hint (Fades out after first interaction) -->
       <div id="hintOverlay" class="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/70 text-amber-100 text-[11px] px-3.5 py-1 rounded-full border border-amber-300/35 backdrop-blur-sm transition-opacity duration-500 whitespace-nowrap shadow-lg">
         Tap Lilo to pet ♥ • Tap bowl to feed 🥣 • Tap blue flower stone for Lilo's Tribute 💠
       </div>
     </div>
   </main>
 
-  <!-- ==================== BOTTOM COZY ACTION BAR ==================== -->
-  <footer class="w-full max-w-4xl px-3 pb-3 z-20 flex flex-wrap items-center justify-center sm:justify-between gap-2 pointer-events-none">
-    <!-- Cat Roster Quick Pills -->
-    <div id="catRosterBar" class="stardew-hud px-2.5 py-1.5 flex items-center gap-1.5 overflow-x-auto max-w-full sm:max-w-md pointer-events-auto">
-      <!-- Populated dynamically with Lilo + Companion pills -->
-    </div>
+  <!-- ==================== BOTTOM FLOATING 2-BUTTON COZY DOCK ==================== -->
+  <nav class="cozy-dock">
+    <!-- Button 1: Fill Bowl with Live Status Badge -->
+    <button id="btnFeed" class="stardew-btn-green rounded-full px-5 py-2.5 text-xs sm:text-sm font-bold flex items-center gap-2">
+      <span>🥣</span>
+      <span>Fill Bowl</span>
+      <span id="bowlBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-black/25 text-white">Full</span>
+    </button>
 
-    <!-- Action Buttons -->
-    <div class="flex items-center gap-2 pointer-events-auto flex-wrap justify-center">
-      <button id="btnFeed" class="stardew-btn-green rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold flex items-center gap-2" title="Refill bowl with tasty kibble">
-        <span>🥣</span>
-        <span>Feed Bowl</span>
-        <span id="bowlBadge" class="text-[10px] px-1.5 py-0.5 rounded bg-black/25 text-white">Full</span>
-      </button>
-
-      <button id="btnAddFriend" class="stardew-btn rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold flex items-center gap-2" title="Customize a new companion cat">
-        <span>🐱</span>
-        <span>+ Add Cat Friend</span>
-      </button>
-
-      <button id="btnOpenSave" class="stardew-hud rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-amber-200 hover:bg-amber-950/80 transition flex items-center gap-1.5 border border-amber-500/40" title="Backup or restore garden save data">
-        <span>💾</span>
-        <span>Save / JSON</span>
-      </button>
-    </div>
-  </footer>
+    <!-- Button 2: Cat Friends & Customizer Modal -->
+    <button id="btnOpenFriends" class="stardew-btn rounded-full px-5 py-2.5 text-xs sm:text-sm font-bold flex items-center gap-2">
+      <span>🐾</span>
+      <span>Cat Friends</span>
+      <span id="catCountBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-black/20 text-[#3e2213]">1</span>
+    </button>
+  </nav>
 
   <!-- ==================== TOAST NOTIFICATION ==================== -->
   <div id="toastBox" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 -translate-y-2 transition-all duration-300">
-    <div class="stardew-hud px-4 py-2 rounded-xl text-xs font-semibold text-amber-200 border border-amber-400/50 shadow-2xl flex items-center gap-2">
+    <div class="whisper-pill px-4 py-2 border border-amber-600/50 shadow-2xl flex items-center gap-2">
       <span id="toastIcon">✨</span>
       <span id="toastText">Saved to garden!</span>
     </div>
   </div>
 
-  <!-- ==================== MODAL 1: LILO'S MEMORIAL TRIBUTE ==================== -->
+  <!-- ==================== MODAL 1: DIEGETIC LILO MEMORIAL TRIBUTE ==================== -->
   <div id="modalTribute" class="modal-overlay">
     <div class="stardew-panel w-full max-w-md p-5 sm:p-6 relative">
       <div class="flex items-center justify-between border-b-2 border-[#d8bfa3] pb-3 mb-4">
@@ -355,6 +389,15 @@
         </p>
       </div>
 
+      <!-- Forget-Me-Not Bloom Progress for Lilo -->
+      <div class="mb-3.5 bg-[#f5e6c8] p-2.5 rounded-xl border border-[#b88b5a]/60 text-xs flex items-center justify-between">
+        <div class="flex items-center gap-1.5 font-bold text-[#4a2e1b]">
+          <span>💠 Memorial Blooms:</span>
+          <span id="modalBloomCount" class="text-sky-700">8 / 24</span>
+        </div>
+        <span class="text-[11px] text-[#7c4d2b]">Every 3 pets grows a blue flower</span>
+      </div>
+
       <!-- Editable Personal Tribute Note (Saved to localStorage) -->
       <div class="mb-4">
         <label for="inputTributeNote" class="block text-xs font-bold text-[#5c3820] mb-1">Personal Dedication / Memory for Lilo:</label>
@@ -372,79 +415,82 @@
     </div>
   </div>
 
-  <!-- ==================== MODAL 2: ADD / CUSTOMIZE CAT FRIEND ==================== -->
-  <div id="modalCustomizer" class="modal-overlay">
+  <!-- ==================== MODAL 2: CAT FRIENDS & COMPANION CUSTOMIZER ==================== -->
+  <div id="modalFriends" class="modal-overlay">
     <div class="stardew-panel w-full max-w-lg p-5 sm:p-6 relative max-h-[92vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b-2 border-[#d8bfa3] pb-3 mb-4">
         <div>
-          <h2 class="font-pixel text-xs sm:text-sm text-[#3d2516]">INVITE A FRIEND FOR LILO</h2>
-          <p class="text-xs text-[#7c4d2b]">Customize a companion cat to keep Lilo company in the garden</p>
+          <h2 class="font-pixel text-xs sm:text-sm text-[#3d2516]">CAT FRIENDS & COMPANIONS</h2>
+          <p class="text-xs text-[#7c4d2b]">Pet existing cats or invite a new companion to wander with Lilo</p>
         </div>
-        <button data-close-modal="modalCustomizer" class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center cursor-pointer">✕</button>
+        <button data-close-modal="modalFriends" class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center cursor-pointer">✕</button>
+      </div>
+
+      <!-- Current Garden Residents & Quick Pet -->
+      <div class="mb-5">
+        <span class="text-xs font-bold text-[#4a2e1b] block mb-2">Garden Residents (Tap to Pet):</span>
+        <div id="residentList" class="flex flex-wrap gap-2">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="border-t-2 border-[#d8bfa3] pt-4 mb-3">
+        <h3 class="font-pixel text-[11px] text-[#4a2e1b] mb-1">INVITE A NEW COMPANION</h3>
+        <p class="text-[11px] text-[#7c4d2b]">Customize fur pattern and colors:</p>
       </div>
 
       <!-- Live Pixel Sprite Preview -->
-      <div class="flex flex-col sm:flex-row items-center gap-4 bg-[#243d27] rounded-xl p-3.5 border-2 border-[#5c3820] mb-4 text-amber-100">
+      <div class="flex flex-col sm:flex-row items-center gap-4 bg-[#243d27] rounded-xl p-3 border-2 border-[#5c3820] mb-4 text-amber-100">
         <div class="bg-[#1b2e1e] rounded-lg p-2 border border-emerald-700/50 flex items-center justify-center shadow-inner">
-          <canvas id="previewCatCanvas" width="64" height="48" class="pixel-canvas w-28 h-20"></canvas>
+          <canvas id="previewCatCanvas" width="64" height="48" class="pixel-canvas w-24 h-18"></canvas>
         </div>
         <div class="flex-1 text-center sm:text-left">
-          <div class="text-xs uppercase tracking-wider text-emerald-300 font-bold">Live Pixel Preview</div>
-          <div id="previewCatTitle" class="font-pixel text-sm text-amber-200 mt-1">Mochi</div>
+          <div class="text-[10px] uppercase tracking-wider text-emerald-300 font-bold">Live Pixel Preview</div>
+          <div id="previewCatTitle" class="font-pixel text-xs text-amber-200 mt-0.5">Mochi</div>
           <p class="text-[11px] text-amber-100/80 mt-1">
-            Friends wander the garden alongside Lilo, share meals from the bowl, and touch noses when they pass by.
+            Wanders alongside Lilo, seeks shelter in rain, and touches noses in greeting.
           </p>
         </div>
       </div>
 
       <!-- Form Controls -->
-      <div class="space-y-3.5 text-xs">
+      <div class="space-y-3 text-xs">
         <div>
           <label for="inputCatName" class="block font-bold text-[#4a2e1b] mb-1">Cat Friend's Name</label>
-          <input id="inputCatName" type="text" maxlength="16" value="Mochi" class="w-full rounded-lg border-2 border-[#b88b5a] bg-[#fffdf7] px-3 py-2 text-sm font-semibold text-[#3d2516] focus:outline-none focus:border-[#5c3820]" placeholder="e.g., Mochi, Luna, Oliver..." />
+          <input id="inputCatName" type="text" maxlength="16" value="Mochi" class="w-full rounded-lg border-2 border-[#b88b5a] bg-[#fffdf7] px-3 py-1.5 text-xs font-semibold text-[#3d2516] focus:outline-none focus:border-[#5c3820]" placeholder="e.g., Mochi, Luna, Oliver..." />
         </div>
 
         <!-- Coat Pattern -->
         <div>
-          <label class="block font-bold text-[#4a2e1b] mb-1.5">Coat Pattern</label>
+          <label class="block font-bold text-[#4a2e1b] mb-1">Coat Pattern</label>
           <div id="patternSelector" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <button type="button" data-pattern="solid" class="pattern-opt rounded-lg border-2 border-[#5c3820] bg-[#f3dfc1] py-2 px-2 font-bold text-[#3d2516] text-center cursor-pointer">Solid</button>
-            <button type="button" data-pattern="tuxedo" class="pattern-opt rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] py-2 px-2 font-semibold text-[#5c3820] text-center cursor-pointer">Tuxedo</button>
-            <button type="button" data-pattern="tabby" class="pattern-opt rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] py-2 px-2 font-semibold text-[#5c3820] text-center cursor-pointer">Tabby Stripes</button>
-            <button type="button" data-pattern="patches" class="pattern-opt rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] py-2 px-2 font-semibold text-[#5c3820] text-center cursor-pointer">Calico Patches</button>
+            <button type="button" data-pattern="solid" class="pattern-opt rounded-lg border-2 border-[#5c3820] bg-[#f3dfc1] py-1.5 px-2 font-bold text-[#3d2516] text-center cursor-pointer">Solid</button>
+            <button type="button" data-pattern="tuxedo" class="pattern-opt rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] py-1.5 px-2 font-semibold text-[#5c3820] text-center cursor-pointer">Tuxedo</button>
+            <button type="button" data-pattern="tabby" class="pattern-opt rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] py-1.5 px-2 font-semibold text-[#5c3820] text-center cursor-pointer">Tabby</button>
+            <button type="button" data-pattern="patches" class="pattern-opt rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] py-1.5 px-2 font-semibold text-[#5c3820] text-center cursor-pointer">Patches</button>
           </div>
         </div>
 
         <!-- Coat Color Swatches -->
         <div>
-          <label class="block font-bold text-[#4a2e1b] mb-1.5">Primary Fur Color</label>
-          <div id="coatColorSelector" class="flex flex-wrap gap-2">
-            <!-- Populated dynamically by JS -->
+          <label class="block font-bold text-[#4a2e1b] mb-1">Primary Fur Color</label>
+          <div id="coatColorSelector" class="flex flex-wrap gap-1.5">
+            <!-- Populated by JS -->
           </div>
         </div>
 
         <!-- Eye Color Swatches -->
         <div>
-          <label class="block font-bold text-[#4a2e1b] mb-1.5">Eye Color</label>
-          <div id="eyeColorSelector" class="flex flex-wrap gap-2">
-            <!-- Populated dynamically by JS -->
+          <label class="block font-bold text-[#4a2e1b] mb-1">Eye Color</label>
+          <div id="eyeColorSelector" class="flex flex-wrap gap-1.5">
+            <!-- Populated by JS -->
           </div>
         </div>
       </div>
 
-      <!-- Existing Friends List (Manage) -->
-      <div class="mt-4 pt-3 border-t border-[#d8bfa3]">
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-xs font-bold text-[#4a2e1b]">Current Garden Residents</span>
-          <span class="text-[11px] text-[#7c4d2b]">Lilo is permanent ★</span>
-        </div>
-        <div id="residentManageList" class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
-          <!-- Populated by JS -->
-        </div>
-      </div>
-
       <div class="mt-5 flex items-center justify-end gap-2">
-        <button data-close-modal="modalCustomizer" class="px-4 py-2 rounded-xl border-2 border-[#9c6639] text-xs font-bold text-[#5c3820] hover:bg-[#edd6b4] cursor-pointer">
+        <button data-close-modal="modalFriends" class="px-4 py-2 rounded-xl border-2 border-[#9c6639] text-xs font-bold text-[#5c3820] hover:bg-[#edd6b4] cursor-pointer">
           Cancel
         </button>
         <button id="btnConfirmAddCat" class="stardew-btn-green rounded-xl px-5 py-2.5 text-xs font-bold">
@@ -454,79 +500,18 @@
     </div>
   </div>
 
-  <!-- ==================== MODAL 3: SAVE / EXPORT / IMPORT JSON ==================== -->
-  <div id="modalSave" class="modal-overlay">
-    <div class="stardew-panel w-full max-w-lg p-5 sm:p-6 relative max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between border-b-2 border-[#d8bfa3] pb-3 mb-4">
-        <div>
-          <h2 class="font-pixel text-xs sm:text-sm text-[#3d2516]">GARDEN SAVE & BACKUP</h2>
-          <p class="text-xs text-[#7c4d2b]">Auto-saved in browser <code class="bg-[#e9d5b5] px-1 rounded">localStorage</code> (`lilos_garden_save_v1`)</p>
-        </div>
-        <button data-close-modal="modalSave" class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center cursor-pointer">✕</button>
-      </div>
-
-      <p class="text-xs text-[#4a2e1b] mb-2 leading-relaxed">
-        Your garden automatically saves every time you pet Lilo, refill the bowl, or add a companion cat. Copy or download the JSON below to back up your garden across devices:
-      </p>
-
-      <textarea id="jsonSaveTextarea" rows="7" class="w-full font-mono text-[11px] rounded-lg border-2 border-[#b88b5a] bg-[#fffdf7] p-3 text-[#2b190e] focus:outline-none focus:border-[#5c3820] mb-3" spellcheck="false"></textarea>
-
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <div class="flex flex-wrap gap-2">
-          <button id="btnCopyJson" class="stardew-btn rounded-xl px-3.5 py-2 text-xs font-bold">
-            📋 Copy JSON
-          </button>
-          <button id="btnDownloadJson" class="stardew-btn-blue rounded-xl px-3.5 py-2 text-xs font-bold">
-            ⬇ Download .JSON
-          </button>
-        </div>
-        <div class="flex flex-wrap gap-2">
-          <button id="btnResetGarden" class="px-3 py-2 rounded-xl border border-rose-600 text-rose-800 hover:bg-rose-100 text-xs font-bold cursor-pointer" title="Reset stats and return garden to Lilo">
-            ⚠️ Reset
-          </button>
-          <button id="btnImportJson" class="stardew-btn-green rounded-xl px-4 py-2 text-xs font-bold">
-            ↻ Load JSON Above
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ==================== MODAL 4: CODING AGENT PROMPT & ARCHITECTURE SPEC ==================== -->
-  <div id="modalAgentPrompt" class="modal-overlay">
-    <div class="stardew-panel w-full max-w-2xl p-5 sm:p-6 relative max-h-[92vh] flex flex-col">
-      <div class="flex items-center justify-between border-b-2 border-[#d8bfa3] pb-3 mb-3">
-        <div>
-          <h2 class="font-pixel text-xs sm:text-sm text-[#3d2516]">CODING AGENT PROMPT & SPEC</h2>
-          <p class="text-xs text-[#7c4d2b]">Copy and paste this prompt directly into Antigravity, Cursor, Claude Code, or Copilot</p>
-        </div>
-        <button data-close-modal="modalAgentPrompt" class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center cursor-pointer">✕</button>
-      </div>
-
-      <textarea id="agentPromptTextarea" readonly class="w-full flex-1 min-h-[280px] font-mono text-[11px] leading-relaxed rounded-lg border-2 border-[#b88b5a] bg-[#1e1e24] text-emerald-200 p-3.5 focus:outline-none mb-3 select-all"></textarea>
-
-      <div class="flex items-center justify-between gap-2">
-        <span class="text-[11px] text-[#7c4d2b]">Includes complete system prompt + FSM & procedural pixel matrix architecture</span>
-        <button id="btnCopyAgentPrompt" class="stardew-btn-green rounded-xl px-5 py-2.5 text-xs font-bold">
-          📋 Copy Prompt for Coding Agent
-        </button>
-      </div>
-    </div>
-  </div>
-
   <!-- ==================== APPLICATION SCRIPT ==================== -->
   <script>
     /********************************************************************
-     * LILO'S GARDEN — SINGLE-FILE COZY PIXEL SANDBOX ENGINE
-     * Internal Canvas Resolution: 360 x 220 (Crisp Pixel Art)
+     * LILO'S GARDEN — COZY PIXEL ENGINE & DIEGETIC WORLD
+     * Internal Canvas Resolution: 360 x 220
      * Storage Key: 'lilos_garden_save_v1'
      ********************************************************************/
-
     const STORAGE_KEY = 'lilos_garden_save_v1';
     const INTERNAL_W = 360;
     const INTERNAL_H = 220;
 
-    // Walkable garden bounds (inside the wooden fence & grass borders)
+    // Walkable garden bounds
     const GARDEN_BOUNDS = {
       minX: 28,
       maxX: 332,
@@ -534,15 +519,16 @@
       maxY: 194
     };
 
-    // Key Interactive Landmarks in the 360x220 Pixel Coordinate Space
+    // Diegetic Landmarks
     const LANDMARKS = {
-      shrine: { x: 74,  y: 66,  radius: 24, label: "Lilo's Memorial Stone" },
-      bowl:   { x: 185, y: 146, radius: 18, label: "Cat Food Bowl" },
-      rug:    { x: 274, y: 120, radius: 22, label: "Sunny Nap Blanket" },
-      pond:   { x: 72,  y: 158, radius: 22, label: "Garden Birdbath" }
+      shrine:  { x: 74,  y: 72,  radius: 24, label: "Lilo's Memorial Stone" },
+      bowl:    { x: 180, y: 150, radius: 18, label: "Ceramic Cat Bowl" },
+      shelter: { x: 282, y: 78,  radius: 26, label: "Covered Cat Shelter" },
+      pond:    { x: 68,  y: 162, radius: 22, label: "Birdbath Pond" },
+      rug:     { x: 200, y: 108, radius: 20, label: "Sunny Nap Rug" }
     };
 
-    // Preset Swatches for Companion Cat Customizer
+    // Swatches for Companion Customizer
     const COAT_SWATCHES = [
       { name: 'Orange Ginger', hex: '#f59e42', shade: '#c96f18' },
       { name: 'Tuxedo Charcoal', hex: '#374151', shade: '#1f2937' },
@@ -562,7 +548,7 @@
       { name: 'Copper Gold', hex: '#f97316' }
     ];
 
-    // Immutable Default Entity: Lilo (Pure White Male Cat with Blue Eyes)
+    // Immutable Anchor Cat: Lilo
     const DEFAULT_LILO = Object.freeze({
       id: 'lilo',
       name: 'Lilo',
@@ -574,42 +560,15 @@
       pattern: 'solid'
     });
 
-    // Coding Agent Prompt Text (Ready to copy & paste into any AI coding agent)
-    const CODING_AGENT_PROMPT_TEXT = `You are an expert HTML5 Canvas game developer. Build or extend "Lilo's Garden", a single-file HTML5, CSS, and Vanilla JS cozy pixel-art virtual pet sandbox game inspired by a minimalist Stardew Valley aesthetic, hosted for free on GitHub Pages.
-
-### CORE SPECIFICATIONS
-1. Pixel-Art Canvas & Atmosphere:
-   - Use a low-resolution internal canvas (360x220) scaled responsively with CSS \`image-rendering: pixelated\`.
-   - Render a cozy top-down garden with deterministic grass tiles, animated wildflowers, a top wooden fence border, cobblestone path, a clickable Memorial Tribute Stone with blue forget-me-not flowers for Lilo at (74, 66), a sunny nap rug at (274, 120), and an interactive cat food bowl at (185, 146).
-   - Support ambient lighting states (Sunny Day, Golden Sunset, Firefly Night).
-
-2. Default Immutable Cat ("Lilo"):
-   - Lilo (\`id: "lilo"\`) is always present and cannot be deleted.
-   - Visual spec: Pure white male cat (\`#ffffff\` primary coat, \`#dbe7f5\` soft shading, \`#ff9ebb\` pink ears/nose, and bright blue eyes \`#29b6f6\`).
-   - Render via a procedural pixel-art sprite matrix supporting directional flipping, 4-frame walk cycle, animated tail swish, blinking idle, curled sleeping animation with floating "z" particles, and head-down eating animation.
-
-3. Finite State Machine (FSM) Cat AI:
-   - \`IDLE\`: Sits (blinking periodically) or curls up to nap for 4–9 seconds.
-   - \`WANDER\`: Picks random walkable garden coordinates and walks smoothly at ~24–32 px/sec.
-   - \`SEEK_FOOD\`: Triggered when the bowl has food; navigates toward the bowl coordinates.
-   - \`EATING\`: Munches kibble for 3.5 seconds, decrements bowl level (3 -> 2 -> 1 -> 0), increments meal counter, and spawns happy heart/sparkle particles.
-   - \`INTERACT\`: Triggered when tapped/clicked; pauses movement, plays a happy purr bounce, increments affection counter, and spawns rising pixel heart particles.
-
-4. Interactive HUD, Customizer & Tribute Modals:
-   - Top HUD: Garden title, atmosphere toggle, Pets counter, Meals counter, Audio toggle, and Lilo's Tribute button.
-   - Bottom Action Bar: "Feed Bowl" button, "+ Add Cat Friend" modal (custom name, coat color, pattern: solid/tuxedo/tabby/patches, eye color, with live pixel preview), and "Save / JSON" backup modal.
-   - Clicking Lilo's Memorial Stone opens a peaceful tribute modal honoring Lilo with a customizable memory note.
-
-5. Persistence (\`localStorage\`):
-   - Automatically serialize and load state under \`localStorage.getItem('lilos_garden_save_v1')\` including \`stats\`, \`bowlLevel\`, \`tributeNote\`, and \`companions\`, always ensuring Lilo is present first in the cat array.`;
-
     /********************************************************************
-     * WEB AUDIO COZY SYNTHESIZER (Zero External Sound Assets Needed)
+     * COZY WEB AUDIO SYNTHESIZER (Purr Modulation, Soft Rain, Chimes)
      ********************************************************************/
-    class CozySoundEngine {
+    class CozyAudio {
       constructor() {
         this.ctx = null;
         this.enabled = true;
+        this.rainGain = null;
+        this.rainSource = null;
       }
 
       init() {
@@ -622,613 +581,295 @@
         }
       }
 
-      playPurrChime() {
+      playPurr() {
         if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
         try {
-          this.init();
-          if (!this.ctx) return;
           const now = this.ctx.currentTime;
-          
-          // Soft warm two-note Stardew-like heart chime
-          const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
-          notes.forEach((freq, i) => {
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, now + i * 0.065);
-            gain.gain.setValueAtTime(0.001, now + i * 0.065);
-            gain.gain.exponentialRampToValueAtTime(0.08, now + i * 0.065 + 0.02);
-            gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.065 + 0.28);
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-            osc.start(now + i * 0.065);
-            osc.stop(now + i * 0.065 + 0.3);
-          });
+          const carrier = this.ctx.createOscillator();
+          const lfo = this.ctx.createOscillator();
+          const lfoGain = this.ctx.createGain();
+          const masterGain = this.ctx.createGain();
 
-          // Subtle warm low purr oscillation
-          const purr = this.ctx.createOscillator();
-          const purrGain = this.ctx.createGain();
-          purr.type = 'triangle';
-          purr.frequency.setValueAtTime(55, now);
-          purrGain.gain.setValueAtTime(0.015, now);
-          purrGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
-          purr.connect(purrGain);
-          purrGain.connect(this.ctx.destination);
-          purr.start(now);
-          purr.stop(now + 0.45);
+          carrier.type = 'triangle';
+          carrier.frequency.setValueAtTime(28, now);
+          carrier.frequency.linearRampToValueAtTime(24, now + 1.2);
+
+          lfo.type = 'sine';
+          lfo.frequency.setValueAtTime(23, now);
+          lfoGain.gain.setValueAtTime(0.06, now);
+
+          masterGain.gain.setValueAtTime(0.001, now);
+          masterGain.gain.linearRampToValueAtTime(0.09, now + 0.15);
+          masterGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.25);
+
+          lfo.connect(lfoGain);
+          lfoGain.connect(masterGain.gain);
+          carrier.connect(masterGain);
+          masterGain.connect(this.ctx.destination);
+
+          carrier.start(now);
+          lfo.start(now);
+          carrier.stop(now + 1.3);
+          lfo.stop(now + 1.3);
+
+          // Soft bell overtone
+          const chime = this.ctx.createOscillator();
+          const chimeGain = this.ctx.createGain();
+          chime.type = 'sine';
+          chime.frequency.setValueAtTime(587.33, now); // D5
+          chimeGain.gain.setValueAtTime(0.03, now);
+          chimeGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+          chime.connect(chimeGain);
+          chimeGain.connect(this.ctx.destination);
+          chime.start(now);
+          chime.stop(now + 0.36);
+        } catch (e) {}
+      }
+
+      startRain() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx || this.rainSource) return;
+        try {
+          // Generate 2-second pink-noise buffer for soothing rain on cedar roof
+          const bufferSize = this.ctx.sampleRate * 2;
+          const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          let lastOut = 0.0;
+          for (let i = 0; i < bufferSize; i++) {
+            const white = Math.random() * 2 - 1;
+            data[i] = (lastOut + (0.04 * white)) / 1.04;
+            lastOut = data[i];
+            data[i] *= 1.6;
+          }
+
+          this.rainSource = this.ctx.createBufferSource();
+          this.rainSource.buffer = buffer;
+          this.rainSource.loop = true;
+
+          const filter = this.ctx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(750, this.ctx.currentTime);
+
+          this.rainGain = this.ctx.createGain();
+          this.rainGain.gain.setValueAtTime(0.001, this.ctx.currentTime);
+          this.rainGain.gain.linearRampToValueAtTime(0.045, this.ctx.currentTime + 1.5);
+
+          this.rainSource.connect(filter);
+          filter.connect(this.rainGain);
+          this.rainGain.connect(this.ctx.destination);
+          this.rainSource.start();
+        } catch (e) {}
+      }
+
+      stopRain() {
+        if (!this.rainGain || !this.ctx) return;
+        try {
+          this.rainGain.gain.linearRampToValueAtTime(0.0001, this.ctx.currentTime + 1.0);
+          setTimeout(() => {
+            if (this.rainSource) {
+              try { this.rainSource.stop(); this.rainSource.disconnect(); } catch (e) {}
+              this.rainSource = null;
+            }
+          }, 1100);
         } catch (e) {}
       }
 
       playFeedSound() {
         if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
         try {
-          this.init();
-          if (!this.ctx) return;
           const now = this.ctx.currentTime;
           const notes = [392.00, 440.00, 523.25, 659.25]; // G4, A4, C5, E5
           notes.forEach((freq, i) => {
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
             osc.type = 'triangle';
-            osc.frequency.setValueAtTime(freq, now + i * 0.055);
-            gain.gain.setValueAtTime(0.001, now + i * 0.055);
-            gain.gain.exponentialRampToValueAtTime(0.09, now + i * 0.055 + 0.015);
-            gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.055 + 0.22);
+            osc.frequency.setValueAtTime(freq, now + i * 0.05);
+            gain.gain.setValueAtTime(0.001, now + i * 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.08, now + i * 0.05 + 0.015);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.05 + 0.22);
             osc.connect(gain);
             gain.connect(this.ctx.destination);
-            osc.start(now + i * 0.055);
-            osc.stop(now + i * 0.055 + 0.24);
+            osc.start(now + i * 0.05);
+            osc.stop(now + i * 0.05 + 0.24);
           });
         } catch (e) {}
       }
 
       playMunchPop() {
         if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
         try {
-          this.init();
-          if (!this.ctx) return;
           const now = this.ctx.currentTime;
           const osc = this.ctx.createOscillator();
           const gain = this.ctx.createGain();
           osc.type = 'sine';
           osc.frequency.setValueAtTime(320, now);
-          osc.frequency.exponentialRampToValueAtTime(580, now + 0.09);
-          gain.gain.setValueAtTime(0.06, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+          osc.frequency.exponentialRampToValueAtTime(560, now + 0.08);
+          gain.gain.setValueAtTime(0.05, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
           osc.connect(gain);
           gain.connect(this.ctx.destination);
           osc.start(now);
-          osc.stop(now + 0.12);
+          osc.stop(now + 0.11);
         } catch (e) {}
       }
     }
 
-    const sound = new CozySoundEngine();
+    const sound = new CozyAudio();
 
     /********************************************************************
-     * PIXEL CAT SPRITE RENDERER
-     * Draws Lilo or any custom companion cat at pixel-perfect coordinates
+     * OPEN-METEO LIVE LOCAL WEATHER SYNC & FALLBACK
      ********************************************************************/
-    function drawPixelCat(ctx, cat, time) {
-      const x = Math.round(cat.x);
-      const y = Math.round(cat.y);
-      const isWalking = cat.state === 'WANDER' || cat.state === 'SEEK_FOOD';
-      const isEating = cat.state === 'EATING';
-      const isPetted = cat.state === 'INTERACT';
-      const isSleeping = cat.state === 'IDLE' && cat.pose === 'sleep';
-
-      ctx.save();
-      ctx.translate(x, y);
-
-      // Soft ground shadow under the cat
-      ctx.fillStyle = 'rgba(15, 28, 17, 0.32)';
-      if (isSleeping) {
-        ctx.fillRect(-8, -1, 16, 4);
-      } else {
-        ctx.fillRect(-7, -1, 14, 3);
-      }
-
-      // Flip horizontally when facing left (default pixel art faces right)
-      if (cat.facing < 0 && !isSleeping) {
-        ctx.scale(-1, 1);
-      }
-
-      const coat = cat.coatColor || '#ffffff';
-      const shade = cat.shadeColor || '#dbe7f5';
-      const eye = cat.eyeColor || '#29b6f6';
-      const nose = cat.noseColor || '#ff9ebb';
-      const pattern = cat.pattern || 'solid';
-
-      // Helper for 1x1 or WxH crisp pixel blocks
-      const px = (rx, ry, w, h, color) => {
-        ctx.fillStyle = color;
-        ctx.fillRect(Math.round(rx), Math.round(ry), w, h);
-      };
-
-      // ==================== SLEEPING CURLED POSTURE ====================
-      if (isSleeping) {
-        const breath = Math.sin(time * 2.4 + cat.seed) > 0 ? 1 : 0;
-        // Curled body oval
-        px(-7, -7 + breath, 14, 6, coat);
-        px(-6, -8 + breath, 12, 2, coat);
-        px(-7, -3, 14, 2, shade);
-
-        // Pattern details while curled
-        if (pattern === 'tabby') {
-          px(-3, -8 + breath, 2, 3, shade);
-          px(1, -8 + breath, 2, 3, shade);
-        } else if (pattern === 'patches') {
-          px(-4, -7 + breath, 4, 3, '#d97706');
-          px(1, -6 + breath, 3, 3, '#374151');
-        } else if (pattern === 'tuxedo') {
-          px(-2, -4, 6, 2, '#ffffff');
-        }
-
-        // Tucked head & ears on right side of curl
-        px(1, -9 + breath, 6, 5, coat);
-        px(2, -11 + breath, 2, 2, coat);
-        px(5, -11 + breath, 2, 2, coat);
-        px(2, -10 + breath, 1, 1, nose);
-        px(5, -10 + breath, 1, 1, nose);
-
-        // Closed peaceful sleeping eyes
-        px(3, -7 + breath, 2, 1, '#475569');
-        px(6, -7 + breath, 1, 1, nose); // Tiny pink nose
-
-        // Curled tail wrapped around left side
-        px(-8, -5, 2, 3, shade);
-        px(-7, -3, 3, 1, shade);
-
-        ctx.restore();
+    async function syncLiveWeather(world) {
+      if (world.weatherMode !== 'AUTO') return;
+      if (!navigator.geolocation) {
+        world.applyClockFallback();
         return;
       }
-
-      // ==================== WALKING / SITTING / EATING / PETTED ====================
-      const walkCycle = isWalking ? Math.floor(time * 9 + cat.seed) % 4 : 0;
-      const bounceY = isWalking ? (walkCycle % 2 === 1 ? -1 : 0) : (isPetted ? -1 : 0);
-      const headDipY = isEating ? (Math.floor(time * 8) % 2 === 0 ? 3 : 2) : (Math.sin(time * 2.5 + cat.seed) > 0.7 ? 1 : 0);
-
-      // Animated Tail (left side, -8 to -5)
-      const tailWag = Math.sin(time * (isPetted ? 12 : 4.5) + cat.seed);
-      const tailOffsetY = tailWag > 0.35 ? -1 : (tailWag < -0.35 ? 1 : 0);
-      px(-8, -8 + bounceY, 2, 3, coat);
-      px(-9, -11 + bounceY + tailOffsetY, 2, 4, coat);
-      px(-9, -8 + bounceY, 1, 2, shade);
-
-      // Torso / Body
-      px(-6, -8 + bounceY, 11, 6, coat);
-      px(-6, -4 + bounceY, 11, 2, shade); // Underbelly soft shadow
-
-      // Coat Patterns on Torso
-      if (pattern === 'tuxedo') {
-        px(2, -6 + bounceY, 3, 4, '#ffffff'); // White chest bib
-      } else if (pattern === 'tabby') {
-        px(-4, -8 + bounceY, 1, 4, shade);
-        px(-1, -8 + bounceY, 1, 4, shade);
-        px(2, -8 + bounceY, 1, 3, shade);
-      } else if (pattern === 'patches') {
-        px(-5, -8 + bounceY, 4, 3, '#e07a2b');
-        px(0, -7 + bounceY, 3, 3, '#2d3748');
-      }
-
-      // Lilo's signature sky-blue collar tag (subtle 2px detail on Lilo)
-      if (cat.isDefault) {
-        px(2, -5 + bounceY, 3, 1, '#38bdf8');
-        px(4, -4 + bounceY, 1, 1, '#fde047'); // Tiny gold bell pixel
-      }
-
-      // Legs / Paws (4-frame walk animation or planted paws)
-      const pawColor = pattern === 'tuxedo' ? '#ffffff' : coat;
-      if (isWalking) {
-        const legA = (walkCycle === 0 || walkCycle === 3) ? 0 : -1;
-        const legB = (walkCycle === 1 || walkCycle === 2) ? 0 : -1;
-        // Back legs
-        px(-5, -2 + legA, 2, 2, shade);
-        px(-3, -2 + legB, 2, 2, pawColor);
-        // Front legs
-        px(1, -2 + legB, 2, 2, shade);
-        px(3, -2 + legA, 2, 2, pawColor);
-      } else {
-        // Seated / standing planted paws
-        px(-5, -2, 2, 2, shade);
-        px(-2, -2, 2, 2, pawColor);
-        px(1, -2, 2, 2, shade);
-        px(3, -2, 2, 2, pawColor);
-      }
-
-      // Head Box (shifted down slightly when eating from bowl)
-      const hx = 0;
-      const hy = -13 + bounceY + headDipY;
-
-      // Head main block
-      px(hx, hy, 8, 6, coat);
-      px(hx + 1, hy - 1, 6, 1, coat); // Rounded crown
-      px(hx, hy + 5, 8, 1, shade);     // Chin shadow
-
-      // Left & Right Pointed Ears
-      px(hx + 1, hy - 3, 2, 2, coat);
-      px(hx + 5, hy - 3, 2, 2, coat);
-      // Pink inner ears
-      px(hx + 1, hy - 2, 1, 1, nose);
-      px(hx + 6, hy - 2, 1, 1, nose);
-
-      // Head Pattern Accents
-      if (pattern === 'tabby') {
-        px(hx + 3, hy - 1, 2, 2, shade);
-      } else if (pattern === 'patches') {
-        px(hx + 1, hy - 1, 3, 2, '#e07a2b');
-      } else if (pattern === 'tuxedo') {
-        px(hx + 2, hy + 4, 4, 2, '#ffffff');
-      }
-
-      // Eyes (Blinking, Happy Petted Arcs, or Vivid Blue/Custom Eyes)
-      const isBlinking = (Math.sin(time * 1.7 + cat.seed * 3) > 0.94) || isEating;
-      if (isPetted || isBlinking) {
-        // Happy closed eyes
-        px(hx + 2, hy + 2, 2, 1, '#334155');
-        px(hx + 5, hy + 2, 2, 1, '#334155');
-      } else {
-        // Vivid 2x2 pixel eyes with subtle shine
-        px(hx + 2, hy + 1, 2, 2, eye);
-        px(hx + 5, hy + 1, 2, 2, eye);
-        // Eye depth pixel for extra Lilo charm
-        if (cat.isDefault) {
-          px(hx + 2, hy + 1, 1, 1, '#7dd3fc');
-          px(hx + 5, hy + 1, 1, 1, '#7dd3fc');
-        }
-      }
-
-      // Cute Pink Nose
-      px(hx + 4, hy + 3, 1, 1, nose);
-
-      // Rosy cheeks when petted
-      if (isPetted) {
-        px(hx + 1, hy + 3, 1, 1, '#fda4af');
-        px(hx + 6, hy + 3, 1, 1, '#fda4af');
-      }
-
-      ctx.restore();
-
-      // Floating Nameplate when hovered or recently interacted
-      if (cat.labelAlpha > 0.02) {
-        ctx.save();
-        ctx.globalAlpha = Math.min(1, cat.labelAlpha);
-        ctx.font = 'bold 7px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        const textW = ctx.measureText(cat.name).width + 8;
-        ctx.fillStyle = 'rgba(24, 16, 10, 0.78)';
-        ctx.fillRect(Math.round(x - textW / 2), Math.round(y - 25), Math.round(textW), 9);
-        ctx.fillStyle = cat.isDefault ? '#7dd3fc' : '#fde68a';
-        ctx.fillText(cat.name, Math.round(x), Math.round(y - 18));
-        ctx.restore();
-      }
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          try {
+            const { latitude, longitude } = pos.coords;
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code,is_day`;
+            const res = await fetch(url);
+            const data = await res.json();
+            const cur = data.current;
+            world.tempC = Math.round(cur.temperature_2m);
+            const code = cur.weather_code;
+            if ([51, 53, 55, 61, 63, 65, 80, 81, 82, 95].includes(code)) {
+              world.weather = 'RAIN';
+              world.skyDesc = 'Rain Shower';
+            } else if (cur.is_day === 0) {
+              world.weather = 'NIGHT';
+              world.skyDesc = 'Starry Night';
+            } else if ([2, 3, 45, 48].includes(code)) {
+              world.weather = 'CLOUDY';
+              world.skyDesc = 'Cloudy Sky';
+            } else {
+              world.weather = 'SUNNY';
+              world.skyDesc = 'Sunny Sky';
+            }
+            world.onWeatherUpdated();
+          } catch (e) {
+            world.applyClockFallback();
+          }
+        },
+        () => world.applyClockFallback(),
+        { timeout: 6000 }
+      );
     }
 
     /********************************************************************
-     * GARDEN ENVIRONMENT & LANDMARK RENDERER (360 x 220)
+     * 24 DETERMINISTIC FORGET-ME-NOT BLOOM COORDINATES FOR LILO
      ********************************************************************/
-    const GRASS_TUFT_LIST = [];
-    const FLOWER_LIST = [];
-    (function generateGardenDecor() {
-      let seed = 1337;
-      const rand = () => {
-        seed = (seed * 16807) % 2147483647;
-        return (seed - 1) / 2147483646;
-      };
-
-      for (let i = 0; i < 95; i++) {
-        const gx = Math.floor(16 + rand() * (INTERNAL_W - 32));
-        const gy = Math.floor(42 + rand() * (INTERNAL_H - 56));
-        // Keep stone path & pond clear
-        if (Math.hypot(gx - LANDMARKS.pond.x, gy - LANDMARKS.pond.y) < 25) continue;
-        if (Math.hypot(gx - LANDMARKS.rug.x, gy - LANDMARKS.rug.y) < 25) continue;
-        GRASS_TUFT_LIST.push({
-          x: gx,
-          y: gy,
-          shade: rand() > 0.5 ? '#3f7d3b' : '#579c4c',
-          phase: rand() * Math.PI * 2
-        });
-      }
-
-      // Wildflowers (with blue forget-me-not flowers near Lilo's Memorial Stone)
-      const flowerColors = ['#38bdf8', '#7dd3fc', '#fde047', '#f472b6', '#ffffff'];
-      for (let i = 0; i < 42; i++) {
-        const fx = Math.floor(20 + rand() * (INTERNAL_W - 40));
-        const fy = Math.floor(46 + rand() * (INTERNAL_H - 60));
-        if (Math.hypot(fx - LANDMARKS.pond.x, fy - LANDMARKS.pond.y) < 26) continue;
-        if (Math.hypot(fx - LANDMARKS.bowl.x, fy - LANDMARKS.bowl.y) < 18) continue;
-        if (Math.hypot(fx - LANDMARKS.rug.x, fy - LANDMARKS.rug.y) < 26) continue;
-        FLOWER_LIST.push({
-          x: fx,
-          y: fy,
-          color: flowerColors[Math.floor(rand() * flowerColors.length)],
-          phase: rand() * Math.PI * 2
-        });
-      }
-
-      // Dedicated ring of blue forget-me-not flowers around Lilo's Memorial Stone
-      const shrineRing = [
-        [-18, 4], [-15, 10], [15, 5], [18, 10], [-12, -6], [13, -5], [-6, 12], [8, 12]
-      ];
-      shrineRing.forEach(([ox, oy], idx) => {
-        FLOWER_LIST.push({
-          x: LANDMARKS.shrine.x + ox,
-          y: LANDMARKS.shrine.y + oy,
-          color: idx % 2 === 0 ? '#38bdf8' : '#bae6fd',
-          phase: idx
-        });
-      });
-    })();
-
-    // Cobblestone Path Stones leading from gate to Shrine & Bowl
-    const COBBLESTONES = [
-      { x: 176, y: 42, w: 12, h: 7 },
-      { x: 173, y: 53, w: 14, h: 8 },
-      { x: 168, y: 65, w: 13, h: 7 },
-      { x: 158, y: 76, w: 14, h: 8 },
-      { x: 144, y: 82, w: 12, h: 7 },
-      { x: 126, y: 78, w: 13, h: 7 },
-      { x: 108, y: 74, w: 12, h: 7 },
-      { x: 92,  y: 71, w: 11, h: 7 },
-      // Branch down toward food bowl
-      { x: 172, y: 89, w: 13, h: 8 },
-      { x: 176, y: 102, w: 12, h: 7 },
-      { x: 179, y: 115, w: 14, h: 8 },
-      { x: 180, y: 129, w: 13, h: 7 }
+    const MEMORIAL_BLOOM_COORDS = [
+      // Ring 1 (Inner 8)
+      [-17, 3], [-14, 9], [14, 5], [17, 9], [-12, -7], [13, -6], [-6, 13], [7, 13],
+      // Ring 2 (Mid 8)
+      [-22, 6], [-20, 15], [20, 7], [22, 15], [-17, -13], [16, -12], [-13, 16], [14, 16],
+      // Ring 3 (Outer 8)
+      [-26, 11], [-24, 19], [25, 11], [27, 19], [-22, -16], [21, -16], [-4, 19], [5, 19]
     ];
 
-    function drawGardenBackground(ctx, time, world) {
-      // 1. Base Lush Grass Fill with Subtle Checkerboard Tile Texture
-      ctx.fillStyle = '#478942';
-      ctx.fillRect(0, 0, INTERNAL_W, INTERNAL_H);
-
-      const tileSize = 16;
-      for (let ty = 0; ty < INTERNAL_H; ty += tileSize) {
-        for (let tx = 0; tx < INTERNAL_W; tx += tileSize) {
-          if (((tx / tileSize) + (ty / tileSize)) % 2 === 0) {
-            ctx.fillStyle = '#4c9146';
-            ctx.fillRect(tx, ty, tileSize, tileSize);
-          }
-        }
-      }
-
-      // 2. Top Horizon Hedge & Sky Strip
-      ctx.fillStyle = '#2d5c2b';
-      ctx.fillRect(0, 0, INTERNAL_W, 28);
-      ctx.fillStyle = '#386e35';
-      for (let hx = 0; hx < INTERNAL_W; hx += 12) {
-        ctx.fillRect(hx, 14 + (hx % 24 === 0 ? 2 : 0), 10, 14);
-      }
-
-      // 3. Stardew-style Wooden Perimeter Fence along Top
-      ctx.fillStyle = 'rgba(15, 28, 17, 0.28)';
-      ctx.fillRect(8, 34, INTERNAL_W - 16, 4); // Fence shadow
-
-      // Horizontal rails
-      ctx.fillStyle = '#8c5832';
-      ctx.fillRect(10, 22, INTERNAL_W - 20, 3);
-      ctx.fillRect(10, 29, INTERNAL_W - 20, 3);
-
-      // Vertical fence posts
-      for (let fx = 10; fx < INTERNAL_W - 10; fx += 22) {
-        if (fx > 160 && fx < 195) continue; // Gap for garden entrance
-        ctx.fillStyle = '#6e4223';
-        ctx.fillRect(fx, 17, 6, 19);
-        ctx.fillStyle = '#a86e42';
-        ctx.fillRect(fx + 1, 18, 4, 16);
-        ctx.fillStyle = '#c98d5c';
-        ctx.fillRect(fx + 1, 17, 4, 2); // Post cap highlight
-      }
-
-      // 4. Cobblestone Path
-      COBBLESTONES.forEach(st => {
-        ctx.fillStyle = '#64748b';
-        ctx.fillRect(st.x, st.y + 1, st.w, st.h);
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillRect(st.x, st.y, st.w - 1, st.h - 1);
-        ctx.fillStyle = '#cbd5e1';
-        ctx.fillRect(st.x + 1, st.y + 1, st.w - 4, 2);
-      });
-
-      // 5. Swaying Grass Tufts
-      GRASS_TUFT_LIST.forEach(g => {
-        const sway = Math.round(Math.sin(time * 2 + g.phase) * 0.7);
-        ctx.fillStyle = g.shade;
-        ctx.fillRect(g.x + sway, g.y, 1, 3);
-        ctx.fillRect(g.x + 2 + sway, g.y + 1, 1, 2);
-      });
-
-      // 6. Cozy Garden Birdbath / Mini Pond (Bottom Left)
-      const px = LANDMARKS.pond.x;
-      const py = LANDMARKS.pond.y;
-      ctx.fillStyle = '#57534e';
-      ctx.fillRect(px - 18, py - 10, 36, 20);
-      ctx.fillStyle = '#78716c';
-      ctx.fillRect(px - 16, py - 12, 32, 22);
-      // Water surface
-      ctx.fillStyle = '#0284c7';
-      ctx.fillRect(px - 14, py - 9, 28, 16);
-      ctx.fillStyle = '#38bdf8';
-      ctx.fillRect(px - 12, py - 7, 24, 12);
-      // Animated water ripple + lily pad
-      const rippleX = Math.floor(Math.sin(time * 2) * 2);
-      ctx.fillStyle = '#bae6fd';
-      ctx.fillRect(px - 6 + rippleX, py - 3, 6, 1);
-      ctx.fillRect(px + 2 - rippleX, py + 2, 5, 1);
-      // Lily pad with tiny pink lotus pixel
-      ctx.fillStyle = '#22c55e';
-      ctx.fillRect(px - 9, py + 1, 5, 4);
-      ctx.fillStyle = '#f472b6';
-      ctx.fillRect(px - 7, py + 1, 2, 2);
-
-      // 7. Cozy Sunlit Picnic / Nap Blanket (Right Side)
-      const rx = LANDMARKS.rug.x;
-      const ry = LANDMARKS.rug.y;
-      ctx.fillStyle = 'rgba(15, 28, 17, 0.25)';
-      ctx.fillRect(rx - 21, ry - 13, 42, 28);
-      ctx.fillStyle = '#fef3c7';
-      ctx.fillRect(rx - 20, ry - 14, 40, 26);
-      // Warm checkered picnic pattern
-      ctx.fillStyle = '#f59e0b';
-      for (let bx = rx - 18; bx < rx + 18; bx += 8) {
-        for (let by = ry - 12; by < ry + 10; by += 8) {
-          if (((bx + by) / 8) % 2 === 0) {
-            ctx.fillRect(bx, by, 4, 4);
-          }
-        }
-      }
-      // Fringe tassels on left/right edges
-      ctx.fillStyle = '#fde68a';
-      for (let fy = ry - 12; fy < ry + 11; fy += 4) {
-        ctx.fillRect(rx - 22, fy, 2, 2);
-        ctx.fillRect(rx + 20, fy, 2, 2);
-      }
-
-      // 8. Wildflowers
-      FLOWER_LIST.forEach(f => {
-        const bob = Math.sin(time * 2.5 + f.phase) > 0.6 ? -1 : 0;
-        ctx.fillStyle = '#2e6b30';
-        ctx.fillRect(f.x, f.y + 1, 1, 2);
-        ctx.fillStyle = f.color;
-        ctx.fillRect(f.x - 1, f.y + bob, 3, 2);
-        ctx.fillStyle = '#fef08a';
-        ctx.fillRect(f.x, f.y + bob, 1, 1);
-      });
-    }
-
-    // Draw Lilo's Memorial Stone (Depth-sorted with cats)
-    function drawMemorialShrine(ctx, time, hovered) {
-      const sx = LANDMARKS.shrine.x;
-      const sy = LANDMARKS.shrine.y;
-
-      // Ground shadow
-      ctx.fillStyle = 'rgba(15, 28, 17, 0.35)';
-      ctx.fillRect(sx - 15, sy + 2, 30, 5);
-
-      // Mossy stone base
-      ctx.fillStyle = '#64748b';
-      ctx.fillRect(sx - 13, sy - 4, 26, 8);
-      ctx.fillStyle = '#94a3b8';
-      ctx.fillRect(sx - 12, sy - 5, 24, 6);
-
-      // Upright curved headstone/monument
-      ctx.fillStyle = '#64748b';
-      ctx.fillRect(sx - 10, sy - 22, 20, 18);
-      ctx.fillStyle = '#94a3b8';
-      ctx.fillRect(sx - 9, sy - 24, 18, 19);
-      ctx.fillStyle = '#cbd5e1';
-      ctx.fillRect(sx - 7, sy - 25, 14, 2);
-
-      // Engraved Blue Cat Paw / Star Emblem in center of stone
-      const glow = Math.sin(time * 3) > 0 ? '#38bdf8' : '#7dd3fc';
-      ctx.fillStyle = glow;
-      ctx.fillRect(sx - 2, sy - 16, 4, 3);
-      ctx.fillRect(sx - 4, sy - 19, 2, 2);
-      ctx.fillRect(sx - 1, sy - 20, 2, 2);
-      ctx.fillRect(sx + 2, sy - 19, 2, 2);
-
-      // Moss & Blue Forget-Me-Not Garland on top left of stone
-      ctx.fillStyle = '#4ade80';
-      ctx.fillRect(sx - 9, sy - 23, 5, 3);
-      ctx.fillStyle = '#38bdf8';
-      ctx.fillRect(sx - 8, sy - 24, 2, 2);
-
-      // Gentle fluttering blue butterfly near the shrine
-      const bx = sx + 12 + Math.sin(time * 2.2) * 4;
-      const by = sy - 24 + Math.cos(time * 3.1) * 3;
-      const wingOpen = Math.floor(time * 10) % 2 === 0;
-      ctx.fillStyle = '#7dd3fc';
-      if (wingOpen) {
-        ctx.fillRect(Math.round(bx - 1), Math.round(by), 3, 2);
-      } else {
-        ctx.fillRect(Math.round(bx), Math.round(by - 1), 1, 3);
-      }
-
-      if (hovered) {
-        ctx.font = 'bold 7px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-        ctx.fillRect(sx - 36, sy - 37, 72, 10);
-        ctx.fillStyle = '#bae6fd';
-        ctx.fillText("Lilo's Tribute 💠", sx, sy - 30);
-      }
-    }
-
-    // Draw Interactive Cat Food Bowl (Full, Half, Low, Empty states)
-    function drawFoodBowl(ctx, bowlLevel, hovered) {
-      const bx = LANDMARKS.bowl.x;
-      const by = LANDMARKS.bowl.y;
-
-      // Placemat under bowl
-      ctx.fillStyle = 'rgba(15, 28, 17, 0.3)';
-      ctx.fillRect(bx - 11, by - 4, 22, 9);
-      ctx.fillStyle = '#cbd5e1';
-      ctx.fillRect(bx - 10, by - 5, 20, 9);
-      ctx.fillStyle = '#94a3b8';
-      ctx.fillRect(bx - 9, by - 4, 18, 7);
-
-      // Ceramic Dish Rim (Sky-blue dish for Lilo)
-      ctx.fillStyle = '#0284c7';
-      ctx.fillRect(bx - 7, by - 3, 14, 6);
-      ctx.fillStyle = '#38bdf8';
-      ctx.fillRect(bx - 6, by - 4, 12, 5);
-      ctx.fillStyle = '#e0f2fe';
-      ctx.fillRect(bx - 5, by - 3, 10, 3);
-
-      // Kibble Levels inside Bowl (0 = Empty, 1 = Low, 2 = Half, 3 = Full)
-      if (bowlLevel >= 1) {
-        ctx.fillStyle = '#92400e';
-        ctx.fillRect(bx - 4, by - 3, 8, 2);
-      }
-      if (bowlLevel >= 2) {
-        ctx.fillStyle = '#b45309';
-        ctx.fillRect(bx - 5, by - 4, 10, 2);
-        ctx.fillStyle = '#78350f';
-        ctx.fillRect(bx - 2, by - 4, 2, 1);
-        ctx.fillRect(bx + 2, by - 3, 2, 1);
-      }
-      if (bowlLevel >= 3) {
-        ctx.fillStyle = '#d97706';
-        ctx.fillRect(bx - 3, by - 5, 6, 2);
-        ctx.fillStyle = '#f59e0b';
-        ctx.fillRect(bx - 1, by - 5, 2, 1);
-      }
-
-      if (hovered) {
-        ctx.font = 'bold 7px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = 'rgba(24, 16, 10, 0.85)';
-        ctx.fillRect(bx - 28, by - 16, 56, 9);
-        ctx.fillStyle = '#fde68a';
-        ctx.fillText(bowlLevel > 0 ? 'Food Bowl (Full)' : 'Tap to Refill 🥣', bx, by - 9);
-      }
-    }
-
     /********************************************************************
-     * MAIN WORLD STATE & FINITE STATE MACHINE CONTROLLER
+     * WORLD STATE CONTROLLER
      ********************************************************************/
     const world = {
-      stats: {
-        pets: 0,
-        meals: 0
-      },
-      bowlLevel: 3, // 0..3
-      atmosphere: 'day', // 'day' | 'sunset' | 'night'
+      stats: { pets: 0, meals: 0 },
+      petProgress: 0, // Every 3 pets grows a blue flower
+      blooms: 8,      // Persistent bloomed forget-me-nots (up to 24)
+      bowlLevel: 3,   // 0..3
+      weatherMode: 'AUTO', // 'AUTO' | 'SUNNY' | 'CLOUDY' | 'RAIN' | 'NIGHT'
+      weather: 'SUNNY',    // Current active weather
+      skyDesc: 'Sunny Sky',
+      tempC: 24,
       tributeNote: "Forever loved, forever missed. Enjoy the endless sunshine and treats in your garden, sweet Lilo.",
       cats: [],
       particles: [],
-      ambientParticles: [],
+      critters: [], // Butterflies & Fireflies
+      rainDrops: [],
       pointer: { x: -100, y: -100, hoveredEntity: null },
 
       init() {
         this.load();
-        this.initAmbientParticles();
+        this.initCritters();
+        this.initRain();
+        syncLiveWeather(this);
         this.syncUI();
       },
 
+      applyClockFallback() {
+        const hour = new Date().getHours();
+        if (hour < 6 || hour >= 19) {
+          this.weather = 'NIGHT';
+          this.skyDesc = 'Firefly Night';
+          this.tempC = 16;
+        } else if (hour >= 11 && hour <= 14) {
+          this.weather = 'SUNNY';
+          this.skyDesc = 'Bright Sun';
+          this.tempC = 26;
+        } else {
+          this.weather = 'SUNNY';
+          this.skyDesc = 'Sunny Sky';
+          this.tempC = 22;
+        }
+        this.onWeatherUpdated();
+      },
+
+      onWeatherUpdated() {
+        if (this.weather === 'RAIN') {
+          sound.startRain();
+          this.cats.forEach(c => {
+            if (c.state !== 'SHELTERED') {
+              c.state = 'SEEK_SHELTER';
+              c.targetX = 274 + Math.random() * 16;
+              c.targetY = 78 + Math.random() * 8;
+            }
+          });
+        } else {
+          sound.stopRain();
+          this.cats.forEach(c => {
+            if (c.state === 'SHELTERED') {
+              c.state = 'IDLE';
+              c.stateTimer = 2.5;
+            }
+          });
+        }
+        this.syncUI();
+      },
+
+      cycleWeather() {
+        const modes = ['AUTO', 'SUNNY', 'CLOUDY', 'RAIN', 'NIGHT'];
+        const nextIdx = (modes.indexOf(this.weatherMode) + 1) % modes.length;
+        this.weatherMode = modes[nextIdx];
+        if (this.weatherMode === 'AUTO') {
+          syncLiveWeather(this);
+          showToast('Live Weather: Open-Meteo GPS', '📡');
+        } else {
+          this.weather = this.weatherMode;
+          const map = {
+            SUNNY:  { desc: 'Sunny Sky', temp: 25 },
+            CLOUDY: { desc: 'Cloudy Sky', temp: 21 },
+            RAIN:   { desc: 'Rain Shower', temp: 18 },
+            NIGHT:  { desc: 'Firefly Night', temp: 16 }
+          };
+          this.skyDesc = map[this.weather].desc;
+          this.tempC = map[this.weather].temp;
+          this.onWeatherUpdated();
+          showToast(`Weather Override: ${this.skyDesc}`, '🌤️');
+        }
+        this.save();
+      },
+
       createCatRuntime(spec, index = 0) {
-        const startX = spec.isDefault ? 148 : 110 + ((index * 47) % 140);
-        const startY = spec.isDefault ? 118 : 95 + ((index * 31) % 75);
+        const startX = spec.isDefault ? 148 : 110 + ((index * 47) % 130);
+        const startY = spec.isDefault ? 118 : 95 + ((index * 31) % 65);
         return {
           ...spec,
           x: startX,
@@ -1236,12 +877,13 @@
           targetX: startX,
           targetY: startY,
           facing: 1,
-          state: 'IDLE', // 'IDLE' | 'WANDER' | 'SEEK_FOOD' | 'EATING' | 'INTERACT'
+          state: 'IDLE', // 'IDLE' | 'WANDER' | 'SEEK_FOOD' | 'EATING' | 'INTERACT' | 'SEEK_SHELTER' | 'SHELTERED' | 'PLAYFUL'
           pose: 'sit',   // 'sit' | 'sleep'
           stateTimer: 3 + Math.random() * 4,
           animTime: Math.random() * 10,
+          playTimer: 0,
           seed: Math.random() * 100,
-          labelAlpha: 1.0,
+          labelAlpha: 0,
           socialCooldown: 0
         };
       },
@@ -1258,21 +900,21 @@
         if (saved && typeof saved === 'object') {
           this.stats.pets = Number(saved.stats?.pets) || 0;
           this.stats.meals = Number(saved.stats?.meals) || 0;
+          this.petProgress = Number(saved.petProgress) || 0;
+          this.blooms = typeof saved.blooms === 'number' ? Math.max(1, Math.min(24, saved.blooms)) : 8;
           this.bowlLevel = typeof saved.bowlLevel === 'number' ? Math.max(0, Math.min(3, saved.bowlLevel)) : 3;
           if (saved.tributeNote) this.tributeNote = String(saved.tributeNote);
-          if (saved.atmosphere) this.atmosphere = saved.atmosphere;
+          if (saved.weatherMode) this.weatherMode = saved.weatherMode;
 
           const companions = Array.isArray(saved.companions)
             ? saved.companions.filter(c => c && c.id !== 'lilo')
             : [];
 
-          // Always guarantee immutable Lilo is index 0
           this.cats = [
             this.createCatRuntime(DEFAULT_LILO, 0),
             ...companions.map((c, idx) => this.createCatRuntime(c, idx + 1))
           ];
         } else {
-          // Fresh Garden state with Lilo
           this.cats = [this.createCatRuntime(DEFAULT_LILO, 0)];
           this.save();
         }
@@ -1292,12 +934,13 @@
           }));
 
         return {
-          version: 1,
+          version: 2,
           updatedAt: new Date().toISOString(),
-          anchorCat: DEFAULT_LILO,
           stats: this.stats,
+          petProgress: this.petProgress,
+          blooms: this.blooms,
           bowlLevel: this.bowlLevel,
-          atmosphere: this.atmosphere,
+          weatherMode: this.weatherMode,
           tributeNote: this.tributeNote,
           companions
         };
@@ -1305,25 +948,46 @@
 
       save() {
         try {
-          const data = this.serialize();
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-          const jsonEl = document.getElementById('jsonSaveTextarea');
-          if (jsonEl && document.activeElement !== jsonEl) {
-            jsonEl.value = JSON.stringify(data, null, 2);
-          }
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(this.serialize()));
         } catch (e) {}
         this.syncUI();
       },
 
-      initAmbientParticles() {
-        this.ambientParticles = [];
-        for (let i = 0; i < 18; i++) {
-          this.ambientParticles.push({
+      initCritters() {
+        this.critters = [];
+        // 3 daytime butterflies
+        for (let i = 0; i < 3; i++) {
+          this.critters.push({
+            type: 'butterfly',
+            x: 60 + Math.random() * 240,
+            y: 50 + Math.random() * 120,
+            vx: (Math.random() - 0.5) * 15,
+            vy: (Math.random() - 0.5) * 12,
+            phase: Math.random() * Math.PI * 2,
+            color: ['#38bdf8', '#f472b6', '#fde047'][i % 3]
+          });
+        }
+        // 12 nighttime fireflies
+        for (let i = 0; i < 12; i++) {
+          this.critters.push({
+            type: 'firefly',
             x: Math.random() * INTERNAL_W,
-            y: 30 + Math.random() * (INTERNAL_H - 40),
-            vx: 4 + Math.random() * 6,
-            vy: -2 + Math.random() * 4,
+            y: 36 + Math.random() * 150,
+            vx: (Math.random() - 0.5) * 8,
+            vy: (Math.random() - 0.5) * 6,
             phase: Math.random() * Math.PI * 2
+          });
+        }
+      },
+
+      initRain() {
+        this.rainDrops = [];
+        for (let i = 0; i < 65; i++) {
+          this.rainDrops.push({
+            x: Math.random() * (INTERNAL_W + 40) - 20,
+            y: Math.random() * INTERNAL_H,
+            speed: 180 + Math.random() * 80,
+            len: 4 + Math.random() * 4
           });
         }
       },
@@ -1333,7 +997,7 @@
         for (let i = 0; i < count; i++) {
           this.particles.push({
             x: x + (Math.random() * 10 - 5),
-            y: y - 10 + (Math.random() * 4 - 2),
+            y: y - 8 + (Math.random() * 4 - 2),
             vx: (Math.random() - 0.5) * 12,
             vy: -14 - Math.random() * 10,
             life: 1.1 + Math.random() * 0.4,
@@ -1358,12 +1022,23 @@
       petCat(cat) {
         cat.state = 'INTERACT';
         cat.pose = 'sit';
-        cat.stateTimer = 2.2;
+        cat.stateTimer = 2.4;
         cat.labelAlpha = 1.6;
         this.stats.pets++;
+        this.petProgress = (this.petProgress || 0) + 1;
+
+        // Every 3 pets, bloom a persistent forget-me-not flower for Lilo
+        if (this.petProgress >= 3) {
+          this.petProgress = 0;
+          if (this.blooms < 24) {
+            this.blooms++;
+            this.spawnHeart(LANDMARKS.shrine.x, LANDMARKS.shrine.y - 10, 'sparkle');
+            showToast('A new blue forget-me-not bloomed for Lilo! 💠', '💠');
+          }
+        }
+
         this.spawnHeart(cat.x, cat.y - 6, 'heart');
-        sound.playPurrChime();
-        this.setTicker(`${cat.name} purrs happily and leans into your hand ♥`);
+        sound.playPurr();
         this.save();
       },
 
@@ -1371,26 +1046,30 @@
         this.bowlLevel = 3;
         sound.playFeedSound();
         this.spawnHeart(LANDMARKS.bowl.x, LANDMARKS.bowl.y - 4, 'sparkle');
-        // Direct all cats toward the freshly filled food bowl
         this.cats.forEach((cat, idx) => {
-          cat.state = 'SEEK_FOOD';
-          cat.pose = 'sit';
-          const angle = (idx / Math.max(1, this.cats.length)) * Math.PI * 2;
-          cat.targetX = LANDMARKS.bowl.x + Math.cos(angle) * 12;
-          cat.targetY = LANDMARKS.bowl.y + 2 + Math.sin(angle) * 6;
-          cat.labelAlpha = 1.2;
+          if (this.weather === 'RAIN' && cat.state === 'SHELTERED') {
+            // In heavy rain, cats stay cozy under gazebo unless very hungry
+            if (Math.random() < 0.4) {
+              cat.state = 'SEEK_FOOD';
+              cat.targetX = LANDMARKS.bowl.x + (idx * 14 - 7);
+              cat.targetY = LANDMARKS.bowl.y + 2;
+            }
+          } else {
+            cat.state = 'SEEK_FOOD';
+            cat.pose = 'sit';
+            cat.targetX = LANDMARKS.bowl.x + (idx * 14 - 7);
+            cat.targetY = LANDMARKS.bowl.y + 2;
+          }
         });
-        this.setTicker("Fresh cat food poured! Lilo and friends are trotting over 🐟");
-        showToast("Bowl filled with Lilo's favorite treats!", "🥣");
+        showToast("Ceramic bowl filled with crunchy kibble!", "🥣");
         this.save();
       },
 
       pickRandomGardenPoint() {
-        // 25% chance to wander near the cozy sunny nap blanket
-        if (Math.random() < 0.25) {
+        if (Math.random() < 0.28) {
           return {
-            x: LANDMARKS.rug.x + (Math.random() * 24 - 12),
-            y: LANDMARKS.rug.y + (Math.random() * 16 - 8)
+            x: LANDMARKS.rug.x + (Math.random() * 20 - 10),
+            y: LANDMARKS.rug.y + (Math.random() * 14 - 7)
           };
         }
         for (let tries = 0; tries < 10; tries++) {
@@ -1405,7 +1084,30 @@
       },
 
       update(dt, time) {
-        // Update each cat's Finite State Machine
+        // 1. Update Rain Animation
+        if (this.weather === 'RAIN') {
+          for (let i = 0; i < this.rainDrops.length; i++) {
+            const drop = this.rainDrops[i];
+            drop.y += drop.speed * dt;
+            drop.x -= 30 * dt; // Slight wind slant
+            if (drop.y > INTERNAL_H) {
+              drop.y = -5;
+              drop.x = Math.random() * (INTERNAL_W + 40) - 10;
+            }
+          }
+        }
+
+        // 2. Update Butterflies & Fireflies
+        this.critters.forEach(cr => {
+          cr.x += cr.vx * dt + Math.sin(time * 2 + cr.phase) * 12 * dt;
+          cr.y += cr.vy * dt + Math.cos(time * 1.5 + cr.phase) * 10 * dt;
+          if (cr.x < 15) { cr.x = 15; cr.vx = Math.abs(cr.vx); }
+          if (cr.x > INTERNAL_W - 15) { cr.x = INTERNAL_W - 15; cr.vx = -Math.abs(cr.vx); }
+          if (cr.y < 42) { cr.y = 42; cr.vy = Math.abs(cr.vy); }
+          if (cr.y > INTERNAL_H - 24) { cr.y = INTERNAL_H - 24; cr.vy = -Math.abs(cr.vy); }
+        });
+
+        // 3. Update Each Cat's FSM
         for (let i = 0; i < this.cats.length; i++) {
           const cat = this.cats[i];
           cat.stateTimer -= dt;
@@ -1413,17 +1115,39 @@
           if (cat.socialCooldown > 0) cat.socialCooldown -= dt;
           if (cat.labelAlpha > 0) cat.labelAlpha = Math.max(0, cat.labelAlpha - dt * 0.25);
 
-          // Emit occasional 'z' bubble while sleeping
-          if (cat.state === 'IDLE' && cat.pose === 'sleep' && Math.random() < dt * 0.65) {
+          // Sleep breathing z bubble
+          if ((cat.state === 'IDLE' || cat.state === 'SHELTERED') && cat.pose === 'sleep' && Math.random() < dt * 0.6) {
             this.spawnSleepZ(cat.x, cat.y);
+          }
+
+          // Rain Shelter Reaction: If raining and outside gazebo, run to shelter
+          if (this.weather === 'RAIN' && cat.state !== 'SHELTERED' && cat.state !== 'SEEK_SHELTER' && cat.state !== 'INTERACT') {
+            cat.state = 'SEEK_SHELTER';
+            cat.targetX = 274 + (i * 8);
+            cat.targetY = 78 + (i % 2 === 0 ? 0 : 5);
+          }
+
+          // Playful Reaction: Check nearby butterflies or fireflies
+          if ((cat.state === 'IDLE' || cat.state === 'WANDER') && this.weather !== 'RAIN') {
+            for (const cr of this.critters) {
+              const activeCritter = (this.weather === 'NIGHT' && cr.type === 'firefly') || (this.weather !== 'NIGHT' && cr.type === 'butterfly');
+              if (activeCritter && Math.hypot(cat.x - cr.x, cat.y - cr.y) < 22 && Math.random() < dt * 0.5) {
+                cat.state = 'PLAYFUL';
+                cat.playTimer = 2.2;
+                cat.targetX = cr.x;
+                cat.targetY = cr.y + 4;
+                this.spawnHeart(cat.x, cat.y - 12, 'sparkle');
+                break;
+              }
+            }
           }
 
           switch (cat.state) {
             case 'IDLE': {
               if (this.bowlLevel > 0 && Math.random() < dt * 0.08) {
                 cat.state = 'SEEK_FOOD';
-                cat.targetX = LANDMARKS.bowl.x + (Math.random() * 16 - 8);
-                cat.targetY = LANDMARKS.bowl.y + (Math.random() * 8 - 2);
+                cat.targetX = LANDMARKS.bowl.x + (Math.random() * 14 - 7);
+                cat.targetY = LANDMARKS.bowl.y + (Math.random() * 6 - 2);
                 break;
               }
               if (cat.stateTimer <= 0) {
@@ -1438,7 +1162,8 @@
             }
 
             case 'WANDER':
-            case 'SEEK_FOOD': {
+            case 'SEEK_FOOD':
+            case 'SEEK_SHELTER': {
               const dx = cat.targetX - cat.x;
               const dy = cat.targetY - cat.y;
               const dist = Math.hypot(dx, dy);
@@ -1449,23 +1174,40 @@
                   cat.stateTimer = 3.5;
                   cat.facing = LANDMARKS.bowl.x >= cat.x ? 1 : -1;
                   sound.playMunchPop();
-                  this.setTicker(`${cat.name} is munching happily at the food bowl 🐟`);
+                } else if (cat.state === 'SEEK_SHELTER') {
+                  cat.state = 'SHELTERED';
+                  cat.pose = Math.random() < 0.65 ? 'sleep' : 'sit';
+                  cat.stateTimer = 6;
                 } else {
                   cat.state = 'IDLE';
-                  const onRug = Math.hypot(cat.x - LANDMARKS.rug.x, cat.y - LANDMARKS.rug.y) < 26;
+                  const onRug = Math.hypot(cat.x - LANDMARKS.rug.x, cat.y - LANDMARKS.rug.y) < 22;
                   cat.pose = (onRug || Math.random() < 0.32) ? 'sleep' : 'sit';
                   cat.stateTimer = 4 + Math.random() * 5;
-                  if (cat.pose === 'sleep' && cat.isDefault) {
-                    this.setTicker("Lilo curled up for a peaceful catnap in the sun 💤");
-                  }
                 }
               } else {
-                const speed = cat.state === 'SEEK_FOOD' ? 36 : 26;
+                const speed = cat.state === 'SEEK_FOOD' ? 36 : (cat.state === 'SEEK_SHELTER' ? 38 : 26);
                 cat.x += (dx / dist) * speed * dt;
                 cat.y += (dy / dist) * speed * dt;
-                if (Math.abs(dx) > 0.4) {
-                  cat.facing = dx < 0 ? -1 : 1;
-                }
+                if (Math.abs(dx) > 0.4) cat.facing = dx < 0 ? -1 : 1;
+              }
+              break;
+            }
+
+            case 'SHELTERED': {
+              // Stay cozy under gazebo while raining
+              if (this.weather !== 'RAIN') {
+                cat.state = 'IDLE';
+                cat.stateTimer = 3;
+              }
+              break;
+            }
+
+            case 'PLAYFUL': {
+              cat.playTimer -= dt;
+              if (cat.playTimer <= 0) {
+                cat.state = 'IDLE';
+                cat.pose = 'sit';
+                cat.stateTimer = 3;
               }
               break;
             }
@@ -1479,7 +1221,7 @@
                   this.bowlLevel = Math.max(0, this.bowlLevel - 1);
                   this.stats.meals++;
                   this.spawnHeart(cat.x, cat.y - 8, 'heart');
-                  sound.playPurrChime();
+                  sound.playPurr();
                   this.save();
                 }
                 cat.state = 'IDLE';
@@ -1500,7 +1242,7 @@
           }
         }
 
-        // Social Interactions: Friendly nose-touching when passing close by
+        // 4. Social Nose-Boops
         if (this.cats.length > 1) {
           for (let i = 0; i < this.cats.length; i++) {
             for (let j = i + 1; j < this.cats.length; j++) {
@@ -1512,44 +1254,47 @@
                   a.socialCooldown = 18;
                   b.socialCooldown = 18;
                   this.spawnHeart((a.x + b.x) / 2, Math.min(a.y, b.y) - 8, 'heart');
-                  this.setTicker(`${a.name} and ${b.name} touched noses in a friendly greeting ♥`);
                 }
               }
             }
           }
         }
 
-        // Update Floating Particles
+        // 5. Update Floating Particles
         for (let i = this.particles.length - 1; i >= 0; i--) {
           const p = this.particles[i];
           p.x += p.vx * dt;
           p.y += p.vy * dt;
           p.life -= dt;
-          if (p.life <= 0) {
-            this.particles.splice(i, 1);
-          }
+          if (p.life <= 0) this.particles.splice(i, 1);
         }
 
-        // Update Ambient Dandelion / Firefly Particles
-        this.ambientParticles.forEach(ap => {
-          ap.x += Math.sin(time + ap.phase) * 5 * dt + ap.vx * 0.25 * dt;
-          ap.y += Math.cos(time * 0.8 + ap.phase) * 4 * dt;
-          if (ap.x > INTERNAL_W + 5) ap.x = -5;
-          if (ap.x < -5) ap.x = INTERNAL_W + 5;
-          if (ap.y < 25) ap.y = INTERNAL_H - 10;
-          if (ap.y > INTERNAL_H - 5) ap.y = 30;
-        });
+        // Update Mood Whisper Pill
+        this.updateLiveMoodTicker();
       },
 
-      setTicker(msg) {
-        const el = document.getElementById('statusTicker');
-        if (el) el.textContent = msg;
+      updateLiveMoodTicker() {
+        const lilo = this.cats[0];
+        const el = document.getElementById('whisperMood');
+        if (!lilo || !el) return;
+
+        let moodText = "Lilo: Enjoying the garden";
+        if (lilo.state === 'SHELTERED') moodText = "Lilo: Cozy under gazebo porch 🏡";
+        else if (lilo.state === 'SEEK_SHELTER') moodText = "Lilo: Trotting to dry shelter 🌧️";
+        else if (lilo.state === 'EATING') moodText = "Lilo: Munching tasty kibble 🐟";
+        else if (lilo.state === 'SEEK_FOOD') moodText = "Lilo: Trotting to the food bowl 🥣";
+        else if (lilo.state === 'INTERACT') moodText = "Lilo: Purring happily with love ♥";
+        else if (lilo.state === 'PLAYFUL') moodText = "Lilo: Pouncing at butterflies ♪";
+        else if (lilo.state === 'IDLE' && lilo.pose === 'sleep') moodText = "Lilo: Napping peacefully 💤";
+        else if (lilo.state === 'WANDER') moodText = "Lilo: Strolling along path 🐾";
+
+        el.textContent = moodText;
       },
 
       syncUI() {
-        document.getElementById('statPets').textContent = this.stats.pets;
-        document.getElementById('statMeals').textContent = this.stats.meals;
-        document.getElementById('statCats').textContent = this.cats.length;
+        document.getElementById('statBlooms').textContent = this.blooms;
+        document.getElementById('modalBloomCount').textContent = `${this.blooms} / 24`;
+        document.getElementById('catCountBadge').textContent = this.cats.length;
 
         const bowlLabels = ['Empty', 'Low', 'Half', 'Full'];
         const bowlBadge = document.getElementById('bowlBadge');
@@ -1557,28 +1302,550 @@
           bowlBadge.textContent = bowlLabels[this.bowlLevel] || 'Full';
         }
 
-        const timeBadge = document.getElementById('timeBadge');
-        const atmosphereIcon = document.getElementById('atmosphereIcon');
-        if (timeBadge) {
-          const labels = {
-            day: '☀️ Sunny Day',
-            sunset: '🌅 Sunset',
-            night: '✨ Night'
-          };
-          timeBadge.textContent = labels[this.atmosphere] || '☀️ Sunny Day';
-        }
-        if (atmosphereIcon) {
-          const icons = { day: '☀️', sunset: '🌅', night: '🌙' };
-          atmosphereIcon.textContent = icons[this.atmosphere] || '☀️';
-        }
+        const iconMap = { SUNNY: '☀️', CLOUDY: '☁️', RAIN: '🌧️', NIGHT: '✨' };
+        document.getElementById('weatherIcon').textContent = iconMap[this.weather] || '☀️';
+        document.getElementById('weatherText').textContent = `${this.tempC}°C • ${this.skyDesc}${this.weatherMode === 'AUTO' ? ' (Live)' : ''}`;
 
-        renderRosterBar();
-        renderResidentManageList();
+        renderFriendsList();
       }
     };
 
     /********************************************************************
-     * MAIN RENDER PIPELINE (360 x 220 Pixel Canvas)
+     * PIXEL SPRITE RENDERER
+     ********************************************************************/
+    function drawPixelCat(ctx, cat, time) {
+      const x = Math.round(cat.x);
+      const y = Math.round(cat.y);
+      const isWalking = cat.state === 'WANDER' || cat.state === 'SEEK_FOOD' || cat.state === 'SEEK_SHELTER';
+      const isEating = cat.state === 'EATING';
+      const isPetted = cat.state === 'INTERACT';
+      const isSleeping = (cat.state === 'IDLE' || cat.state === 'SHELTERED') && cat.pose === 'sleep';
+      const isPlayful = cat.state === 'PLAYFUL';
+
+      ctx.save();
+      ctx.translate(x, y);
+
+      // Ground shadow
+      ctx.fillStyle = 'rgba(15, 28, 17, 0.32)';
+      if (isSleeping) {
+        ctx.fillRect(-8, -1, 16, 4);
+      } else {
+        ctx.fillRect(-7, -1, 14, 3);
+      }
+
+      if (cat.facing < 0 && !isSleeping) {
+        ctx.scale(-1, 1);
+      }
+
+      const coat = cat.coatColor || '#ffffff';
+      const shade = cat.shadeColor || '#dbe7f5';
+      const eye = cat.eyeColor || '#29b6f6';
+      const nose = cat.noseColor || '#ff9ebb';
+      const pattern = cat.pattern || 'solid';
+
+      const px = (rx, ry, w, h, color) => {
+        ctx.fillStyle = color;
+        ctx.fillRect(Math.round(rx), Math.round(ry), w, h);
+      };
+
+      // Sleeping Curled Posture
+      if (isSleeping) {
+        const breath = Math.sin(time * 2.4 + cat.seed) > 0 ? 1 : 0;
+        px(-7, -7 + breath, 14, 6, coat);
+        px(-6, -8 + breath, 12, 2, coat);
+        px(-7, -3, 14, 2, shade);
+
+        if (pattern === 'tabby') {
+          px(-3, -8 + breath, 2, 3, shade);
+          px(1, -8 + breath, 2, 3, shade);
+        } else if (pattern === 'patches') {
+          px(-4, -7 + breath, 4, 3, '#d97706');
+          px(1, -6 + breath, 3, 3, '#374151');
+        } else if (pattern === 'tuxedo') {
+          px(-2, -4, 6, 2, '#ffffff');
+        }
+
+        px(1, -9 + breath, 6, 5, coat);
+        px(2, -11 + breath, 2, 2, coat);
+        px(5, -11 + breath, 2, 2, coat);
+        px(2, -10 + breath, 1, 1, nose);
+        px(5, -10 + breath, 1, 1, nose);
+        px(3, -7 + breath, 2, 1, '#475569');
+        px(6, -7 + breath, 1, 1, nose);
+
+        px(-8, -5, 2, 3, shade);
+        px(-7, -3, 3, 1, shade);
+
+        ctx.restore();
+        return;
+      }
+
+      // Active Animation Cycles
+      const walkCycle = isWalking ? Math.floor(time * 9 + cat.seed) % 4 : 0;
+      const hopY = isPlayful ? Math.round(Math.abs(Math.sin(time * 10)) * -3) : 0;
+      const bounceY = hopY + (isWalking ? (walkCycle % 2 === 1 ? -1 : 0) : (isPetted ? -1 : 0));
+      const headDipY = isEating ? (Math.floor(time * 8) % 2 === 0 ? 3 : 2) : 0;
+
+      // Tail
+      const tailWag = Math.sin(time * (isPetted || isPlayful ? 12 : 4.5) + cat.seed);
+      const tailOffsetY = tailWag > 0.35 ? -1 : (tailWag < -0.35 ? 1 : 0);
+      px(-8, -8 + bounceY, 2, 3, coat);
+      px(-9, -11 + bounceY + tailOffsetY, 2, 4, coat);
+      px(-9, -8 + bounceY, 1, 2, shade);
+
+      // Torso
+      px(-6, -8 + bounceY, 11, 6, coat);
+      px(-6, -4 + bounceY, 11, 2, shade);
+
+      if (pattern === 'tuxedo') {
+        px(2, -6 + bounceY, 3, 4, '#ffffff');
+      } else if (pattern === 'tabby') {
+        px(-4, -8 + bounceY, 1, 4, shade);
+        px(-1, -8 + bounceY, 1, 4, shade);
+        px(2, -8 + bounceY, 1, 3, shade);
+      } else if (pattern === 'patches') {
+        px(-5, -8 + bounceY, 4, 3, '#e07a2b');
+        px(0, -7 + bounceY, 3, 3, '#2d3748');
+      }
+
+      // Collar on Lilo
+      if (cat.isDefault) {
+        px(2, -5 + bounceY, 3, 1, '#38bdf8');
+        px(4, -4 + bounceY, 1, 1, '#fde047');
+      }
+
+      // Paws
+      const pawColor = pattern === 'tuxedo' ? '#ffffff' : coat;
+      if (isWalking) {
+        const legA = (walkCycle === 0 || walkCycle === 3) ? 0 : -1;
+        const legB = (walkCycle === 1 || walkCycle === 2) ? 0 : -1;
+        px(-5, -2 + legA, 2, 2, shade);
+        px(-3, -2 + legB, 2, 2, pawColor);
+        px(1, -2 + legB, 2, 2, shade);
+        px(3, -2 + legA, 2, 2, pawColor);
+      } else {
+        px(-5, -2, 2, 2, shade);
+        px(-2, -2, 2, 2, pawColor);
+        px(1, -2, 2, 2, shade);
+        px(3, -2, 2, 2, pawColor);
+      }
+
+      // Head
+      const hx = 0;
+      const hy = -13 + bounceY + headDipY;
+      px(hx, hy, 8, 6, coat);
+      px(hx + 1, hy - 1, 6, 1, coat);
+      px(hx, hy + 5, 8, 1, shade);
+
+      // Ears
+      px(hx + 1, hy - 3, 2, 2, coat);
+      px(hx + 5, hy - 3, 2, 2, coat);
+      px(hx + 1, hy - 2, 1, 1, nose);
+      px(hx + 6, hy - 2, 1, 1, nose);
+
+      if (pattern === 'tabby') {
+        px(hx + 3, hy - 1, 2, 2, shade);
+      } else if (pattern === 'patches') {
+        px(hx + 1, hy - 1, 3, 2, '#e07a2b');
+      } else if (pattern === 'tuxedo') {
+        px(hx + 2, hy + 4, 4, 2, '#ffffff');
+      }
+
+      // Eyes
+      const isBlinking = (Math.sin(time * 1.7 + cat.seed * 3) > 0.94) || isEating;
+      if (isPetted || isBlinking) {
+        px(hx + 2, hy + 2, 2, 1, '#334155');
+        px(hx + 5, hy + 2, 2, 1, '#334155');
+      } else {
+        px(hx + 2, hy + 1, 2, 2, eye);
+        px(hx + 5, hy + 1, 2, 2, eye);
+        if (cat.isDefault) {
+          px(hx + 2, hy + 1, 1, 1, '#7dd3fc');
+          px(hx + 5, hy + 1, 1, 1, '#7dd3fc');
+        }
+      }
+
+      // Nose
+      px(hx + 4, hy + 3, 1, 1, nose);
+
+      // Cheeks when petted
+      if (isPetted) {
+        px(hx + 1, hy + 3, 1, 1, '#fda4af');
+        px(hx + 6, hy + 3, 1, 1, '#fda4af');
+      }
+
+      // Musical note emote above head if playful
+      if (isPlayful) {
+        px(hx + 2, hy - 8, 3, 1, '#fef08a');
+        px(hx + 4, hy - 7, 1, 2, '#fef08a');
+        px(hx + 3, hy - 5, 2, 1, '#fde047');
+      }
+
+      ctx.restore();
+
+      // Floating nameplate when hovered
+      if (cat.labelAlpha > 0.02) {
+        ctx.save();
+        ctx.globalAlpha = Math.min(1, cat.labelAlpha);
+        ctx.font = 'bold 7px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        const textW = ctx.measureText(cat.name).width + 8;
+        ctx.fillStyle = 'rgba(24, 16, 10, 0.78)';
+        ctx.fillRect(Math.round(x - textW / 2), Math.round(y - 25), Math.round(textW), 9);
+        ctx.fillStyle = cat.isDefault ? '#7dd3fc' : '#fde68a';
+        ctx.fillText(cat.name, Math.round(x), Math.round(y - 18));
+        ctx.restore();
+      }
+    }
+
+    /********************************************************************
+     * GARDEN SCENERY, FORGET-ME-NOT BLOOMS & GAZEBO SHELTER
+     ********************************************************************/
+    const GRASS_TUFT_LIST = [];
+    const GENERAL_FLOWERS = [];
+    (function initStaticGarden() {
+      let seed = 2026;
+      const rand = () => {
+        seed = (seed * 16807) % 2147483647;
+        return (seed - 1) / 2147483646;
+      };
+
+      for (let i = 0; i < 90; i++) {
+        const gx = Math.floor(16 + rand() * (INTERNAL_W - 32));
+        const gy = Math.floor(44 + rand() * (INTERNAL_H - 58));
+        if (Math.hypot(gx - LANDMARKS.pond.x, gy - LANDMARKS.pond.y) < 25) continue;
+        if (Math.hypot(gx - LANDMARKS.shelter.x, gy - LANDMARKS.shelter.y) < 32) continue;
+        GRASS_TUFT_LIST.push({
+          x: gx, y: gy,
+          shade: rand() > 0.5 ? '#3f7d3b' : '#579c4c',
+          phase: rand() * Math.PI * 2
+        });
+      }
+
+      const colors = ['#fde047', '#f472b6', '#ffffff', '#bae6fd'];
+      for (let i = 0; i < 35; i++) {
+        const fx = Math.floor(20 + rand() * (INTERNAL_W - 40));
+        const fy = Math.floor(48 + rand() * (INTERNAL_H - 62));
+        if (Math.hypot(fx - LANDMARKS.pond.x, fy - LANDMARKS.pond.y) < 26) continue;
+        if (Math.hypot(fx - LANDMARKS.shelter.x, fy - LANDMARKS.shelter.y) < 34) continue;
+        if (Math.hypot(fx - LANDMARKS.shrine.x, fy - LANDMARKS.shrine.y) < 32) continue;
+        GENERAL_FLOWERS.push({
+          x: fx, y: fy,
+          color: colors[Math.floor(rand() * colors.length)],
+          phase: rand() * Math.PI * 2
+        });
+      }
+    })();
+
+    // Cobblestones
+    const PATH_STONES = [
+      { x: 176, y: 42, w: 12, h: 7 }, { x: 173, y: 53, w: 14, h: 8 },
+      { x: 168, y: 65, w: 13, h: 7 }, { x: 158, y: 76, w: 14, h: 8 },
+      { x: 144, y: 82, w: 12, h: 7 }, { x: 126, y: 78, w: 13, h: 7 },
+      { x: 108, y: 74, w: 12, h: 7 }, { x: 92,  y: 72, w: 11, h: 7 },
+      { x: 172, y: 89, w: 13, h: 8 }, { x: 176, y: 104, w: 12, h: 7 },
+      { x: 179, y: 118, w: 14, h: 8 }, { x: 180, y: 132, w: 13, h: 7 }
+    ];
+
+    function drawGardenScenery(ctx, time) {
+      // 1. Checkerboard Grass Base
+      ctx.fillStyle = '#478942';
+      ctx.fillRect(0, 0, INTERNAL_W, INTERNAL_H);
+      for (let ty = 0; ty < INTERNAL_H; ty += 16) {
+        for (let tx = 0; tx < INTERNAL_W; tx += 16) {
+          if (((tx / 16) + (ty / 16)) % 2 === 0) {
+            ctx.fillStyle = '#4c9146';
+            ctx.fillRect(tx, ty, 16, 16);
+          }
+        }
+      }
+
+      // 2. Horizon Hedge
+      ctx.fillStyle = '#2d5c2b';
+      ctx.fillRect(0, 0, INTERNAL_W, 28);
+      ctx.fillStyle = '#386e35';
+      for (let hx = 0; hx < INTERNAL_W; hx += 12) {
+        ctx.fillRect(hx, 14 + (hx % 24 === 0 ? 2 : 0), 10, 14);
+      }
+
+      // 3. Wooden Fence
+      ctx.fillStyle = 'rgba(15, 28, 17, 0.28)';
+      ctx.fillRect(8, 34, INTERNAL_W - 16, 4);
+      ctx.fillStyle = '#8c5832';
+      ctx.fillRect(10, 22, INTERNAL_W - 20, 3);
+      ctx.fillRect(10, 29, INTERNAL_W - 20, 3);
+      for (let fx = 10; fx < INTERNAL_W - 10; fx += 22) {
+        if (fx > 160 && fx < 195) continue; // Entrance gap
+        ctx.fillStyle = '#6e4223';
+        ctx.fillRect(fx, 17, 6, 19);
+        ctx.fillStyle = '#a86e42';
+        ctx.fillRect(fx + 1, 18, 4, 16);
+        ctx.fillStyle = '#c98d5c';
+        ctx.fillRect(fx + 1, 17, 4, 2);
+      }
+
+      // 4. Cobblestones
+      PATH_STONES.forEach(st => {
+        ctx.fillStyle = '#64748b';
+        ctx.fillRect(st.x, st.y + 1, st.w, st.h);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(st.x, st.y, st.w - 1, st.h - 1);
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillRect(st.x + 1, st.y + 1, st.w - 4, 2);
+      });
+
+      // 5. Swaying Grass
+      GRASS_TUFT_LIST.forEach(g => {
+        const sway = Math.round(Math.sin(time * 2 + g.phase) * 0.7);
+        ctx.fillStyle = g.shade;
+        ctx.fillRect(g.x + sway, g.y, 1, 3);
+        ctx.fillRect(g.x + 2 + sway, g.y + 1, 1, 2);
+      });
+
+      // 6. Birdbath Pond
+      const px = LANDMARKS.pond.x;
+      const py = LANDMARKS.pond.y;
+      ctx.fillStyle = '#57534e';
+      ctx.fillRect(px - 18, py - 10, 36, 20);
+      ctx.fillStyle = '#78716c';
+      ctx.fillRect(px - 16, py - 12, 32, 22);
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(px - 14, py - 9, 28, 16);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(px - 12, py - 7, 24, 12);
+      const rip = Math.floor(Math.sin(time * 2) * 2);
+      ctx.fillStyle = '#bae6fd';
+      ctx.fillRect(px - 6 + rip, py - 3, 6, 1);
+      ctx.fillRect(px + 2 - rip, py + 2, 5, 1);
+      ctx.fillStyle = '#22c55e';
+      ctx.fillRect(px - 9, py + 1, 5, 4);
+      ctx.fillStyle = '#f472b6';
+      ctx.fillRect(px - 7, py + 1, 2, 2);
+
+      // 7. Sunny Nap Rug
+      const rx = LANDMARKS.rug.x;
+      const ry = LANDMARKS.rug.y;
+      ctx.fillStyle = 'rgba(15, 28, 17, 0.25)';
+      ctx.fillRect(rx - 19, ry - 11, 38, 22);
+      ctx.fillStyle = '#fef3c7';
+      ctx.fillRect(rx - 18, ry - 12, 36, 22);
+      ctx.fillStyle = '#f59e0b';
+      for (let bx = rx - 16; bx < rx + 16; bx += 8) {
+        for (let by = ry - 10; by < ry + 8; by += 8) {
+          if (((bx + by) / 8) % 2 === 0) ctx.fillRect(bx, by, 4, 4);
+        }
+      }
+
+      // 8. General Wildflowers
+      GENERAL_FLOWERS.forEach(f => {
+        const bob = Math.sin(time * 2.5 + f.phase) > 0.6 ? -1 : 0;
+        ctx.fillStyle = '#2e6b30';
+        ctx.fillRect(f.x, f.y + 1, 1, 2);
+        ctx.fillStyle = f.color;
+        ctx.fillRect(f.x - 1, f.y + bob, 3, 2);
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(f.x, f.y + bob, 1, 1);
+      });
+    }
+
+    // Draw Covered Wooden Cat Shelter (Gazebo Deck & Berry Cushion)
+    function drawShelterDeck(ctx, time) {
+      const sx = LANDMARKS.shelter.x;
+      const sy = LANDMARKS.shelter.y;
+
+      // Ground shadow
+      ctx.fillStyle = 'rgba(15, 28, 17, 0.4)';
+      ctx.fillRect(sx - 26, sy - 10, 52, 28);
+
+      // Cedar wood flooring
+      ctx.fillStyle = '#532e16';
+      ctx.fillRect(sx - 24, sy - 8, 48, 24);
+      ctx.fillStyle = '#78431e';
+      ctx.fillRect(sx - 23, sy - 9, 46, 24);
+      // Floor plank lines
+      ctx.fillStyle = '#452310';
+      for (let py = sy - 6; py < sy + 14; py += 5) {
+        ctx.fillRect(sx - 23, py, 46, 1);
+      }
+
+      // Berry Velvet Cushion
+      ctx.fillStyle = '#831843'; // Deep berry velvet
+      ctx.fillRect(sx - 15, sy - 4, 30, 14);
+      ctx.fillStyle = '#9f1239'; // Rich ruby berry
+      ctx.fillRect(sx - 14, sy - 5, 28, 13);
+      ctx.fillStyle = '#be123c'; // Cushion highlight
+      ctx.fillRect(sx - 12, sy - 4, 24, 2);
+      // Gold tufting buttons
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(sx - 8, sy + 1, 2, 2);
+      ctx.fillRect(sx + 6, sy + 1, 2, 2);
+
+      // Back Posts
+      ctx.fillStyle = '#532e16';
+      ctx.fillRect(sx - 22, sy - 28, 4, 20);
+      ctx.fillRect(sx + 18, sy - 28, 4, 20);
+    }
+
+    // Draw Shelter Roof Overhead (Depth-Sorted at y = 92)
+    function drawShelterRoofOverhead(ctx, time) {
+      const sx = LANDMARKS.shelter.x;
+      const sy = LANDMARKS.shelter.y;
+
+      // Front Posts
+      ctx.fillStyle = '#532e16';
+      ctx.fillRect(sx - 22, sy - 10, 4, 25);
+      ctx.fillRect(sx + 18, sy - 10, 4, 25);
+      ctx.fillStyle = '#8c5832';
+      ctx.fillRect(sx - 21, sy - 10, 2, 25);
+      ctx.fillRect(sx + 19, sy - 10, 2, 25);
+
+      // Hanging Warm Lantern
+      const lanternGlow = Math.sin(time * 3) * 0.15 + 0.85;
+      ctx.fillStyle = '#1e1e24';
+      ctx.fillRect(sx - 1, sy - 24, 2, 7); // Chain
+      ctx.fillRect(sx - 4, sy - 17, 8, 9); // Lantern cage
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(sx - 2, sy - 15, 4, 5); // Glowing core
+
+      // Radial warm lantern glow
+      const grad = ctx.createRadialGradient(sx, sy - 12, 2, sx, sy - 12, 34);
+      grad.addColorStop(0, `rgba(253, 224, 71, ${0.35 * lanternGlow})`);
+      grad.addColorStop(1, 'rgba(253, 224, 71, 0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(sx, sy - 12, 34, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Cedar Shingle Roof
+      ctx.fillStyle = '#452310';
+      ctx.fillRect(sx - 28, sy - 34, 56, 14);
+      ctx.fillStyle = '#6e3818';
+      ctx.fillRect(sx - 26, sy - 36, 52, 13);
+      ctx.fillStyle = '#8c4820';
+      ctx.fillRect(sx - 24, sy - 38, 48, 12);
+      ctx.fillStyle = '#a85828';
+      ctx.fillRect(sx - 18, sy - 42, 36, 9);
+      ctx.fillStyle = '#c86f34';
+      ctx.fillRect(sx - 10, sy - 45, 20, 6);
+      ctx.fillStyle = '#5c2a10';
+      ctx.fillRect(sx - 2, sy - 47, 4, 4); // Peak cap
+    }
+
+    // Draw Lilo's Memorial Stone & Bloomed Blue Forget-Me-Nots
+    function drawMemorialStone(ctx, time, hovered) {
+      const sx = LANDMARKS.shrine.x;
+      const sy = LANDMARKS.shrine.y;
+
+      // Base shadow
+      ctx.fillStyle = 'rgba(15, 28, 17, 0.35)';
+      ctx.fillRect(sx - 15, sy + 2, 30, 5);
+
+      // Mossy stone base & headstone
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(sx - 13, sy - 4, 26, 8);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(sx - 12, sy - 5, 24, 6);
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(sx - 10, sy - 22, 20, 18);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(sx - 9, sy - 24, 18, 19);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(sx - 7, sy - 25, 14, 2);
+
+      // Pulsing blue paw emblem
+      const glow = Math.sin(time * 3) > 0 ? '#38bdf8' : '#7dd3fc';
+      ctx.fillStyle = glow;
+      ctx.fillRect(sx - 2, sy - 16, 4, 3);
+      ctx.fillRect(sx - 4, sy - 19, 2, 2);
+      ctx.fillRect(sx - 1, sy - 20, 2, 2);
+      ctx.fillRect(sx + 2, sy - 19, 2, 2);
+
+      // Garland
+      ctx.fillStyle = '#4ade80';
+      ctx.fillRect(sx - 9, sy - 23, 5, 3);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(sx - 8, sy - 24, 2, 2);
+
+      // Render Persistent Forget-Me-Not Blooms around the Memorial Stone
+      const bloomCount = Math.min(world.blooms, MEMORIAL_BLOOM_COORDS.length);
+      for (let i = 0; i < bloomCount; i++) {
+        const [ox, oy] = MEMORIAL_BLOOM_COORDS[i];
+        const fx = sx + ox;
+        const fy = sy + oy;
+        const bob = Math.sin(time * 2.8 + i) > 0.65 ? -1 : 0;
+
+        // Stem
+        ctx.fillStyle = '#256d27';
+        ctx.fillRect(fx, fy + 1, 1, 2);
+
+        // Radiant Blue Petals
+        ctx.fillStyle = i % 2 === 0 ? '#38bdf8' : '#60a5fa';
+        ctx.fillRect(fx - 1, fy + bob, 3, 2);
+        // Yellow center stamen
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(fx, fy + bob, 1, 1);
+      }
+
+      // Hover Tooltip
+      if (hovered) {
+        ctx.font = 'bold 7px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+        ctx.fillRect(sx - 38, sy - 38, 76, 11);
+        ctx.fillStyle = '#bae6fd';
+        ctx.fillText("Lilo's Tribute 💠", sx, sy - 30);
+      }
+    }
+
+    // Draw Ceramic Food Bowl
+    function drawFoodBowl(ctx, bowlLevel, hovered) {
+      const bx = LANDMARKS.bowl.x;
+      const by = LANDMARKS.bowl.y;
+
+      ctx.fillStyle = 'rgba(15, 28, 17, 0.3)';
+      ctx.fillRect(bx - 11, by - 4, 22, 9);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(bx - 10, by - 5, 20, 9);
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(bx - 9, by - 4, 18, 7);
+
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(bx - 7, by - 3, 14, 6);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(bx - 6, by - 4, 12, 5);
+      ctx.fillStyle = '#e0f2fe';
+      ctx.fillRect(bx - 5, by - 3, 10, 3);
+
+      if (bowlLevel >= 1) {
+        ctx.fillStyle = '#92400e';
+        ctx.fillRect(bx - 4, by - 3, 8, 2);
+      }
+      if (bowlLevel >= 2) {
+        ctx.fillStyle = '#b45309';
+        ctx.fillRect(bx - 5, by - 4, 10, 2);
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(bx - 2, by - 4, 2, 1);
+        ctx.fillRect(bx + 2, by - 3, 2, 1);
+      }
+      if (bowlLevel >= 3) {
+        ctx.fillStyle = '#d97706';
+        ctx.fillRect(bx - 3, by - 5, 6, 2);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(bx - 1, by - 5, 2, 1);
+      }
+
+      if (hovered) {
+        ctx.font = 'bold 7px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = 'rgba(24, 16, 10, 0.88)';
+        ctx.fillRect(bx - 28, by - 16, 56, 9);
+        ctx.fillStyle = '#fde68a';
+        ctx.fillText(bowlLevel > 0 ? 'Food Bowl' : 'Tap to Refill 🥣', bx, by - 9);
+      }
+    }
+
+    /********************************************************************
+     * MAIN CANVAS RENDER PIPELINE (360 x 220)
      ********************************************************************/
     const canvas = document.getElementById('gardenCanvas');
     const ctx = canvas.getContext('2d');
@@ -1586,18 +1853,23 @@
     function renderGarden(time) {
       ctx.clearRect(0, 0, INTERNAL_W, INTERNAL_H);
 
-      // 1. Background Grass, Fence, Path, Pond, Picnic Blanket & Flowers
-      drawGardenBackground(ctx, time, world);
+      // 1. Static Garden Scenery & Background Deck
+      drawGardenScenery(ctx, time);
+      drawShelterDeck(ctx, time);
 
-      // 2. Depth-Sorted Entities (Memorial Stone, Food Bowl, and Cats sorted by Y coordinate)
+      // 2. Depth-Sorted Entities (Memorial Stone, Bowl, Shelter Roof, Cats)
       const renderables = [
         {
           y: LANDMARKS.shrine.y,
-          draw: () => drawMemorialShrine(ctx, time, world.pointer.hoveredEntity === 'shrine')
+          draw: () => drawMemorialStone(ctx, time, world.pointer.hoveredEntity === 'shrine')
         },
         {
           y: LANDMARKS.bowl.y - 2,
           draw: () => drawFoodBowl(ctx, world.bowlLevel, world.pointer.hoveredEntity === 'bowl')
+        },
+        {
+          y: 92, // Shelter roof overhead
+          draw: () => drawShelterRoofOverhead(ctx, time)
         },
         ...world.cats.map(cat => ({
           y: cat.y,
@@ -1608,7 +1880,26 @@
       renderables.sort((a, b) => a.y - b.y);
       renderables.forEach(item => item.draw());
 
-      // 3. Floating Pixel Particles (Hearts, Sparkles, Sleep Zs)
+      // 3. Critters (Butterflies / Fireflies)
+      world.critters.forEach(cr => {
+        const cx = Math.round(cr.x);
+        const cy = Math.round(cr.y);
+        if (cr.type === 'butterfly' && world.weather !== 'NIGHT' && world.weather !== 'RAIN') {
+          const wing = Math.floor(time * 10) % 2 === 0;
+          ctx.fillStyle = cr.color || '#38bdf8';
+          if (wing) {
+            ctx.fillRect(cx - 1, cy, 3, 2);
+          } else {
+            ctx.fillRect(cx, cy - 1, 1, 3);
+          }
+        } else if (cr.type === 'firefly' && world.weather === 'NIGHT') {
+          const pulse = (Math.sin(time * 4 + cr.phase) + 1) * 0.5;
+          ctx.fillStyle = `rgba(250, 204, 21, ${0.3 + pulse * 0.7})`;
+          ctx.fillRect(cx, cy, 2, 2);
+        }
+      });
+
+      // 4. Floating Particles (Hearts, Sparkles, Sleep Zs)
       world.particles.forEach(p => {
         const alpha = Math.max(0, Math.min(1, p.life / p.maxLife));
         ctx.save();
@@ -1639,31 +1930,27 @@
         ctx.restore();
       });
 
-      // 4. Ambient Atmosphere Tint & Dandelion / Firefly Particles
-      if (world.atmosphere === 'sunset') {
-        ctx.fillStyle = 'rgba(249, 115, 22, 0.16)';
+      // 5. Weather Lighting & Ambient Filters
+      if (world.weather === 'CLOUDY') {
+        ctx.fillStyle = 'rgba(148, 163, 184, 0.12)';
         ctx.fillRect(0, 0, INTERNAL_W, INTERNAL_H);
-      } else if (world.atmosphere === 'night') {
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.42)';
+      } else if (world.weather === 'RAIN') {
+        ctx.fillStyle = 'rgba(30, 41, 59, 0.32)';
+        ctx.fillRect(0, 0, INTERNAL_W, INTERNAL_H);
+
+        // Falling Pixel Rain Streaks
+        ctx.fillStyle = 'rgba(186, 230, 253, 0.7)';
+        world.rainDrops.forEach(d => {
+          ctx.fillRect(Math.round(d.x), Math.round(d.y), 1, Math.round(d.len));
+        });
+      } else if (world.weather === 'NIGHT') {
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.48)';
         ctx.fillRect(0, 0, INTERNAL_W, INTERNAL_H);
       }
-
-      world.ambientParticles.forEach(ap => {
-        const ax = Math.round(ap.x);
-        const ay = Math.round(ap.y);
-        if (world.atmosphere === 'night') {
-          const pulse = (Math.sin(time * 3.5 + ap.phase) + 1) * 0.5;
-          ctx.fillStyle = `rgba(250, 204, 21, ${0.35 + pulse * 0.6})`;
-          ctx.fillRect(ax, ay, 2, 2);
-        } else {
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
-          ctx.fillRect(ax, ay, 1, 1);
-        }
-      });
     }
 
     /********************************************************************
-     * RESPONSIVE SCALING & POINTER HIT DETECTION
+     * RESPONSIVE CANVAS & TOUCH HIT DETECTION
      ********************************************************************/
     function resizeCanvasDisplay() {
       const mainEl = document.querySelector('main');
@@ -1728,43 +2015,42 @@
 
       const pt = getCanvasPixelCoords(evt);
 
-      // 1. Check if a Cat was tapped/clicked
+      // 1. Diegetic Cat Petting
       const hitCat = findCatAt(pt.x, pt.y);
       if (hitCat) {
         world.petCat(hitCat);
         return;
       }
 
-      // 2. Check if Lilo's Memorial Stone was tapped/clicked
+      // 2. Diegetic Memorial Stone Tap -> Opens Lilo's Tribute Card
       if (Math.hypot(pt.x - LANDMARKS.shrine.x, pt.y - (LANDMARKS.shrine.y - 10)) <= LANDMARKS.shrine.radius) {
         openModal('modalTribute');
         return;
       }
 
-      // 3. Check if the Cat Food Bowl was tapped/clicked
+      // 3. Diegetic Food Bowl Tap -> Refills Bowl directly
       if (Math.hypot(pt.x - LANDMARKS.bowl.x, pt.y - LANDMARKS.bowl.y) <= LANDMARKS.bowl.radius) {
         world.feedBowl();
         return;
       }
 
-      // 4. Tapping walkable grass gently calls Lilo over to that spot
+      // 4. Tapping open grass guides Lilo
       if (pt.x >= GARDEN_BOUNDS.minX && pt.x <= GARDEN_BOUNDS.maxX &&
           pt.y >= GARDEN_BOUNDS.minY && pt.y <= GARDEN_BOUNDS.maxY) {
         const lilo = world.cats[0];
-        if (lilo && lilo.state !== 'EATING') {
+        if (lilo && lilo.state !== 'EATING' && lilo.state !== 'SHELTERED') {
           lilo.state = 'WANDER';
           lilo.pose = 'sit';
           lilo.targetX = pt.x;
           lilo.targetY = pt.y;
           lilo.labelAlpha = 1.2;
           world.spawnHeart(pt.x, pt.y, 'sparkle');
-          world.setTicker("You called Lilo over to a sunny spot in the grass 🐾");
         }
       }
     });
 
     /********************************************************************
-     * UI MODALS, ROSTER BAR & CAT CUSTOMIZER LOGIC
+     * MODALS & UI HANDLERS
      ********************************************************************/
     let customizerState = {
       name: 'Mochi',
@@ -1795,10 +2081,6 @@
       if (id === 'modalTribute') {
         document.getElementById('inputTributeNote').value = world.tributeNote;
         document.getElementById('tributeQuoteDisplay').textContent = `"${world.tributeNote}"`;
-      } else if (id === 'modalSave') {
-        document.getElementById('jsonSaveTextarea').value = JSON.stringify(world.serialize(), null, 2);
-      } else if (id === 'modalAgentPrompt') {
-        document.getElementById('agentPromptTextarea').value = CODING_AGENT_PROMPT_TEXT;
       }
     }
 
@@ -1812,16 +2094,12 @@
       btn.addEventListener('click', () => closeModal(btn.getAttribute('data-close-modal')));
     });
 
-    // Close modal when clicking outside on backdrop
     document.querySelectorAll('.modal-overlay').forEach(overlay => {
       overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-          overlay.classList.remove('active');
-        }
+        if (e.target === overlay) overlay.classList.remove('active');
       });
     });
 
-    // Keyboard shortcuts
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
@@ -1834,66 +2112,48 @@
           const lilo = world.cats[0];
           if (lilo) world.petCat(lilo);
         }
+      } else if (e.key === 'w' || e.key === 'W') {
+        world.cycleWeather();
       }
     });
 
-    // Render Bottom Cat Roster Pills
-    function renderRosterBar() {
-      const bar = document.getElementById('catRosterBar');
-      if (!bar) return;
-      bar.innerHTML = '';
-
-      world.cats.forEach(cat => {
-        const btn = document.createElement('button');
-        btn.className = `px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shrink-0 cursor-pointer ${
-          cat.isDefault
-            ? 'bg-sky-500/25 text-sky-200 border border-sky-400/50 hover:bg-sky-500/35'
-            : 'bg-amber-500/15 text-amber-100 border border-amber-400/30 hover:bg-amber-500/25'
-        }`;
-        const dot = document.createElement('span');
-        dot.className = 'w-2.5 h-2.5 rounded-full border border-black/40 inline-block';
-        dot.style.backgroundColor = cat.coatColor;
-
-        const nameSpan = document.createElement('span');
-        nameSpan.textContent = cat.isDefault ? `★ ${cat.name}` : cat.name;
-
-        btn.appendChild(dot);
-        btn.appendChild(nameSpan);
-        btn.addEventListener('click', () => {
-          world.petCat(cat);
-        });
-        bar.appendChild(btn);
-      });
-    }
-
-    // Render Manage List inside Customizer Modal
-    function renderResidentManageList() {
-      const list = document.getElementById('residentManageList');
+    // Populate Residents inside Friends Modal
+    function renderFriendsList() {
+      const list = document.getElementById('residentList');
       if (!list) return;
       list.innerHTML = '';
 
       world.cats.forEach(cat => {
         const badge = document.createElement('div');
-        badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#f3dfc1] border border-[#b88b5a] text-[#3d2516]';
+        badge.className = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#f3dfc1] border border-[#b88b5a] text-[#3d2516] shadow-sm';
 
         const dot = document.createElement('span');
-        dot.className = 'w-2.5 h-2.5 rounded-full border border-black/30';
+        dot.className = 'w-3 h-3 rounded-full border border-black/30';
         dot.style.backgroundColor = cat.coatColor;
         badge.appendChild(dot);
 
-        const label = document.createElement('span');
-        label.textContent = cat.isDefault ? `${cat.name} (Default)` : cat.name;
-        badge.appendChild(label);
+        const nameLabel = document.createElement('span');
+        nameLabel.textContent = cat.isDefault ? `★ ${cat.name} (Lilo)` : cat.name;
+        badge.appendChild(nameLabel);
+
+        const petBtn = document.createElement('button');
+        petBtn.className = 'ml-1 px-2 py-0.5 rounded-full bg-rose-200 text-rose-800 text-[10px] font-bold hover:bg-rose-300 cursor-pointer';
+        petBtn.textContent = '♥ Pet';
+        petBtn.addEventListener('click', () => {
+          world.petCat(cat);
+          showToast(`Gave warm chin scratches to ${cat.name}! ♥`, '♥');
+        });
+        badge.appendChild(petBtn);
 
         if (!cat.isDefault) {
           const delBtn = document.createElement('button');
-          delBtn.className = 'ml-1 text-rose-700 hover:text-rose-900 font-bold cursor-pointer';
+          delBtn.className = 'ml-1 text-stone-500 hover:text-rose-700 font-bold cursor-pointer text-xs';
           delBtn.textContent = '✕';
           delBtn.title = `Remove ${cat.name}`;
           delBtn.addEventListener('click', () => {
             world.cats = world.cats.filter(c => c.id !== cat.id);
             world.save();
-            showToast(`${cat.name} headed home for a nap.`, '🐾');
+            showToast(`${cat.name} headed home for a peaceful nap.`, '🐾');
           });
           badge.appendChild(delBtn);
         }
@@ -1908,7 +2168,7 @@
       COAT_SWATCHES.forEach((sw, i) => {
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = `w-8 h-8 rounded-lg border-2 transition transform hover:scale-105 cursor-pointer ${
+        btn.className = `w-7 h-7 rounded-lg border-2 transition transform hover:scale-105 cursor-pointer ${
           i === 0 ? 'border-[#3d2516] ring-2 ring-amber-500' : 'border-[#b88b5a]'
         }`;
         btn.style.backgroundColor = sw.hex;
@@ -1916,8 +2176,8 @@
         btn.addEventListener('click', () => {
           customizerState.coatColor = sw.hex;
           customizerState.shadeColor = sw.shade;
-          Array.from(coatContainer.children).forEach(c => c.className = 'w-8 h-8 rounded-lg border-2 border-[#b88b5a] transition transform hover:scale-105 cursor-pointer');
-          btn.className = 'w-8 h-8 rounded-lg border-2 border-[#3d2516] ring-2 ring-amber-500 transition transform scale-105 cursor-pointer';
+          Array.from(coatContainer.children).forEach(c => c.className = 'w-7 h-7 rounded-lg border-2 border-[#b88b5a] transition transform hover:scale-105 cursor-pointer');
+          btn.className = 'w-7 h-7 rounded-lg border-2 border-[#3d2516] ring-2 ring-amber-500 transition transform scale-105 cursor-pointer';
         });
         coatContainer.appendChild(btn);
       });
@@ -1926,11 +2186,11 @@
       EYE_SWATCHES.forEach((sw, i) => {
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = `px-2.5 py-1.5 rounded-lg border-2 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+        btn.className = `px-2 py-1 rounded-lg border-2 text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer ${
           i === 0 ? 'border-[#3d2516] bg-[#f3dfc1]' : 'border-[#c8ab89] bg-[#fff9ea]'
         }`;
         const dot = document.createElement('span');
-        dot.className = 'w-3 h-3 rounded-full border border-black/30';
+        dot.className = 'w-2.5 h-2.5 rounded-full border border-black/30';
         dot.style.backgroundColor = sw.hex;
         const txt = document.createElement('span');
         txt.textContent = sw.name.split(' ').pop();
@@ -1940,9 +2200,9 @@
         btn.addEventListener('click', () => {
           customizerState.eyeColor = sw.hex;
           Array.from(eyeContainer.children).forEach(c => {
-            c.className = 'px-2.5 py-1.5 rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] text-xs font-bold flex items-center gap-1.5 transition cursor-pointer';
+            c.className = 'px-2 py-1 rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer';
           });
-          btn.className = 'px-2.5 py-1.5 rounded-lg border-2 border-[#3d2516] bg-[#f3dfc1] text-xs font-bold flex items-center gap-1.5 transition cursor-pointer';
+          btn.className = 'px-2 py-1 rounded-lg border-2 border-[#3d2516] bg-[#f3dfc1] text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer';
         });
         eyeContainer.appendChild(btn);
       });
@@ -1951,9 +2211,9 @@
         btn.addEventListener('click', () => {
           customizerState.pattern = btn.getAttribute('data-pattern');
           document.querySelectorAll('.pattern-opt').forEach(b => {
-            b.className = 'pattern-opt rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] py-2 px-2 font-semibold text-[#5c3820] text-center cursor-pointer';
+            b.className = 'pattern-opt rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] py-1.5 px-2 font-semibold text-[#5c3820] text-center cursor-pointer';
           });
-          btn.className = 'pattern-opt rounded-lg border-2 border-[#5c3820] bg-[#f3dfc1] py-2 px-2 font-bold text-[#3d2516] text-center cursor-pointer';
+          btn.className = 'pattern-opt rounded-lg border-2 border-[#5c3820] bg-[#f3dfc1] py-1.5 px-2 font-bold text-[#3d2516] text-center cursor-pointer';
         });
       });
 
@@ -1971,24 +2231,17 @@
     const tributeCtx = tributeCanvas.getContext('2d');
 
     function renderMiniCanvases(time) {
-      // 1. Customizer Preview Canvas (64x48)
-      if (document.getElementById('modalCustomizer').classList.contains('active')) {
+      if (document.getElementById('modalFriends').classList.contains('active')) {
         previewCtx.clearRect(0, 0, 64, 48);
         previewCtx.fillStyle = '#3f7d3b';
         previewCtx.fillRect(0, 32, 64, 16);
         drawPixelCat(previewCtx, {
           ...customizerState,
-          x: 32,
-          y: 36,
-          facing: 1,
-          state: 'WANDER',
-          pose: 'sit',
-          seed: 1,
-          labelAlpha: 0
+          x: 32, y: 36,
+          facing: 1, state: 'WANDER', pose: 'sit', seed: 1, labelAlpha: 0
         }, time);
       }
 
-      // 2. Lilo's Tribute Portrait Canvas (96x64)
       if (document.getElementById('modalTribute').classList.contains('active')) {
         tributeCtx.clearRect(0, 0, 96, 64);
         tributeCtx.fillStyle = '#0f172a';
@@ -2005,79 +2258,18 @@
 
         drawPixelCat(tributeCtx, {
           ...DEFAULT_LILO,
-          x: 48,
-          y: 48,
-          facing: 1,
-          state: 'IDLE',
-          pose: 'sit',
-          seed: 0,
-          labelAlpha: 0
+          x: 48, y: 48,
+          facing: 1, state: 'IDLE', pose: 'sit', seed: 0, labelAlpha: 0
         }, time);
       }
     }
 
-    function copyTextToClipboard(text, successMsg) {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(() => {
-          showToast(successMsg, '📋');
-        }).catch(() => {
-          fallbackCopyText(text, successMsg);
-        });
-      } else {
-        fallbackCopyText(text, successMsg);
-      }
-    }
-
-    function fallbackCopyText(text, successMsg) {
-      const temp = document.createElement('textarea');
-      temp.value = text;
-      temp.style.position = 'fixed';
-      temp.style.left = '-9999px';
-      document.body.appendChild(temp);
-      temp.select();
-      try {
-        document.execCommand('copy');
-        showToast(successMsg, '📋');
-      } catch (err) {
-        showToast('Select and copy the text manually.', 'ℹ️');
-      }
-      document.body.removeChild(temp);
-    }
-
     /********************************************************************
-     * BUTTON EVENT BINDINGS
+     * BUTTON BINDINGS
      ********************************************************************/
-    document.getElementById('btnFeed').addEventListener('click', () => {
-      world.feedBowl();
-    });
-
-    document.getElementById('btnAddFriend').addEventListener('click', () => {
-      openModal('modalCustomizer');
-    });
-
-    document.getElementById('btnOpenTribute').addEventListener('click', () => {
-      openModal('modalTribute');
-    });
-
-    document.getElementById('btnOpenSave').addEventListener('click', () => {
-      openModal('modalSave');
-    });
-
-    document.getElementById('btnOpenPrompt').addEventListener('click', () => {
-      openModal('modalAgentPrompt');
-    });
-
-    function cycleAtmosphere() {
-      const order = ['day', 'sunset', 'night'];
-      const nextIdx = (order.indexOf(world.atmosphere) + 1) % order.length;
-      world.atmosphere = order[nextIdx];
-      world.save();
-      const labels = { day: '☀️ Sunny Day', sunset: '🌅 Golden Sunset', night: '✨ Firefly Night' };
-      showToast(`Garden Atmosphere: ${labels[world.atmosphere]}`, '✨');
-    }
-
-    document.getElementById('timeBadge').addEventListener('click', cycleAtmosphere);
-    document.getElementById('btnAtmosphere').addEventListener('click', cycleAtmosphere);
+    document.getElementById('btnFeed').addEventListener('click', () => world.feedBowl());
+    document.getElementById('btnOpenFriends').addEventListener('click', () => openModal('modalFriends'));
+    document.getElementById('btnWeather').addEventListener('click', () => world.cycleWeather());
 
     document.getElementById('btnAudio').addEventListener('click', () => {
       sound.enabled = !sound.enabled;
@@ -2100,11 +2292,10 @@
       const runtimeCat = world.createCatRuntime(newSpec, world.cats.length);
       world.cats.push(runtimeCat);
       world.spawnHeart(runtimeCat.x, runtimeCat.y - 6, 'heart');
-      sound.playPurrChime();
-      world.setTicker(`${name} joined Lilo in the garden! 🐾`);
+      sound.playPurr();
       world.save();
-      closeModal('modalCustomizer');
-      showToast(`${name} is now wandering the garden with Lilo!`, '🐱');
+      closeModal('modalFriends');
+      showToast(`${name} is now wandering the garden with Lilo!`, '🐾');
     });
 
     document.getElementById('btnSaveTributeNote').addEventListener('click', () => {
@@ -2126,55 +2317,8 @@
       }
     });
 
-    document.getElementById('btnCopyJson').addEventListener('click', () => {
-      const text = document.getElementById('jsonSaveTextarea').value;
-      copyTextToClipboard(text, 'Garden JSON save copied to clipboard!');
-    });
-
-    document.getElementById('btnDownloadJson').addEventListener('click', () => {
-      const dataStr = JSON.stringify(world.serialize(), null, 2);
-      const blob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'lilos_garden_save.json';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      showToast('Downloaded lilos_garden_save.json!', '⬇');
-    });
-
-    document.getElementById('btnImportJson').addEventListener('click', () => {
-      try {
-        const raw = document.getElementById('jsonSaveTextarea').value;
-        const parsed = JSON.parse(raw);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
-        world.load();
-        world.syncUI();
-        closeModal('modalSave');
-        showToast('Garden state restored from JSON!', '✨');
-      } catch (e) {
-        showToast('Invalid JSON format — please check syntax.', '⚠️');
-      }
-    });
-
-    document.getElementById('btnResetGarden').addEventListener('click', () => {
-      if (confirm('Reset garden stats and return to default Lilo state?')) {
-        localStorage.removeItem(STORAGE_KEY);
-        world.load();
-        world.syncUI();
-        closeModal('modalSave');
-        showToast('Garden reset to fresh sunny state with Lilo!', '🌱');
-      }
-    });
-
-    document.getElementById('btnCopyAgentPrompt').addEventListener('click', () => {
-      copyTextToClipboard(CODING_AGENT_PROMPT_TEXT, 'Coding Agent Prompt copied! Paste it into your AI agent.');
-    });
-
     /********************************************************************
-     * MAIN GAME LOOP (Started on window.onload)
+     * MAIN GAME LOOP
      ********************************************************************/
     let lastTimestamp = 0;
 
