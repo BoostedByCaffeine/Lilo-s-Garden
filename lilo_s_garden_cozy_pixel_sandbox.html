@@ -3,45 +3,70 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Lilo's Garden — Cozy Pixel Tribute Sandbox</title>
-  <!-- Tailwind CSS CDN -->
+  <title>Lilo's Garden — Cozy Pixel Virtual Pet Sandbox</title>
+  
+  <!-- Primary Meta Tags for GitHub Pages -->
+  <meta name="title" content="Lilo's Garden — Cozy Pixel Virtual Pet Sandbox">
+  <meta name="description" content="A cozy pixel-art virtual pet garden sandbox honoring Lilo the pure white cat. Features procedural pixel art, interactive feeding, cat friends customizer, atmosphere lighting, and offline localStorage save.">
+  <meta name="theme-color" content="#162019">
+
+  <!-- Tailwind CSS CDN (Optional enhancement; all core styles are backed by Vanilla CSS) -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Fonts: Press Start 2P for pixel headers & Inter for clean UI legibility -->
+
+  <!-- Google Fonts: Press Start 2P for pixel art retro headers & Inter for crisp legibility -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
 
   <style>
+    /* ==========================================================================
+       LILO'S GARDEN — COMPLETE VANILLA CSS DESIGN SYSTEM (STARDEW COZY AESTHETIC)
+       ========================================================================== */
     :root {
-      --wood-dark: #4a2e1b;
-      --wood-mid: #7c4d2b;
-      --wood-light: #b87d4b;
-      --parchment: #fdf6e3;
-      --parchment-border: #d8bfa3;
+      --wood-dark: #3e2213;
+      --wood-mid: #683d1c;
+      --wood-light: #a86c3d;
+      --parchment: #fff9ea;
+      --parchment-mid: #f5e6c8;
+      --parchment-border: #5c3820;
+      --gold-border: #d9a76a;
+      --lilo-blue: #29b6f6;
+      --lilo-blue-dark: #0284c7;
+      --grass-green: #478942;
     }
 
     * {
       box-sizing: border-box;
+      margin: 0;
+      padding: 0;
       user-select: none;
       -webkit-user-select: none;
       -webkit-touch-callout: none;
     }
 
     body {
-      font-family: 'Inter', sans-serif;
-      background-color: #162019;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: #141c16;
+      background-image: 
+        radial-gradient(ellipse at 50% 20%, rgba(35, 59, 38, 0.6) 0%, rgba(16, 24, 18, 0.95) 75%),
+        repeating-linear-gradient(45deg, rgba(255,255,255,0.015) 0, rgba(255,255,255,0.015) 2px, transparent 0, transparent 8px);
       color: #fef3c7;
+      min-height: 100vh;
+      width: 100vw;
       overflow: hidden;
-      margin: 0;
-      padding: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
     }
 
     .font-pixel {
-      font-family: 'Press Start 2P', monospace;
+      font-family: 'Press Start 2P', monospace, sans-serif;
       letter-spacing: 0.04em;
     }
 
-    /* Crisp Pixel Art Scaling Mandate */
+    /* Crisp Pixel Art Rendering Mandate */
     #gardenCanvas,
     .pixel-canvas {
       image-rendering: -moz-crisp-edges;
@@ -50,34 +75,38 @@
       image-rendering: crisp-edges;
     }
 
-    /* Stardew-inspired Cozy Wooden UI Panel Styling */
+    /* Stardew-inspired Cozy Wooden UI Panels */
     .stardew-panel {
       background: linear-gradient(180deg, #fff9ea 0%, #f5e6c8 100%);
       color: #3d2516;
       border: 4px solid #5c3820;
       box-shadow:
         inset 0 0 0 2px #d9a76a,
-        0 10px 25px rgba(0, 0, 0, 0.55);
+        0 14px 35px rgba(0, 0, 0, 0.65);
       border-radius: 14px;
     }
 
     .stardew-hud {
-      background: rgba(38, 24, 15, 0.88);
+      background: rgba(38, 24, 15, 0.9);
       border: 2px solid #9c6639;
       box-shadow:
         inset 0 0 0 1px #472b16,
-        0 6px 16px rgba(0, 0, 0, 0.45);
-      backdrop-filter: blur(6px);
+        0 6px 18px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 12px;
     }
 
+    /* Interactive Tactile Wood & Gold Buttons */
     .stardew-btn {
       background: linear-gradient(180deg, #f7d486 0%, #e0a64b 100%);
       color: #3d2310;
       border: 2px solid #5c3618;
       box-shadow:
-        inset 0 2px 0 rgba(255, 255, 255, 0.55),
+        inset 0 2px 0 rgba(255, 255, 255, 0.6),
         0 3px 0 #3d2310;
       transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
+      cursor: pointer;
     }
 
     .stardew-btn:hover {
@@ -96,8 +125,14 @@
       color: #0d2b3e;
       border: 2px solid #154563;
       box-shadow:
-        inset 0 2px 0 rgba(255, 255, 255, 0.65),
+        inset 0 2px 0 rgba(255, 255, 255, 0.7),
         0 3px 0 #0f354d;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
+      cursor: pointer;
+    }
+
+    .stardew-btn-blue:hover {
+      filter: brightness(1.06);
     }
 
     .stardew-btn-blue:active {
@@ -110,8 +145,14 @@
       color: #16360f;
       border: 2px solid #235418;
       box-shadow:
-        inset 0 2px 0 rgba(255, 255, 255, 0.6),
+        inset 0 2px 0 rgba(255, 255, 255, 0.65),
         0 3px 0 #183d10;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
+      cursor: pointer;
+    }
+
+    .stardew-btn-green:hover {
+      filter: brightness(1.06);
     }
 
     .stardew-btn-green:active {
@@ -119,10 +160,34 @@
       box-shadow: 0 1px 0 #183d10;
     }
 
-    /* Custom Scrollbar for Modals */
+    /* Modal Backdrop & Transitions */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      z-index: 50;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      animation: fadeIn 0.18s ease-out;
+    }
+
+    .modal-overlay.active {
+      display: flex !important;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.97); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* Custom Scrollbar for Parchment Modals */
     ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
     }
     ::-webkit-scrollbar-track {
       background: #e9d5b5;
@@ -132,17 +197,20 @@
       background: #9c6639;
       border-radius: 6px;
     }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #7c4d2b;
+    }
   </style>
 </head>
 <body class="w-screen h-screen flex flex-col justify-between items-center relative select-none">
 
   <!-- ==================== TOP HUD BAR ==================== -->
   <header class="w-full max-w-5xl px-3 pt-3 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
-    <!-- Left: Title & Lilo Status Badge -->
-    <div class="stardew-hud rounded-xl px-3.5 py-2 flex items-center gap-3 pointer-events-auto">
-      <div class="w-8 h-8 rounded-lg bg-sky-900/70 border border-sky-400/50 flex items-center justify-center shadow-inner" title="Lilo the White Cat">
-        <!-- Mini Inline SVG Pixel Cat Icon -->
-        <svg viewBox="0 0 16 16" class="w-6 h-6" style="shape-rendering: crispEdges;">
+    <!-- Left: Garden Title & Lilo Status Badge -->
+    <div class="stardew-hud px-3.5 py-2 flex items-center gap-3 pointer-events-auto">
+      <div class="w-9 h-9 rounded-lg bg-sky-900/80 border border-sky-400/60 flex items-center justify-center shadow-inner" title="Lilo the Pure White Cat">
+        <!-- Crisp Pixel Cat Portrait Icon -->
+        <svg viewBox="0 0 16 16" class="w-7 h-7" style="shape-rendering: crispEdges;">
           <rect x="3" y="3" width="2" height="3" fill="#ffffff"/>
           <rect x="11" y="3" width="2" height="3" fill="#ffffff"/>
           <rect x="4" y="4" width="1" height="2" fill="#ff9ebb"/>
@@ -157,27 +225,27 @@
       <div>
         <div class="flex items-center gap-2">
           <h1 class="font-pixel text-xs sm:text-sm text-amber-200 tracking-wide">LILO'S GARDEN</h1>
-          <span id="timeBadge" class="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-200 border border-amber-400/30 cursor-pointer hover:bg-amber-500/30 transition" title="Click to cycle atmosphere">
-            Sunny Day
-          </span>
+          <button id="timeBadge" class="text-[10px] font-semibold uppercase px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-200 border border-amber-400/40 cursor-pointer hover:bg-amber-500/35 transition" title="Click to cycle atmosphere (Day, Sunset, Night)">
+            ☀️ Sunny Day
+          </button>
         </div>
-        <p id="statusTicker" class="text-[11px] text-amber-100/80 truncate max-w-[210px] sm:max-w-xs">
+        <p id="statusTicker" class="text-[11px] text-amber-100/80 truncate max-w-[210px] sm:max-w-xs mt-0.5">
           Lilo is enjoying the gentle breeze...
         </p>
       </div>
     </div>
 
-    <!-- Right: Stats Counters & Tribute / Agent Prompt Buttons -->
+    <!-- Right: Stats Counters & Action Buttons -->
     <div class="flex items-center gap-2 pointer-events-auto flex-wrap">
       <!-- Stats Pill -->
-      <div class="stardew-hud rounded-xl px-3 py-1.5 flex items-center gap-3 text-xs">
-        <div class="flex items-center gap-1.5" title="Total Pets & Affection">
+      <div class="stardew-hud px-3 py-1.5 flex items-center gap-3 text-xs">
+        <div class="flex items-center gap-1.5" title="Total Pets Given">
           <span class="text-rose-400 text-sm">♥</span>
           <span class="text-amber-100/70 hidden sm:inline">Pets:</span>
           <span id="statPets" class="font-pixel text-amber-200 text-xs">0</span>
         </div>
         <div class="h-4 w-[1px] bg-amber-700/60"></div>
-        <div class="flex items-center gap-1.5" title="Total Meals Shared">
+        <div class="flex items-center gap-1.5" title="Meals Shared at Food Bowl">
           <span class="text-amber-300 text-sm">🐟</span>
           <span class="text-amber-100/70 hidden sm:inline">Meals:</span>
           <span id="statMeals" class="font-pixel text-amber-200 text-xs">0</span>
@@ -189,21 +257,26 @@
         </div>
       </div>
 
-      <!-- Sound Toggle -->
-      <button id="btnAudio" class="stardew-hud rounded-xl px-2.5 py-2 text-amber-200 hover:text-white transition text-xs font-medium flex items-center gap-1" title="Toggle Cozy Synth Audio">
+      <!-- Atmosphere Toggle Button -->
+      <button id="btnAtmosphere" class="stardew-hud px-2.5 py-2 text-amber-200 hover:text-white transition text-xs font-medium flex items-center gap-1" title="Cycle Atmosphere Lighting">
+        <span id="atmosphereIcon">☀️</span>
+      </button>
+
+      <!-- Audio Synthesizer Toggle -->
+      <button id="btnAudio" class="stardew-hud px-2.5 py-2 text-amber-200 hover:text-white transition text-xs font-medium flex items-center gap-1" title="Toggle Cozy Synth Audio">
         <span id="audioIcon">🔊</span>
       </button>
 
-      <!-- Tribute Button -->
-      <button id="btnOpenTribute" class="stardew-btn-blue rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1.5">
+      <!-- Lilo's Tribute Button -->
+      <button id="btnOpenTribute" class="stardew-btn-blue rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1.5" title="Open Lilo's Memorial Tribute">
         <span>💠</span>
         <span>Lilo's Tribute</span>
       </button>
 
-      <!-- Coding Agent Prompt Button -->
-      <button id="btnOpenPrompt" class="stardew-btn rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1.5" title="View & Copy Coding Agent Prompt">
+      <!-- Coding Agent Prompt / Spec Button -->
+      <button id="btnOpenPrompt" class="stardew-btn rounded-xl px-3 py-2 text-xs font-bold flex items-center gap-1.5" title="View & Copy Coding Agent Architecture Spec">
         <span>📋</span>
-        <span class="hidden md:inline">Agent Prompt</span>
+        <span class="hidden md:inline">Spec / Prompt</span>
       </button>
     </div>
   </header>
@@ -211,12 +284,12 @@
   <!-- ==================== CENTER PIXEL GARDEN STAGE ==================== -->
   <main class="flex-1 w-full flex items-center justify-center p-2 sm:p-4 overflow-hidden relative">
     <div id="canvasContainer" class="relative rounded-2xl overflow-hidden border-4 border-[#5c3820] shadow-[0_20px_50px_rgba(0,0,0,0.75)] bg-[#2c4c2e] flex items-center justify-center">
-      <!-- Internal Pixel Resolution: 360x220 scaled crisply -->
+      <!-- Internal Pixel Resolution: 360 x 220, scaled crisply -->
       <canvas id="gardenCanvas" width="360" height="220" class="block cursor-pointer touch-none"></canvas>
 
-      <!-- Floating Hint Pill (Fades out after first interaction) -->
-      <div id="hintOverlay" class="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/65 text-amber-100 text-[11px] px-3 py-1 rounded-full border border-amber-300/30 backdrop-blur-sm transition-opacity duration-500 whitespace-nowrap">
-        Tap Lilo to pet ♥ • Tap the bowl or "Feed Bowl" to feed • Tap the blue flower stone for Lilo's Tribute
+      <!-- Floating Hint Overlay (Fades out after first interaction) -->
+      <div id="hintOverlay" class="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/70 text-amber-100 text-[11px] px-3.5 py-1 rounded-full border border-amber-300/35 backdrop-blur-sm transition-opacity duration-500 whitespace-nowrap shadow-lg">
+        Tap Lilo to pet ♥ • Tap bowl to feed 🥣 • Tap blue flower stone for Lilo's Tribute 💠
       </div>
     </div>
   </main>
@@ -224,24 +297,24 @@
   <!-- ==================== BOTTOM COZY ACTION BAR ==================== -->
   <footer class="w-full max-w-4xl px-3 pb-3 z-20 flex flex-wrap items-center justify-center sm:justify-between gap-2 pointer-events-none">
     <!-- Cat Roster Quick Pills -->
-    <div id="catRosterBar" class="stardew-hud rounded-xl px-2.5 py-1.5 flex items-center gap-1.5 overflow-x-auto max-w-full sm:max-w-md pointer-events-auto">
+    <div id="catRosterBar" class="stardew-hud px-2.5 py-1.5 flex items-center gap-1.5 overflow-x-auto max-w-full sm:max-w-md pointer-events-auto">
       <!-- Populated dynamically with Lilo + Companion pills -->
     </div>
 
     <!-- Action Buttons -->
     <div class="flex items-center gap-2 pointer-events-auto flex-wrap justify-center">
-      <button id="btnFeed" class="stardew-btn-green rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold flex items-center gap-2">
+      <button id="btnFeed" class="stardew-btn-green rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold flex items-center gap-2" title="Refill bowl with tasty kibble">
         <span>🥣</span>
         <span>Feed Bowl</span>
-        <span id="bowlBadge" class="text-[10px] px-1.5 py-0.5 rounded bg-black/20 text-white">Full</span>
+        <span id="bowlBadge" class="text-[10px] px-1.5 py-0.5 rounded bg-black/25 text-white">Full</span>
       </button>
 
-      <button id="btnAddFriend" class="stardew-btn rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold flex items-center gap-2">
+      <button id="btnAddFriend" class="stardew-btn rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold flex items-center gap-2" title="Customize a new companion cat">
         <span>🐱</span>
         <span>+ Add Cat Friend</span>
       </button>
 
-      <button id="btnOpenSave" class="stardew-hud rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-amber-200 hover:bg-amber-950/80 transition flex items-center gap-1.5 border border-amber-500/40">
+      <button id="btnOpenSave" class="stardew-hud rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-amber-200 hover:bg-amber-950/80 transition flex items-center gap-1.5 border border-amber-500/40" title="Backup or restore garden save data">
         <span>💾</span>
         <span>Save / JSON</span>
       </button>
@@ -250,24 +323,24 @@
 
   <!-- ==================== TOAST NOTIFICATION ==================== -->
   <div id="toastBox" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 -translate-y-2 transition-all duration-300">
-    <div class="stardew-hud px-4 py-2 rounded-xl text-xs font-semibold text-amber-200 border border-amber-400/50 shadow-xl flex items-center gap-2">
+    <div class="stardew-hud px-4 py-2 rounded-xl text-xs font-semibold text-amber-200 border border-amber-400/50 shadow-2xl flex items-center gap-2">
       <span id="toastIcon">✨</span>
       <span id="toastText">Saved to garden!</span>
     </div>
   </div>
 
   <!-- ==================== MODAL 1: LILO'S MEMORIAL TRIBUTE ==================== -->
-  <div id="modalTribute" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 hidden items-center justify-center p-4">
-    <div class="stardew-panel w-full max-w-md p-5 sm:p-6 relative animate-fadeIn">
+  <div id="modalTribute" class="modal-overlay">
+    <div class="stardew-panel w-full max-w-md p-5 sm:p-6 relative">
       <div class="flex items-center justify-between border-b-2 border-[#d8bfa3] pb-3 mb-4">
         <div class="flex items-center gap-2.5">
-          <span class="text-xl">💠</span>
+          <span class="text-2xl">💠</span>
           <div>
             <h2 class="font-pixel text-xs sm:text-sm text-[#3d2516]">IN LOVING MEMORY OF LILO</h2>
             <p class="text-xs text-[#7c4d2b] font-medium">Forever wandering in the sunlit garden</p>
           </div>
         </div>
-        <button data-close-modal="modalTribute" class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center">✕</button>
+        <button data-close-modal="modalTribute" class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center cursor-pointer">✕</button>
       </div>
 
       <!-- Pixel Portrait Card of Lilo -->
@@ -284,7 +357,7 @@
 
       <!-- Editable Personal Tribute Note (Saved to localStorage) -->
       <div class="mb-4">
-        <label class="block text-xs font-bold text-[#5c3820] mb-1">Personal Memory / Dedication Note for Lilo:</label>
+        <label for="inputTributeNote" class="block text-xs font-bold text-[#5c3820] mb-1">Personal Dedication / Memory for Lilo:</label>
         <textarea id="inputTributeNote" rows="2" class="w-full rounded-lg border-2 border-[#b88b5a] bg-[#fffdf7] px-3 py-2 text-xs text-[#3d2516] focus:outline-none focus:border-[#5c3820]" placeholder="Write a special memory or note for Lilo..."></textarea>
       </div>
 
@@ -300,19 +373,19 @@
   </div>
 
   <!-- ==================== MODAL 2: ADD / CUSTOMIZE CAT FRIEND ==================== -->
-  <div id="modalCustomizer" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 hidden items-center justify-center p-4">
+  <div id="modalCustomizer" class="modal-overlay">
     <div class="stardew-panel w-full max-w-lg p-5 sm:p-6 relative max-h-[92vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b-2 border-[#d8bfa3] pb-3 mb-4">
         <div>
           <h2 class="font-pixel text-xs sm:text-sm text-[#3d2516]">INVITE A FRIEND FOR LILO</h2>
           <p class="text-xs text-[#7c4d2b]">Customize a companion cat to keep Lilo company in the garden</p>
         </div>
-        <button data-close-modal="modalCustomizer" class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center">✕</button>
+        <button data-close-modal="modalCustomizer" class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center cursor-pointer">✕</button>
       </div>
 
       <!-- Live Pixel Sprite Preview -->
       <div class="flex flex-col sm:flex-row items-center gap-4 bg-[#243d27] rounded-xl p-3.5 border-2 border-[#5c3820] mb-4 text-amber-100">
-        <div class="bg-[#1b2e1e] rounded-lg p-2 border border-emerald-700/50 flex items-center justify-center">
+        <div class="bg-[#1b2e1e] rounded-lg p-2 border border-emerald-700/50 flex items-center justify-center shadow-inner">
           <canvas id="previewCatCanvas" width="64" height="48" class="pixel-canvas w-28 h-20"></canvas>
         </div>
         <div class="flex-1 text-center sm:text-left">
@@ -327,7 +400,7 @@
       <!-- Form Controls -->
       <div class="space-y-3.5 text-xs">
         <div>
-          <label class="block font-bold text-[#4a2e1b] mb-1">Cat Friend's Name</label>
+          <label for="inputCatName" class="block font-bold text-[#4a2e1b] mb-1">Cat Friend's Name</label>
           <input id="inputCatName" type="text" maxlength="16" value="Mochi" class="w-full rounded-lg border-2 border-[#b88b5a] bg-[#fffdf7] px-3 py-2 text-sm font-semibold text-[#3d2516] focus:outline-none focus:border-[#5c3820]" placeholder="e.g., Mochi, Luna, Oliver..." />
         </div>
 
@@ -335,10 +408,10 @@
         <div>
           <label class="block font-bold text-[#4a2e1b] mb-1.5">Coat Pattern</label>
           <div id="patternSelector" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <button type="button" data-pattern="solid" class="pattern-opt rounded-lg border-2 border-[#5c3820] bg-[#f3dfc1] py-2 px-2 font-bold text-[#3d2516] text-center">Solid</button>
-            <button type="button" data-pattern="tuxedo" class="pattern-opt rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] py-2 px-2 font-semibold text-[#5c3820] text-center">Tuxedo</button>
-            <button type="button" data-pattern="tabby" class="pattern-opt rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] py-2 px-2 font-semibold text-[#5c3820] text-center">Tabby Stripes</button>
-            <button type="button" data-pattern="patches" class="pattern-opt rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] py-2 px-2 font-semibold text-[#5c3820] text-center">Calico Patches</button>
+            <button type="button" data-pattern="solid" class="pattern-opt rounded-lg border-2 border-[#5c3820] bg-[#f3dfc1] py-2 px-2 font-bold text-[#3d2516] text-center cursor-pointer">Solid</button>
+            <button type="button" data-pattern="tuxedo" class="pattern-opt rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] py-2 px-2 font-semibold text-[#5c3820] text-center cursor-pointer">Tuxedo</button>
+            <button type="button" data-pattern="tabby" class="pattern-opt rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] py-2 px-2 font-semibold text-[#5c3820] text-center cursor-pointer">Tabby Stripes</button>
+            <button type="button" data-pattern="patches" class="pattern-opt rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] py-2 px-2 font-semibold text-[#5c3820] text-center cursor-pointer">Calico Patches</button>
           </div>
         </div>
 
@@ -346,7 +419,7 @@
         <div>
           <label class="block font-bold text-[#4a2e1b] mb-1.5">Primary Fur Color</label>
           <div id="coatColorSelector" class="flex flex-wrap gap-2">
-            <!-- Populated by JS -->
+            <!-- Populated dynamically by JS -->
           </div>
         </div>
 
@@ -354,7 +427,7 @@
         <div>
           <label class="block font-bold text-[#4a2e1b] mb-1.5">Eye Color</label>
           <div id="eyeColorSelector" class="flex flex-wrap gap-2">
-            <!-- Populated by JS -->
+            <!-- Populated dynamically by JS -->
           </div>
         </div>
       </div>
@@ -371,7 +444,7 @@
       </div>
 
       <div class="mt-5 flex items-center justify-end gap-2">
-        <button data-close-modal="modalCustomizer" class="px-4 py-2 rounded-xl border-2 border-[#9c6639] text-xs font-bold text-[#5c3820] hover:bg-[#edd6b4]">
+        <button data-close-modal="modalCustomizer" class="px-4 py-2 rounded-xl border-2 border-[#9c6639] text-xs font-bold text-[#5c3820] hover:bg-[#edd6b4] cursor-pointer">
           Cancel
         </button>
         <button id="btnConfirmAddCat" class="stardew-btn-green rounded-xl px-5 py-2.5 text-xs font-bold">
@@ -382,14 +455,14 @@
   </div>
 
   <!-- ==================== MODAL 3: SAVE / EXPORT / IMPORT JSON ==================== -->
-  <div id="modalSave" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 hidden items-center justify-center p-4">
+  <div id="modalSave" class="modal-overlay">
     <div class="stardew-panel w-full max-w-lg p-5 sm:p-6 relative max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b-2 border-[#d8bfa3] pb-3 mb-4">
         <div>
           <h2 class="font-pixel text-xs sm:text-sm text-[#3d2516]">GARDEN SAVE & BACKUP</h2>
           <p class="text-xs text-[#7c4d2b]">Auto-saved in browser <code class="bg-[#e9d5b5] px-1 rounded">localStorage</code> (`lilos_garden_save_v1`)</p>
         </div>
-        <button data-close-modal="modalSave" class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center">✕</button>
+        <button data-close-modal="modalSave" class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center cursor-pointer">✕</button>
       </div>
 
       <p class="text-xs text-[#4a2e1b] mb-2 leading-relaxed">
@@ -407,28 +480,33 @@
             ⬇ Download .JSON
           </button>
         </div>
-        <button id="btnImportJson" class="stardew-btn-green rounded-xl px-4 py-2 text-xs font-bold">
-          ↻ Load JSON Above
-        </button>
+        <div class="flex flex-wrap gap-2">
+          <button id="btnResetGarden" class="px-3 py-2 rounded-xl border border-rose-600 text-rose-800 hover:bg-rose-100 text-xs font-bold cursor-pointer" title="Reset stats and return garden to Lilo">
+            ⚠️ Reset
+          </button>
+          <button id="btnImportJson" class="stardew-btn-green rounded-xl px-4 py-2 text-xs font-bold">
+            ↻ Load JSON Above
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- ==================== MODAL 4: CODING AGENT PROMPT & ARCHITECTURE SPEC ==================== -->
-  <div id="modalAgentPrompt" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-40 hidden items-center justify-center p-4">
+  <div id="modalAgentPrompt" class="modal-overlay">
     <div class="stardew-panel w-full max-w-2xl p-5 sm:p-6 relative max-h-[92vh] flex flex-col">
       <div class="flex items-center justify-between border-b-2 border-[#d8bfa3] pb-3 mb-3">
         <div>
           <h2 class="font-pixel text-xs sm:text-sm text-[#3d2516]">CODING AGENT PROMPT & SPEC</h2>
-          <p class="text-xs text-[#7c4d2b]">Copy and paste this prompt directly into Cursor, Claude Code, Copilot, or Windsurf</p>
+          <p class="text-xs text-[#7c4d2b]">Copy and paste this prompt directly into Antigravity, Cursor, Claude Code, or Copilot</p>
         </div>
-        <button data-close-modal="modalAgentPrompt" class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center">✕</button>
+        <button data-close-modal="modalAgentPrompt" class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center cursor-pointer">✕</button>
       </div>
 
       <textarea id="agentPromptTextarea" readonly class="w-full flex-1 min-h-[280px] font-mono text-[11px] leading-relaxed rounded-lg border-2 border-[#b88b5a] bg-[#1e1e24] text-emerald-200 p-3.5 focus:outline-none mb-3 select-all"></textarea>
 
       <div class="flex items-center justify-between gap-2">
-        <span class="text-[11px] text-[#7c4d2b]">Includes complete system prompt + FSM & pixel sprite matrix architecture</span>
+        <span class="text-[11px] text-[#7c4d2b]">Includes complete system prompt + FSM & procedural pixel matrix architecture</span>
         <button id="btnCopyAgentPrompt" class="stardew-btn-green rounded-xl px-5 py-2.5 text-xs font-bold">
           📋 Copy Prompt for Coding Agent
         </button>
@@ -458,10 +536,10 @@
 
     // Key Interactive Landmarks in the 360x220 Pixel Coordinate Space
     const LANDMARKS = {
-      shrine: { x: 74, y: 66, radius: 24, label: "Lilo's Memorial Stone" },
+      shrine: { x: 74,  y: 66,  radius: 24, label: "Lilo's Memorial Stone" },
       bowl:   { x: 185, y: 146, radius: 18, label: "Cat Food Bowl" },
       rug:    { x: 274, y: 120, radius: 22, label: "Sunny Nap Blanket" },
-      pond:   { x: 72, y: 158, radius: 22, label: "Garden Birdbath" }
+      pond:   { x: 72,  y: 158, radius: 22, label: "Garden Birdbath" }
     };
 
     // Preset Swatches for Companion Cat Customizer
@@ -484,7 +562,7 @@
       { name: 'Copper Gold', hex: '#f97316' }
     ];
 
-    //Immutable Default Entity: Lilo (Pure White Male Cat with Blue Eyes)
+    // Immutable Default Entity: Lilo (Pure White Male Cat with Blue Eyes)
     const DEFAULT_LILO = Object.freeze({
       id: 'lilo',
       name: 'Lilo',
@@ -523,80 +601,7 @@
    - Clicking Lilo's Memorial Stone opens a peaceful tribute modal honoring Lilo with a customizable memory note.
 
 5. Persistence (\`localStorage\`):
-   - Automatically serialize and load state under \`localStorage.getItem('lilos_garden_save_v1')\` including \`stats\`, \`bowlLevel\`, \`tributeNote\`, and \`companions\`, always ensuring Lilo is present first in the cat array.
-
-### CORE FSM & PIXEL SPRITE REFERENCE SNIPPET
-\`\`\`javascript
-const LILO_SPEC = {
-  id: 'lilo', name: 'Lilo', isDefault: true,
-  coatColor: '#ffffff', shadeColor: '#dbe7f5',
-  eyeColor: '#29b6f6', noseColor: '#ff9ebb', pattern: 'solid'
-};
-
-function updateCatFSM(cat, dt, world) {
-  cat.stateTimer -= dt;
-  cat.animTime += dt;
-
-  switch (cat.state) {
-    case 'IDLE':
-      if (world.bowlLevel > 0 && Math.random() < 0.015) {
-        cat.state = 'SEEK_FOOD';
-        cat.targetX = world.bowl.x + (Math.random() * 14 - 7);
-        cat.targetY = world.bowl.y + (Math.random() * 10 - 3);
-      } else if (cat.stateTimer <= 0) {
-        cat.state = 'WANDER';
-        cat.targetX = 32 + Math.random() * 296;
-        cat.targetY = 58 + Math.random() * 130;
-      }
-      break;
-
-    case 'WANDER':
-    case 'SEEK_FOOD': {
-      const dx = cat.targetX - cat.x;
-      const dy = cat.targetY - cat.y;
-      const dist = Math.hypot(dx, dy);
-      if (dist < 4) {
-        if (cat.state === 'SEEK_FOOD' && world.bowlLevel > 0) {
-          cat.state = 'EATING';
-          cat.stateTimer = 3.5;
-        } else {
-          cat.state = 'IDLE';
-          cat.pose = Math.random() < 0.32 ? 'sleep' : 'sit';
-          cat.stateTimer = 4 + Math.random() * 5;
-        }
-      } else {
-        const speed = cat.state === 'SEEK_FOOD' ? 36 : 24;
-        cat.x += (dx / dist) * speed * dt;
-        cat.y += (dy / dist) * speed * dt;
-        if (Math.abs(dx) > 0.5) cat.facing = dx < 0 ? -1 : 1;
-      }
-      break;
-    }
-
-    case 'EATING':
-      if (cat.stateTimer <= 0) {
-        if (world.bowlLevel > 0) {
-          world.bowlLevel--;
-          world.stats.meals++;
-          world.spawnHeart(cat.x, cat.y - 14);
-          world.save();
-        }
-        cat.state = 'IDLE';
-        cat.pose = 'sit';
-        cat.stateTimer = 5;
-      }
-      break;
-
-    case 'INTERACT':
-      if (cat.stateTimer <= 0) {
-        cat.state = 'IDLE';
-        cat.pose = 'sit';
-        cat.stateTimer = 4;
-      }
-      break;
-  }
-}
-\`\`\``;
+   - Automatically serialize and load state under \`localStorage.getItem('lilos_garden_save_v1')\` including \`stats\`, \`bowlLevel\`, \`tributeNote\`, and \`companions\`, always ensuring Lilo is present first in the cat array.`;
 
     /********************************************************************
      * WEB AUDIO COZY SYNTHESIZER (Zero External Sound Assets Needed)
@@ -623,6 +628,7 @@ function updateCatFSM(cat, dt, world) {
           this.init();
           if (!this.ctx) return;
           const now = this.ctx.currentTime;
+          
           // Soft warm two-note Stardew-like heart chime
           const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
           notes.forEach((freq, i) => {
@@ -638,9 +644,19 @@ function updateCatFSM(cat, dt, world) {
             osc.start(now + i * 0.065);
             osc.stop(now + i * 0.065 + 0.3);
           });
-        } catch (e) {
-          // Ignore audio context restrictions
-        }
+
+          // Subtle warm low purr oscillation
+          const purr = this.ctx.createOscillator();
+          const purrGain = this.ctx.createGain();
+          purr.type = 'triangle';
+          purr.frequency.setValueAtTime(55, now);
+          purrGain.gain.setValueAtTime(0.015, now);
+          purrGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+          purr.connect(purrGain);
+          purrGain.connect(this.ctx.destination);
+          purr.start(now);
+          purr.stop(now + 0.45);
+        } catch (e) {}
       }
 
       playFeedSound() {
@@ -649,7 +665,7 @@ function updateCatFSM(cat, dt, world) {
           this.init();
           if (!this.ctx) return;
           const now = this.ctx.currentTime;
-          const notes = [392.00, 440.00, 523.25, 659.25];
+          const notes = [392.00, 440.00, 523.25, 659.25]; // G4, A4, C5, E5
           notes.forEach((freq, i) => {
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
@@ -891,7 +907,6 @@ function updateCatFSM(cat, dt, world) {
     /********************************************************************
      * GARDEN ENVIRONMENT & LANDMARK RENDERER (360 x 220)
      ********************************************************************/
-    // Pre-generate deterministic grass blades & flowers so the garden looks lush and handcrafted
     const GRASS_TUFT_LIST = [];
     const FLOWER_LIST = [];
     (function generateGardenDecor() {
@@ -915,7 +930,7 @@ function updateCatFSM(cat, dt, world) {
         });
       }
 
-      // Wildflowers (with extra blue forget-me-not flowers near Lilo's Memorial Stone)
+      // Wildflowers (with blue forget-me-not flowers near Lilo's Memorial Stone)
       const flowerColors = ['#38bdf8', '#7dd3fc', '#fde047', '#f472b6', '#ffffff'];
       for (let i = 0; i < 42; i++) {
         const fx = Math.floor(20 + rand() * (INTERNAL_W - 40));
@@ -931,7 +946,7 @@ function updateCatFSM(cat, dt, world) {
         });
       }
 
-      // Dedicated ring of blue flowers around Lilo's Memorial Stone
+      // Dedicated ring of blue forget-me-not flowers around Lilo's Memorial Stone
       const shrineRing = [
         [-18, 4], [-15, 10], [15, 5], [18, 10], [-12, -6], [13, -5], [-6, 12], [8, 12]
       ];
@@ -996,8 +1011,7 @@ function updateCatFSM(cat, dt, world) {
 
       // Vertical fence posts
       for (let fx = 10; fx < INTERNAL_W - 10; fx += 22) {
-        // Leave center gap for garden entrance path
-        if (fx > 160 && fx < 195) continue;
+        if (fx > 160 && fx < 195) continue; // Gap for garden entrance
         ctx.fillStyle = '#6e4223';
         ctx.fillRect(fx, 17, 6, 19);
         ctx.fillStyle = '#a86e42';
@@ -1140,7 +1154,7 @@ function updateCatFSM(cat, dt, world) {
       }
     }
 
-    // Draw Interactive Cat Food Bowl (Full, Half, Empty states)
+    // Draw Interactive Cat Food Bowl (Full, Half, Low, Empty states)
     function drawFoodBowl(ctx, bowlLevel, hovered) {
       const bx = LANDMARKS.bowl.x;
       const by = LANDMARKS.bowl.y;
@@ -1213,7 +1227,6 @@ function updateCatFSM(cat, dt, world) {
       },
 
       createCatRuntime(spec, index = 0) {
-        // Place Lilo near center-left, companions nearby
         const startX = spec.isDefault ? 148 : 110 + ((index * 47) % 140);
         const startY = spec.isDefault ? 118 : 95 + ((index * 31) % 75);
         return {
@@ -1304,7 +1317,7 @@ function updateCatFSM(cat, dt, world) {
 
       initAmbientParticles() {
         this.ambientParticles = [];
-        for (let i = 0; i < 16; i++) {
+        for (let i = 0; i < 18; i++) {
           this.ambientParticles.push({
             x: Math.random() * INTERNAL_W,
             y: 30 + Math.random() * (INTERNAL_H - 40),
@@ -1316,7 +1329,8 @@ function updateCatFSM(cat, dt, world) {
       },
 
       spawnHeart(x, y, type = 'heart') {
-        for (let i = 0; i < (type === 'heart' ? 3 : 4); i++) {
+        const count = type === 'heart' ? 3 : 4;
+        for (let i = 0; i < count; i++) {
           this.particles.push({
             x: x + (Math.random() * 10 - 5),
             y: y - 10 + (Math.random() * 4 - 2),
@@ -1357,7 +1371,7 @@ function updateCatFSM(cat, dt, world) {
         this.bowlLevel = 3;
         sound.playFeedSound();
         this.spawnHeart(LANDMARKS.bowl.x, LANDMARKS.bowl.y - 4, 'sparkle');
-        // Direct cats to seek the freshly filled food bowl
+        // Direct all cats toward the freshly filled food bowl
         this.cats.forEach((cat, idx) => {
           cat.state = 'SEEK_FOOD';
           cat.pose = 'sit';
@@ -1379,7 +1393,6 @@ function updateCatFSM(cat, dt, world) {
             y: LANDMARKS.rug.y + (Math.random() * 16 - 8)
           };
         }
-        // Otherwise pick a random point avoiding the birdbath water
         for (let tries = 0; tries < 10; tries++) {
           const tx = GARDEN_BOUNDS.minX + Math.random() * (GARDEN_BOUNDS.maxX - GARDEN_BOUNDS.minX);
           const ty = GARDEN_BOUNDS.minY + Math.random() * (GARDEN_BOUNDS.maxY - GARDEN_BOUNDS.minY);
@@ -1407,7 +1420,6 @@ function updateCatFSM(cat, dt, world) {
 
           switch (cat.state) {
             case 'IDLE': {
-              // If bowl has food, occasional spontaneous desire to go snack
               if (this.bowlLevel > 0 && Math.random() < dt * 0.08) {
                 cat.state = 'SEEK_FOOD';
                 cat.targetX = LANDMARKS.bowl.x + (Math.random() * 16 - 8);
@@ -1415,13 +1427,12 @@ function updateCatFSM(cat, dt, world) {
                 break;
               }
               if (cat.stateTimer <= 0) {
-                // Transition to WANDER
                 const pt = this.pickRandomGardenPoint();
                 cat.state = 'WANDER';
                 cat.pose = 'sit';
                 cat.targetX = pt.x;
                 cat.targetY = pt.y;
-                cat.stateTimer = 8;
+                cat.stateTimer = 4 + Math.random() * 5;
               }
               break;
             }
@@ -1435,22 +1446,21 @@ function updateCatFSM(cat, dt, world) {
               if (dist < 4) {
                 if (cat.state === 'SEEK_FOOD' && this.bowlLevel > 0) {
                   cat.state = 'EATING';
-                  cat.stateTimer = 3.2;
+                  cat.stateTimer = 3.5;
                   cat.facing = LANDMARKS.bowl.x >= cat.x ? 1 : -1;
                   sound.playMunchPop();
                   this.setTicker(`${cat.name} is munching happily at the food bowl 🐟`);
                 } else {
                   cat.state = 'IDLE';
-                  // Higher chance to curl up and nap if standing on the sunny picnic rug
                   const onRug = Math.hypot(cat.x - LANDMARKS.rug.x, cat.y - LANDMARKS.rug.y) < 26;
-                  cat.pose = (onRug || Math.random() < 0.3) ? 'sleep' : 'sit';
-                  cat.stateTimer = 4 + Math.random() * 6;
+                  cat.pose = (onRug || Math.random() < 0.32) ? 'sleep' : 'sit';
+                  cat.stateTimer = 4 + Math.random() * 5;
                   if (cat.pose === 'sleep' && cat.isDefault) {
                     this.setTicker("Lilo curled up for a peaceful catnap in the sun 💤");
                   }
                 }
               } else {
-                const speed = cat.state === 'SEEK_FOOD' ? 36 : 23;
+                const speed = cat.state === 'SEEK_FOOD' ? 36 : 26;
                 cat.x += (dx / dist) * speed * dt;
                 cat.y += (dy / dist) * speed * dt;
                 if (Math.abs(dx) > 0.4) {
@@ -1483,14 +1493,14 @@ function updateCatFSM(cat, dt, world) {
               if (cat.stateTimer <= 0) {
                 cat.state = 'IDLE';
                 cat.pose = 'sit';
-                cat.stateTimer = 4 + Math.random() * 4;
+                cat.stateTimer = 4;
               }
               break;
             }
           }
         }
 
-        // Social Micro-Interactions: Friendly nose-boops when Lilo and a companion pass close by
+        // Social Interactions: Friendly nose-touching when passing close by
         if (this.cats.length > 1) {
           for (let i = 0; i < this.cats.length; i++) {
             for (let j = i + 1; j < this.cats.length; j++) {
@@ -1509,7 +1519,7 @@ function updateCatFSM(cat, dt, world) {
           }
         }
 
-        // Update Floating Particles (Hearts, Sparkles, Sleep Zs)
+        // Update Floating Particles
         for (let i = this.particles.length - 1; i >= 0; i--) {
           const p = this.particles[i];
           p.x += p.vx * dt;
@@ -1548,13 +1558,18 @@ function updateCatFSM(cat, dt, world) {
         }
 
         const timeBadge = document.getElementById('timeBadge');
+        const atmosphereIcon = document.getElementById('atmosphereIcon');
         if (timeBadge) {
           const labels = {
             day: '☀️ Sunny Day',
-            sunset: '🌅 Golden Sunset',
-            night: '✨ Firefly Night'
+            sunset: '🌅 Sunset',
+            night: '✨ Night'
           };
           timeBadge.textContent = labels[this.atmosphere] || '☀️ Sunny Day';
+        }
+        if (atmosphereIcon) {
+          const icons = { day: '☀️', sunset: '🌅', night: '🌙' };
+          atmosphereIcon.textContent = icons[this.atmosphere] || '☀️';
         }
 
         renderRosterBar();
@@ -1602,7 +1617,6 @@ function updateCatFSM(cat, dt, world) {
         const py = Math.round(p.y);
 
         if (p.type === 'heart') {
-          // Crisp 5x5 pixel heart
           ctx.fillStyle = '#fb7185';
           ctx.fillRect(px - 2, py - 2, 2, 2);
           ctx.fillRect(px + 1, py - 2, 2, 2);
@@ -1610,7 +1624,6 @@ function updateCatFSM(cat, dt, world) {
           ctx.fillRect(px - 2, py + 1, 5, 1);
           ctx.fillRect(px - 1, py + 2, 3, 1);
           ctx.fillRect(px, py + 3, 1, 1);
-          // Highlight pixel
           ctx.fillStyle = '#ffe4e6';
           ctx.fillRect(px - 2, py - 1, 1, 1);
         } else if (p.type === 'sparkle') {
@@ -1639,12 +1652,10 @@ function updateCatFSM(cat, dt, world) {
         const ax = Math.round(ap.x);
         const ay = Math.round(ap.y);
         if (world.atmosphere === 'night') {
-          // Glowing fireflies
           const pulse = (Math.sin(time * 3.5 + ap.phase) + 1) * 0.5;
           ctx.fillStyle = `rgba(250, 204, 21, ${0.35 + pulse * 0.6})`;
           ctx.fillRect(ax, ay, 2, 2);
         } else {
-          // Floating sunlit pollen / dandelion seeds
           ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
           ctx.fillRect(ax, ay, 1, 1);
         }
@@ -1657,8 +1668,8 @@ function updateCatFSM(cat, dt, world) {
     function resizeCanvasDisplay() {
       const mainEl = document.querySelector('main');
       if (!mainEl) return;
-      const availW = mainEl.clientWidth - 20;
-      const availH = mainEl.clientHeight - 20;
+      const availW = Math.max(260, mainEl.clientWidth - 20);
+      const availH = Math.max(160, mainEl.clientHeight - 20);
       const aspect = INTERNAL_W / INTERNAL_H;
 
       let targetW = availW;
@@ -1674,8 +1685,8 @@ function updateCatFSM(cat, dt, world) {
 
     function getCanvasPixelCoords(evt) {
       const rect = canvas.getBoundingClientRect();
-      const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
-      const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+      const clientX = (evt.touches && evt.touches.length > 0) ? evt.touches[0].clientX : evt.clientX;
+      const clientY = (evt.touches && evt.touches.length > 0) ? evt.touches[0].clientY : evt.clientY;
       return {
         x: ((clientX - rect.left) / rect.width) * INTERNAL_W,
         y: ((clientY - rect.top) / rect.height) * INTERNAL_H
@@ -1683,7 +1694,6 @@ function updateCatFSM(cat, dt, world) {
     }
 
     function findCatAt(px, py) {
-      // Search front-to-back (highest Y first)
       const sorted = [...world.cats].sort((a, b) => b.y - a.y);
       for (const cat of sorted) {
         if (Math.abs(px - cat.x) <= 13 && py >= cat.y - 16 && py <= cat.y + 5) {
@@ -1713,7 +1723,6 @@ function updateCatFSM(cat, dt, world) {
 
     canvas.addEventListener('pointerdown', (evt) => {
       evt.preventDefault();
-      // Hide initial hint pill smoothly
       const hint = document.getElementById('hintOverlay');
       if (hint) hint.style.opacity = '0';
 
@@ -1781,8 +1790,7 @@ function updateCatFSM(cat, dt, world) {
     function openModal(id) {
       const el = document.getElementById(id);
       if (!el) return;
-      el.classList.remove('hidden');
-      el.classList.add('flex');
+      el.classList.add('active');
 
       if (id === 'modalTribute') {
         document.getElementById('inputTributeNote').value = world.tributeNote;
@@ -1797,15 +1805,39 @@ function updateCatFSM(cat, dt, world) {
     function closeModal(id) {
       const el = document.getElementById(id);
       if (!el) return;
-      el.classList.add('hidden');
-      el.classList.remove('flex');
+      el.classList.remove('active');
     }
 
     document.querySelectorAll('[data-close-modal]').forEach(btn => {
       btn.addEventListener('click', () => closeModal(btn.getAttribute('data-close-modal')));
     });
 
-    // Render Bottom Cat Roster Pills (Click any pill to pet & highlight that cat)
+    // Close modal when clicking outside on backdrop
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.classList.remove('active');
+        }
+      });
+    });
+
+    // Keyboard shortcuts
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+      } else if (e.key === 'f' || e.key === 'F') {
+        if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+          world.feedBowl();
+        }
+      } else if (e.key === 'p' || e.key === 'P') {
+        if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+          const lilo = world.cats[0];
+          if (lilo) world.petCat(lilo);
+        }
+      }
+    });
+
+    // Render Bottom Cat Roster Pills
     function renderRosterBar() {
       const bar = document.getElementById('catRosterBar');
       if (!bar) return;
@@ -1813,7 +1845,7 @@ function updateCatFSM(cat, dt, world) {
 
       world.cats.forEach(cat => {
         const btn = document.createElement('button');
-        btn.className = `px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shrink-0 ${
+        btn.className = `px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shrink-0 cursor-pointer ${
           cat.isDefault
             ? 'bg-sky-500/25 text-sky-200 border border-sky-400/50 hover:bg-sky-500/35'
             : 'bg-amber-500/15 text-amber-100 border border-amber-400/30 hover:bg-amber-500/25'
@@ -1834,7 +1866,7 @@ function updateCatFSM(cat, dt, world) {
       });
     }
 
-    // Render Manage List inside Customizer Modal (Allows removing optional companions; Lilo is locked)
+    // Render Manage List inside Customizer Modal
     function renderResidentManageList() {
       const list = document.getElementById('residentManageList');
       if (!list) return;
@@ -1855,7 +1887,7 @@ function updateCatFSM(cat, dt, world) {
 
         if (!cat.isDefault) {
           const delBtn = document.createElement('button');
-          delBtn.className = 'ml-1 text-rose-700 hover:text-rose-900 font-bold';
+          delBtn.className = 'ml-1 text-rose-700 hover:text-rose-900 font-bold cursor-pointer';
           delBtn.textContent = '✕';
           delBtn.title = `Remove ${cat.name}`;
           delBtn.addEventListener('click', () => {
@@ -1876,7 +1908,7 @@ function updateCatFSM(cat, dt, world) {
       COAT_SWATCHES.forEach((sw, i) => {
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = `w-8 h-8 rounded-lg border-2 transition transform hover:scale-105 ${
+        btn.className = `w-8 h-8 rounded-lg border-2 transition transform hover:scale-105 cursor-pointer ${
           i === 0 ? 'border-[#3d2516] ring-2 ring-amber-500' : 'border-[#b88b5a]'
         }`;
         btn.style.backgroundColor = sw.hex;
@@ -1884,8 +1916,8 @@ function updateCatFSM(cat, dt, world) {
         btn.addEventListener('click', () => {
           customizerState.coatColor = sw.hex;
           customizerState.shadeColor = sw.shade;
-          Array.from(coatContainer.children).forEach(c => c.className = 'w-8 h-8 rounded-lg border-2 border-[#b88b5a] transition transform hover:scale-105');
-          btn.className = 'w-8 h-8 rounded-lg border-2 border-[#3d2516] ring-2 ring-amber-500 transition transform scale-105';
+          Array.from(coatContainer.children).forEach(c => c.className = 'w-8 h-8 rounded-lg border-2 border-[#b88b5a] transition transform hover:scale-105 cursor-pointer');
+          btn.className = 'w-8 h-8 rounded-lg border-2 border-[#3d2516] ring-2 ring-amber-500 transition transform scale-105 cursor-pointer';
         });
         coatContainer.appendChild(btn);
       });
@@ -1894,8 +1926,8 @@ function updateCatFSM(cat, dt, world) {
       EYE_SWATCHES.forEach((sw, i) => {
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = `px-2.5 py-1.5 rounded-lg border-2 text-xs font-bold flex items-center gap-1.5 transition ${
-          i === 1 ? 'border-[#3d2516] bg-[#f3dfc1]' : 'border-[#c8ab89] bg-[#fff9ea]'
+        btn.className = `px-2.5 py-1.5 rounded-lg border-2 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+          i === 0 ? 'border-[#3d2516] bg-[#f3dfc1]' : 'border-[#c8ab89] bg-[#fff9ea]'
         }`;
         const dot = document.createElement('span');
         dot.className = 'w-3 h-3 rounded-full border border-black/30';
@@ -1908,9 +1940,9 @@ function updateCatFSM(cat, dt, world) {
         btn.addEventListener('click', () => {
           customizerState.eyeColor = sw.hex;
           Array.from(eyeContainer.children).forEach(c => {
-            c.className = 'px-2.5 py-1.5 rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] text-xs font-bold flex items-center gap-1.5 transition';
+            c.className = 'px-2.5 py-1.5 rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] text-xs font-bold flex items-center gap-1.5 transition cursor-pointer';
           });
-          btn.className = 'px-2.5 py-1.5 rounded-lg border-2 border-[#3d2516] bg-[#f3dfc1] text-xs font-bold flex items-center gap-1.5 transition';
+          btn.className = 'px-2.5 py-1.5 rounded-lg border-2 border-[#3d2516] bg-[#f3dfc1] text-xs font-bold flex items-center gap-1.5 transition cursor-pointer';
         });
         eyeContainer.appendChild(btn);
       });
@@ -1919,9 +1951,9 @@ function updateCatFSM(cat, dt, world) {
         btn.addEventListener('click', () => {
           customizerState.pattern = btn.getAttribute('data-pattern');
           document.querySelectorAll('.pattern-opt').forEach(b => {
-            b.className = 'pattern-opt rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] py-2 px-2 font-semibold text-[#5c3820] text-center';
+            b.className = 'pattern-opt rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] py-2 px-2 font-semibold text-[#5c3820] text-center cursor-pointer';
           });
-          btn.className = 'pattern-opt rounded-lg border-2 border-[#5c3820] bg-[#f3dfc1] py-2 px-2 font-bold text-[#3d2516] text-center';
+          btn.className = 'pattern-opt rounded-lg border-2 border-[#5c3820] bg-[#f3dfc1] py-2 px-2 font-bold text-[#3d2516] text-center cursor-pointer';
         });
       });
 
@@ -1932,7 +1964,7 @@ function updateCatFSM(cat, dt, world) {
       });
     }
 
-    // Draw Live Preview in Customizer & Tribute Portrait Canvas
+    // Mini preview canvases in modals
     const previewCanvas = document.getElementById('previewCatCanvas');
     const previewCtx = previewCanvas.getContext('2d');
     const tributeCanvas = document.getElementById('tributePortraitCanvas');
@@ -1940,7 +1972,7 @@ function updateCatFSM(cat, dt, world) {
 
     function renderMiniCanvases(time) {
       // 1. Customizer Preview Canvas (64x48)
-      if (!document.getElementById('modalCustomizer').classList.contains('hidden')) {
+      if (document.getElementById('modalCustomizer').classList.contains('active')) {
         previewCtx.clearRect(0, 0, 64, 48);
         previewCtx.fillStyle = '#3f7d3b';
         previewCtx.fillRect(0, 32, 64, 16);
@@ -1957,9 +1989,8 @@ function updateCatFSM(cat, dt, world) {
       }
 
       // 2. Lilo's Tribute Portrait Canvas (96x64)
-      if (!document.getElementById('modalTribute').classList.contains('hidden')) {
+      if (document.getElementById('modalTribute').classList.contains('active')) {
         tributeCtx.clearRect(0, 0, 96, 64);
-        // Starry sky backdrop + grass hill
         tributeCtx.fillStyle = '#0f172a';
         tributeCtx.fillRect(0, 0, 96, 64);
         tributeCtx.fillStyle = '#38bdf8';
@@ -1968,7 +1999,6 @@ function updateCatFSM(cat, dt, world) {
         tributeCtx.fillRect(48, 8, 2, 2);
         tributeCtx.fillStyle = '#3f7d3b';
         tributeCtx.fillRect(0, 44, 96, 20);
-        // Blue flowers beside Lilo
         tributeCtx.fillStyle = '#38bdf8';
         tributeCtx.fillRect(24, 43, 3, 2);
         tributeCtx.fillRect(68, 44, 3, 2);
@@ -1986,8 +2016,19 @@ function updateCatFSM(cat, dt, world) {
       }
     }
 
-    // Clipboard helper using document.execCommand('copy') for iframe compatibility
     function copyTextToClipboard(text, successMsg) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+          showToast(successMsg, '📋');
+        }).catch(() => {
+          fallbackCopyText(text, successMsg);
+        });
+      } else {
+        fallbackCopyText(text, successMsg);
+      }
+    }
+
+    function fallbackCopyText(text, successMsg) {
       const temp = document.createElement('textarea');
       temp.value = text;
       temp.style.position = 'fixed';
@@ -2026,12 +2067,17 @@ function updateCatFSM(cat, dt, world) {
       openModal('modalAgentPrompt');
     });
 
-    document.getElementById('timeBadge').addEventListener('click', () => {
+    function cycleAtmosphere() {
       const order = ['day', 'sunset', 'night'];
       const nextIdx = (order.indexOf(world.atmosphere) + 1) % order.length;
       world.atmosphere = order[nextIdx];
       world.save();
-    });
+      const labels = { day: '☀️ Sunny Day', sunset: '🌅 Golden Sunset', night: '✨ Firefly Night' };
+      showToast(`Garden Atmosphere: ${labels[world.atmosphere]}`, '✨');
+    }
+
+    document.getElementById('timeBadge').addEventListener('click', cycleAtmosphere);
+    document.getElementById('btnAtmosphere').addEventListener('click', cycleAtmosphere);
 
     document.getElementById('btnAudio').addEventListener('click', () => {
       sound.enabled = !sound.enabled;
@@ -2113,8 +2159,18 @@ function updateCatFSM(cat, dt, world) {
       }
     });
 
+    document.getElementById('btnResetGarden').addEventListener('click', () => {
+      if (confirm('Reset garden stats and return to default Lilo state?')) {
+        localStorage.removeItem(STORAGE_KEY);
+        world.load();
+        world.syncUI();
+        closeModal('modalSave');
+        showToast('Garden reset to fresh sunny state with Lilo!', '🌱');
+      }
+    });
+
     document.getElementById('btnCopyAgentPrompt').addEventListener('click', () => {
-      copyTextToClipboard(CODING_AGENT_PROMPT_TEXT, 'Coding Agent Prompt copied! Paste it into your IDE agent.');
+      copyTextToClipboard(CODING_AGENT_PROMPT_TEXT, 'Coding Agent Prompt copied! Paste it into your AI agent.');
     });
 
     /********************************************************************
