@@ -2,69 +2,65 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Lilo's Garden — Cozy Pixel Virtual Pet Sandbox</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Lilo's Garden — Reunited with Cheeto</title>
   
   <!-- Primary Meta Tags for GitHub Pages -->
-  <meta name="title" content="Lilo's Garden — Cozy Pixel Virtual Pet Sandbox">
-  <meta name="description" content="A modernized cozy pixel-art virtual pet garden tribute honoring Lilo the pure white cat. Features live Open-Meteo local weather, covered gazebo shelter, interactive feeding, cat friends customizer, procedural pixel art, and offline persistence.">
-  <meta name="theme-color" content="#141c16">
+  <meta name="title" content="Lilo's Garden — Reunited with Cheeto">
+  <meta name="description" content="A cozy pixel-art virtual pet garden sandbox tribute honoring Lilo and Cheeto. Features twin Polaroid tribute frames, live Open-Meteo local weather, covered gazebo shelter, interactive feeding, and full mobile responsiveness.">
+  <meta name="theme-color" content="#1f2e23">
 
-  <!-- Global Favicon: Lilo's close-up pixelated head in a black circle -->
+  <!-- Global Favicon: Lilo's pixelated head in a black circle -->
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAC/ElEQVR4nO2bvW7bQAzHL6/wB4EMXj04Y5agWb0I8GMEeQRrdNaMeYPuWTN0KTr5ETIWCDq5T9DAQwsXB9CpKujk+6DuwxIBLrYsHX++o3gkT6lJJokmAC0AWgF0D1AN0ANrzZ/p7xapxykmAC0BegRoC9AeoDlAFUB3AK0B2rCu+bOKr9nzb/Rvl6ntcBKArgF6AmgH0A0bePDUDd9jx/e8Tm2fUfjffgFoFmh0H4wZPyOfWcHr+pmnrrTRJp3zM9P6C3ZeFxENb6t+dp3C8EueilV7UE2RMvTEPSsey2Us428BejOt8wQAjv5Bj+l2aONX/IoKGewQAI6qx7Ya0vjO9W6SIQBY3P9CHAJPe+M/nxmA40yQWQ7s8N6EBzg0gAOPOdwxsoftDWz+k89f/2kADIF76jG/hBpfd73qCgFw4LH7xQkc4VkFORkDOLAN7hEjh5pigw2ScKjPrsYvXWL7AgDMnTZQ7PhEp2tiAAdrh8j7+Zk3gIjiCGBmlU/gxIPTfr4QANqmJxsAuyCPnS8ArbtTxi85BXWuAG56nSEnIZ3TWQUB0LY99gHYety0JABat30Aevf6ZwJgbzJ+4ZvYLAzAvDM05oTHyY3PGQCoOhMmXJq6kwSwef39oVdf3j9U6npPANrG+y4ANZeozh3AunOLzEVKr4pOYQC0jQ9RADSNsDHI9XppAOJLIFMAxiUg7gQzBWB0gvFeg839fUD+wBOA8TUYLxBKC6A7EFIxQ+G0ALpDYTVthqbt8JQQUZ4pse8/fyVRDwD9KTHlmRQtBIB1UtQ5LV4IALu0uPIojBQCwL5S7FoaKwCAW2lMORZHCwDgVhxVjuVxk376thfRkDF4l8eVQ4NExgD8GyQaEE62yGQKILxFRlk2Sbnqnx9Vp0o+Q6xJSlm0yWUIQK5NrgHB2CiZGQD5RskWBLGZMIAO1yrbgNDbLJ1I4zRLNyAY2+UTaNx2+RaIcR6YaEEY75GZpoz20FRbRntsrktGeXCyT0Z3dHaSAuQvZnOLrKXwJAwAAAAASUVORK5CYII=">
 
-  <!-- Tailwind CSS CDN (Optional enhancement; all core styles are backed by Vanilla CSS) -->
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Google Fonts: Press Start 2P for retro pixel headers & Inter for clean legibility -->
+  <!-- Google Fonts: Quicksand for clean cozy legibility & Press Start 2P for retro pixel headers -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    /* ==========================================================================
-       LILO'S GARDEN — MODERNIZED WARM FROSTED PARCHMENT DESIGN SYSTEM
-       ========================================================================== */
     :root {
-      --wood-dark: #3e2213;
-      --wood-mid: #683d1c;
-      --wood-light: #a86c3d;
-      --parchment: #fff9ea;
-      --parchment-mid: #f5e6c8;
-      --parchment-border: #5c3820;
-      --gold-border: #d9a76a;
+      --parchment: rgba(255, 250, 240, 0.94);
+      --parchment-solid: #fffaf0;
+      --wood-border: rgba(139, 94, 60, 0.32);
+      --wood-dark: #4a3525;
+      --wood-muted: #7c624c;
+      --sage-accent: #529471;
+      --sage-hover: #427d5d;
       --lilo-blue: #29b6f6;
-      --lilo-blue-dark: #0284c7;
-      --grass-green: #478942;
-      --frosted-bg: rgba(254, 246, 230, 0.86);
-      --frosted-border: rgba(168, 108, 61, 0.45);
+      --collar-blue: #1e88e5;
+      --cheeto-amber: #ffb300;
+      --heart-pink: #ff6b8b;
+      --shadow-cozy: 0 12px 32px rgba(58, 40, 24, 0.18);
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
     }
 
     * {
       box-sizing: border-box;
-      margin: 0;
-      padding: 0;
       user-select: none;
       -webkit-user-select: none;
       -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+      margin: 0;
+      padding: 0;
     }
 
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: #141c16;
-      background-image: 
-        radial-gradient(ellipse at 50% 20%, rgba(35, 59, 38, 0.6) 0%, rgba(16, 24, 18, 0.95) 75%),
-        repeating-linear-gradient(45deg, rgba(255,255,255,0.015) 0, rgba(255,255,255,0.015) 2px, transparent 0, transparent 8px);
-      color: #fef3c7;
-      min-height: 100vh;
-      width: 100vw;
+    body, html {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      align-items: center;
-      position: relative;
+      background-color: #1f2e23;
+      font-family: 'Quicksand', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: var(--wood-dark);
+      overscroll-behavior: none;
     }
 
     .font-pixel {
@@ -72,22 +68,116 @@
       letter-spacing: 0.04em;
     }
 
-    /* Crisp Pixel Art Rendering Mandate */
-    #gardenCanvas,
-    .pixel-canvas {
+    #garden-stage {
+      position: relative;
+      width: 100vw;
+      height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at center, #2e4736 0%, #162219 100%);
+      overflow: hidden;
+    }
+
+    canvas#garden-canvas {
+      display: block;
       image-rendering: -moz-crisp-edges;
       image-rendering: -webkit-crisp-edges;
       image-rendering: pixelated;
       image-rendering: crisp-edges;
+      cursor: pointer;
+      touch-action: none;
+      transition: border-radius 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    @media (min-width: 820px) {
+      canvas#garden-canvas {
+        border-radius: 22px;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 0 4px rgba(255, 250, 240, 0.15);
+      }
+    }
+
+    /* Cozy Frosted Intro Screen */
+    #intro-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      background: rgba(22, 34, 25, 0.58);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      transition: opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.65s;
+    }
+
+    #intro-overlay.hidden-intro {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .intro-card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--parchment-solid);
+      border: 3px solid rgba(139, 94, 60, 0.35);
+      border-radius: 28px;
+      padding: 24px 22px 20px;
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(15, 23, 17, 0.45);
+    }
+
+    .intro-portrait-wrap {
+      position: relative;
+      width: 220px;
+      height: 124px;
+      margin: 0 auto 14px;
+      background: linear-gradient(180deg, #cfe8d5 0%, #86b87a 100%);
+      border-radius: 20px;
+      border: 2px solid rgba(82, 148, 113, 0.35);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    #intro-canvas {
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+    }
+
+    .intro-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: rgba(41, 182, 246, 0.14);
+      color: #0284c7;
+      font-size: 0.76rem;
+      font-weight: 700;
+      margin-bottom: 8px;
     }
 
     /* Top-Left Floating Whisper Pill */
-    .whisper-pill {
-      background: var(--frosted-bg);
-      border: 2px solid var(--frosted-border);
+    #whisper-pill {
+      position: fixed;
+      top: calc(12px + var(--safe-top));
+      left: calc(12px + var(--safe-left));
+      z-index: 30;
+      pointer-events: none;
+    }
+
+    .whisper-container {
+      background: var(--parchment);
+      border: 2px solid var(--wood-border);
       box-shadow: 
-        inset 0 1px 0 rgba(255, 255, 255, 0.75),
-        0 8px 24px rgba(0, 0, 0, 0.42);
+        inset 0 1px 0 rgba(255, 255, 255, 0.8),
+        0 8px 24px rgba(0, 0, 0, 0.38);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       border-radius: 9999px;
@@ -95,29 +185,23 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      color: #3e2213;
+      color: var(--wood-dark);
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
       pointer-events: auto;
       transition: all 0.2s ease;
     }
 
-    .whisper-pill:hover {
-      box-shadow: 
-        inset 0 1px 0 rgba(255, 255, 255, 0.9),
-        0 10px 28px rgba(0, 0, 0, 0.52);
-    }
-
     .whisper-btn {
       background: rgba(235, 214, 184, 0.65);
-      border: 1px solid rgba(156, 102, 57, 0.4);
+      border: 1px solid rgba(139, 94, 60, 0.35);
       padding: 3px 9px;
       border-radius: 9999px;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      color: #3e2213;
+      color: var(--wood-dark);
       font-weight: 700;
       font-size: 11px;
       transition: background 0.15s ease, transform 0.08s ease;
@@ -128,14 +212,10 @@
       transform: translateY(-1px);
     }
 
-    .whisper-btn:active {
-      transform: translateY(1px);
-    }
-
     .whisper-mood {
-      color: #5c3820;
+      color: var(--wood-muted);
       white-space: nowrap;
-      max-width: 200px;
+      max-width: 190px;
       overflow: hidden;
       text-overflow: ellipsis;
     }
@@ -163,13 +243,13 @@
       transition: transform 0.12s ease;
     }
     .whisper-icon-btn:hover {
-      transform: scale(1.15);
+      transform: scale(1.18);
     }
 
     /* Bottom Floating Cozy Dock */
-    .cozy-dock {
+    #cozy-dock {
       position: fixed;
-      bottom: 16px;
+      bottom: calc(16px + var(--safe-bottom));
       left: 50%;
       transform: translateX(-50%);
       z-index: 30;
@@ -179,14 +259,14 @@
       pointer-events: auto;
     }
 
-    /* Stardew-inspired Tactile Buttons */
+    /* Tactile Buttons */
     .stardew-btn {
       background: linear-gradient(180deg, #f7d486 0%, #e0a64b 100%);
       color: #3d2310;
       border: 2px solid #5c3618;
       box-shadow:
         inset 0 2px 0 rgba(255, 255, 255, 0.6),
-        0 4px 10px rgba(0, 0, 0, 0.45),
+        0 4px 12px rgba(0, 0, 0, 0.4),
         0 3px 0 #3d2310;
       transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
       cursor: pointer;
@@ -209,7 +289,7 @@
       border: 2px solid #235418;
       box-shadow:
         inset 0 2px 0 rgba(255, 255, 255, 0.65),
-        0 4px 10px rgba(0, 0, 0, 0.45),
+        0 4px 12px rgba(0, 0, 0, 0.4),
         0 3px 0 #183d10;
       transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
       cursor: pointer;
@@ -230,7 +310,7 @@
       border: 2px solid #154563;
       box-shadow:
         inset 0 2px 0 rgba(255, 255, 255, 0.7),
-        0 4px 10px rgba(0, 0, 0, 0.45),
+        0 4px 12px rgba(0, 0, 0, 0.4),
         0 3px 0 #0f354d;
       transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.15s ease;
       cursor: pointer;
@@ -245,30 +325,30 @@
       box-shadow: 0 1px 0 #0f354d;
     }
 
-    /* Modals (Warm Frosted Parchment Panels) */
-    .stardew-panel {
-      background: linear-gradient(180deg, rgba(255, 250, 238, 0.96) 0%, rgba(247, 233, 206, 0.96) 100%);
-      color: #3d2516;
+    /* Modals & Mobile Bottom Sheets */
+    .cozy-card {
+      background: linear-gradient(180deg, rgba(255, 250, 238, 0.97) 0%, rgba(247, 233, 206, 0.97) 100%);
+      color: var(--wood-dark);
       border: 4px solid #5c3820;
       box-shadow:
         inset 0 0 0 2px #d9a76a,
-        0 18px 45px rgba(0, 0, 0, 0.7);
+        0 20px 50px rgba(0, 0, 0, 0.65);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
-      border-radius: 16px;
+      border-radius: 24px;
     }
 
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(8, 14, 10, 0.72);
+      background: rgba(8, 14, 10, 0.65);
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
       z-index: 50;
       display: none;
       align-items: center;
       justify-content: center;
-      padding: 1rem;
+      padding: 16px;
       animation: fadeIn 0.18s ease-out;
     }
 
@@ -281,10 +361,122 @@
       to { opacity: 1; transform: scale(1); }
     }
 
-    /* Custom Parchment Scrollbars */
+    /* Mobile Bottom Sheet Adaptation (< 640px) */
+    @media (max-width: 640px) {
+      .modal-overlay {
+        align-items: flex-end !important;
+        padding: 0 !important;
+      }
+      .cozy-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        max-height: 86dvh !important;
+        border-bottom-left-radius: 0 !important;
+        border-bottom-right-radius: 0 !important;
+        border-bottom: none !important;
+        margin-bottom: 0 !important;
+        padding: 20px 18px calc(24px + var(--safe-bottom)) 18px !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+      }
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    /* ==========================================================================
+       TWIN POLAROID TRIBUTE CARDS
+       ========================================================================== */
+    .polaroid-card {
+      background: #ffffff;
+      padding: 10px 10px 14px 10px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.28), 0 2px 6px rgba(0, 0, 0, 0.15);
+      border-radius: 4px;
+      text-align: center;
+      transition: transform 0.22s ease, box-shadow 0.22s ease;
+      cursor: pointer;
+      position: relative;
+      flex: 1;
+      max-width: 175px;
+    }
+
+    .polaroid-card:hover {
+      transform: scale(1.04) rotate(0deg) !important;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.38);
+      z-index: 5;
+    }
+
+    .polaroid-lilo {
+      transform: rotate(-2.5deg);
+    }
+
+    .polaroid-cheeto {
+      transform: rotate(2.5deg);
+    }
+
+    .polaroid-img-wrap {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background: #0f172a;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .polaroid-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .polaroid-pixel-canvas {
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+      display: none;
+    }
+
+    .polaroid-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      color: #2b1d14;
+      margin-top: 8px;
+      margin-bottom: 2px;
+      white-space: nowrap;
+    }
+
+    .polaroid-caption {
+      font-size: 11px;
+      color: #785238;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .polaroid-badge {
+      position: absolute;
+      bottom: 5px;
+      right: 5px;
+      background: rgba(0, 0, 0, 0.7);
+      color: #ffffff;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 5px;
+      border-radius: 4px;
+      pointer-events: none;
+      backdrop-filter: blur(4px);
+    }
+
+    /* Custom Scrollbars */
     ::-webkit-scrollbar {
-      width: 7px;
-      height: 7px;
+      width: 6px;
+      height: 6px;
     }
     ::-webkit-scrollbar-track {
       background: #e9d5b5;
@@ -294,16 +486,30 @@
       background: #9c6639;
       border-radius: 6px;
     }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #7c4d2b;
-    }
   </style>
 </head>
-<body class="w-screen h-screen flex flex-col justify-between items-center relative select-none">
+<body>
 
-  <!-- ==================== TOP-LEFT FLOATING WHISPER PILL ==================== -->
-  <aside class="fixed top-3 left-3 z-30 pointer-events-none">
-    <div class="whisper-pill">
+  <!-- ==================== COZY FROSTED INTRO OVERLAY ==================== -->
+  <div id="intro-overlay">
+    <div class="intro-card">
+      <div class="intro-portrait-wrap">
+        <canvas id="intro-canvas" width="110" height="62"></canvas>
+      </div>
+      <div class="intro-badge">🐾 Reunited with Cheeto</div>
+      <h1 class="font-pixel text-sm sm:text-base text-[#4a3525] mb-2">LILO'S GARDEN</h1>
+      <p class="text-xs sm:text-sm text-[#7c624c] font-medium leading-relaxed mb-4 px-2">
+        Lilo and Cheeto are reunited under the sunny skies, blooming forget-me-nots, and cozy gazebo of their eternal garden.
+      </p>
+      <button id="btnEnterGarden" class="stardew-btn-green rounded-full px-6 py-3 text-xs sm:text-sm font-bold w-full shadow-lg">
+        ✨ Enter the Garden
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== TOP-LEFT WHISPER PILL ==================== -->
+  <aside id="whisper-pill">
+    <div class="whisper-container">
       <!-- Weather Badge with Temperature & Sky (Click to cycle modes) -->
       <button id="btnWeather" class="whisper-btn" title="Click to cycle: Auto Live GPS / Sunny / Cloudy / Rain / Night">
         <span id="weatherIcon">☀️</span>
@@ -314,121 +520,132 @@
       <span id="whisperMood" class="whisper-mood">Lilo: Enjoying the breeze</span>
 
       <!-- Forget-Me-Not Bloom Counter (Grows every 3 pets) -->
-      <span id="whisperBlooms" class="whisper-stat" title="Forget-Me-Not blooms honoring Lilo (Grows every 3 pets!)">
+      <span id="whisperBlooms" class="whisper-stat" title="Forget-Me-Not blooms honoring Lilo & Cheeto (Grows every 3 pets!)">
         💠 <b id="statBlooms">8</b>/24
       </span>
 
       <!-- Compact Audio Toggle -->
-      <button id="btnAudio" class="whisper-icon-btn" title="Toggle Cozy Synth Audio">
+      <button id="btnAudio" class="whisper-icon-btn" title="Toggle Cozy Audio">
         <span id="audioIcon">🔊</span>
       </button>
     </div>
   </aside>
 
-  <!-- ==================== CENTER PIXEL GARDEN STAGE ==================== -->
-  <main class="flex-1 w-full flex items-center justify-center p-2 sm:p-4 overflow-hidden relative">
-    <div id="canvasContainer" class="relative rounded-2xl overflow-hidden border-4 border-[#5c3820] shadow-[0_20px_50px_rgba(0,0,0,0.75)] bg-[#2c4c2e] flex items-center justify-center">
-      <!-- Internal Pixel Resolution: 360 x 220, scaled crisply -->
-      <canvas id="gardenCanvas" width="360" height="220" class="block cursor-pointer touch-none"></canvas>
+  <!-- ==================== MAIN GARDEN STAGE ==================== -->
+  <div id="garden-stage">
+    <canvas id="garden-canvas"></canvas>
+  </div>
 
-      <!-- Floating Diegetic Hint (Fades out after first interaction) -->
-      <div id="hintOverlay" class="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/70 text-amber-100 text-[11px] px-3.5 py-1 rounded-full border border-amber-300/35 backdrop-blur-sm transition-opacity duration-500 whitespace-nowrap shadow-lg">
-        Tap Lilo to pet ♥ • Tap bowl to feed 🥣 • Tap blue flower stone for Lilo's Tribute 💠
-      </div>
-    </div>
-  </main>
-
-  <!-- ==================== BOTTOM FLOATING 2-BUTTON COZY DOCK ==================== -->
-  <nav class="cozy-dock">
-    <!-- Button 1: Fill Bowl with Live Status Badge -->
+  <!-- ==================== BOTTOM COZY DOCK ==================== -->
+  <nav id="cozy-dock">
+    <!-- Button 1: Fill Bowl -->
     <button id="btnFeed" class="stardew-btn-green rounded-full px-5 py-2.5 text-xs sm:text-sm font-bold flex items-center gap-2">
       <span>🥣</span>
       <span>Fill Bowl</span>
       <span id="bowlBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-black/25 text-white">Full</span>
     </button>
 
-    <!-- Button 2: Cat Friends & Customizer Modal -->
+    <!-- Button 2: Cat Friends -->
     <button id="btnOpenFriends" class="stardew-btn rounded-full px-5 py-2.5 text-xs sm:text-sm font-bold flex items-center gap-2">
       <span>🐾</span>
       <span>Cat Friends</span>
-      <span id="catCountBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-black/20 text-[#3e2213]">1</span>
+      <span id="catCountBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-black/20 text-[#3e2213]">2</span>
     </button>
   </nav>
 
   <!-- ==================== TOAST NOTIFICATION ==================== -->
   <div id="toastBox" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 -translate-y-2 transition-all duration-300">
-    <div class="whisper-pill px-4 py-2 border border-amber-600/50 shadow-2xl flex items-center gap-2">
+    <div class="whisper-container px-4 py-2 border border-amber-600/50 shadow-2xl flex items-center gap-2">
       <span id="toastIcon">✨</span>
       <span id="toastText">Saved to garden!</span>
     </div>
   </div>
 
-  <!-- ==================== MODAL 1: DIEGETIC LILO MEMORIAL TRIBUTE ==================== -->
-  <div id="modalTribute" class="modal-overlay">
-    <div class="stardew-panel w-full max-w-md p-5 sm:p-6 relative">
-      <div class="flex items-center justify-between border-b-2 border-[#d8bfa3] pb-3 mb-4">
+  <!-- ==================== MODAL 1: TWIN POLAROID TRIBUTE MODAL ==================== -->
+  <div id="tribute-modal" class="modal-overlay">
+    <div class="cozy-card w-full max-w-lg p-5 sm:p-6 relative">
+      <div class="flex items-center justify-between border-b-2 border-[#d8bfa3] pb-3 mb-3">
         <div class="flex items-center gap-2.5">
           <span class="text-2xl">💠</span>
           <div>
-            <h2 class="font-pixel text-xs sm:text-sm text-[#3d2516]">IN LOVING MEMORY OF LILO</h2>
-            <p class="text-xs text-[#7c4d2b] font-medium">Forever wandering in the sunlit garden</p>
+            <h2 class="font-pixel text-xs sm:text-sm text-[#4a3525]">REUNITED FOREVER</h2>
+            <p class="text-xs text-[#7c624c] font-medium">In loving memory of Lilo and Cheeto</p>
           </div>
         </div>
-        <button data-close-modal="modalTribute" class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center cursor-pointer">✕</button>
+        <button data-close-modal="tribute-modal" class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center cursor-pointer">✕</button>
       </div>
 
-      <!-- Pixel Portrait Card of Lilo -->
-      <div class="bg-gradient-to-b from-sky-950 to-slate-900 rounded-xl p-4 border-2 border-[#7c4d2b] mb-4 flex flex-col items-center text-center shadow-inner">
-        <canvas id="tributePortraitCanvas" width="96" height="64" class="pixel-canvas w-36 h-24 mb-2"></canvas>
-        <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-sky-500/20 border border-sky-400/40 text-sky-200 text-[11px] font-semibold mb-2">
-          <span class="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></span>
-          White Coat • Ocean-Blue Eyes • Goodest Boy
-        </span>
-        <p id="tributeQuoteDisplay" class="text-xs sm:text-sm text-amber-100/95 italic leading-relaxed px-2">
-          "No matter how much time passes, there is always a sunny patch of grass, a full bowl, and endless chin scratches waiting here for you, Lilo."
-        </p>
+      <!-- Twin Polaroid Frames Container -->
+      <div class="flex items-center justify-center gap-4 sm:gap-6 my-2 px-1">
+        <!-- 1. Lilo's Polaroid -->
+        <div id="polaroidLilo" class="polaroid-card polaroid-lilo" title="Click to upload custom photo of Lilo">
+          <div class="polaroid-img-wrap">
+            <img id="lilo-polaroid-img" class="polaroid-img" src="./assets/lilo.jpg" alt="Lilo">
+            <canvas id="lilo-polaroid-canvas" width="64" height="64" class="polaroid-pixel-canvas"></canvas>
+            <span class="polaroid-badge">📷</span>
+          </div>
+          <div class="polaroid-title">Lilo 💙</div>
+          <div class="polaroid-caption">Blue Eyes & Blue Collar</div>
+          <input type="file" id="lilo-photo-input" accept="image/*" class="hidden">
+        </div>
+
+        <!-- 2. Cheeto's Polaroid -->
+        <div id="polaroidCheeto" class="polaroid-card polaroid-cheeto" title="Click to upload custom photo of Cheeto">
+          <div class="polaroid-img-wrap">
+            <img id="cheeto-polaroid-img" class="polaroid-img" src="./assets/cheeto.jpg" alt="Cheeto">
+            <canvas id="cheeto-polaroid-canvas" width="64" height="64" class="polaroid-pixel-canvas"></canvas>
+            <span class="polaroid-badge">📷</span>
+          </div>
+          <div class="polaroid-title">Cheeto 💙💛</div>
+          <div class="polaroid-caption">Blue & Amber Eyes</div>
+          <input type="file" id="cheeto-photo-input" accept="image/*" class="hidden">
+        </div>
       </div>
 
-      <!-- Forget-Me-Not Bloom Progress for Lilo -->
+      <p class="text-center text-[10px] text-[#7c624c] mb-3 italic">
+        Tip: Tap either Polaroid above to upload your own picture!
+      </p>
+
+      <!-- Forget-Me-Not Bloom Progress -->
       <div class="mb-3.5 bg-[#f5e6c8] p-2.5 rounded-xl border border-[#b88b5a]/60 text-xs flex items-center justify-between">
-        <div class="flex items-center gap-1.5 font-bold text-[#4a2e1b]">
+        <div class="flex items-center gap-1.5 font-bold text-[#4a3525]">
           <span>💠 Memorial Blooms:</span>
           <span id="modalBloomCount" class="text-sky-700">8 / 24</span>
         </div>
-        <span class="text-[11px] text-[#7c4d2b]">Every 3 pets grows a blue flower</span>
+        <span class="text-[11px] text-[#7c624c]">Every 3 pets grows a blue flower</span>
       </div>
 
-      <!-- Editable Personal Tribute Note (Saved to localStorage) -->
+      <!-- Editable Memory Dedication Note -->
       <div class="mb-4">
-        <label for="inputTributeNote" class="block text-xs font-bold text-[#5c3820] mb-1">Personal Dedication / Memory for Lilo:</label>
-        <textarea id="inputTributeNote" rows="2" class="w-full rounded-lg border-2 border-[#b88b5a] bg-[#fffdf7] px-3 py-2 text-xs text-[#3d2516] focus:outline-none focus:border-[#5c3820]" placeholder="Write a special memory or note for Lilo..."></textarea>
+        <label for="inputTributeNote" class="block text-xs font-bold text-[#4a3525] mb-1">Personal Dedication / Memory:</label>
+        <textarea id="inputTributeNote" rows="2" class="w-full rounded-lg border-2 border-[#b88b5a] bg-[#fffdf7] px-3 py-2 text-xs text-[#3d2516] focus:outline-none focus:border-[#5c3820]" placeholder="Write a special memory of Lilo & Cheeto..."></textarea>
       </div>
 
       <div class="flex items-center justify-between gap-2">
         <button id="btnPetLiloNow" class="stardew-btn-blue rounded-xl px-4 py-2 text-xs font-bold flex-1">
-          ♥ Send Lilo Extra Love
+          ♥ Send Both Extra Love
         </button>
         <button id="btnSaveTributeNote" class="stardew-btn rounded-xl px-4 py-2 text-xs font-bold">
-          Save Memory
+          Save Note
         </button>
       </div>
     </div>
   </div>
 
-  <!-- ==================== MODAL 2: CAT FRIENDS & COMPANION CUSTOMIZER ==================== -->
+  <!-- ==================== MODAL 2: CAT FRIENDS & COMPANIONS ==================== -->
   <div id="modalFriends" class="modal-overlay">
-    <div class="stardew-panel w-full max-w-lg p-5 sm:p-6 relative max-h-[92vh] overflow-y-auto">
+    <div class="cozy-card w-full max-w-lg p-5 sm:p-6 relative max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b-2 border-[#d8bfa3] pb-3 mb-4">
         <div>
-          <h2 class="font-pixel text-xs sm:text-sm text-[#3d2516]">CAT FRIENDS & COMPANIONS</h2>
-          <p class="text-xs text-[#7c4d2b]">Pet existing cats or invite a new companion to wander with Lilo</p>
+          <h2 class="font-pixel text-xs sm:text-sm text-[#4a3525]">CAT FRIENDS & COMPANIONS</h2>
+          <p class="text-xs text-[#7c624c]">Pet existing cats or invite a new friend to wander the garden</p>
         </div>
         <button data-close-modal="modalFriends" class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center cursor-pointer">✕</button>
       </div>
 
-      <!-- Current Garden Residents & Quick Pet -->
+      <!-- Current Garden Residents -->
       <div class="mb-5">
-        <span class="text-xs font-bold text-[#4a2e1b] block mb-2">Garden Residents (Tap to Pet):</span>
+        <span class="text-xs font-bold text-[#4a3525] block mb-2">Garden Residents (Tap to Pet):</span>
         <div id="residentList" class="flex flex-wrap gap-2">
           <!-- Populated by JS -->
         </div>
@@ -436,11 +653,11 @@
 
       <!-- Divider -->
       <div class="border-t-2 border-[#d8bfa3] pt-4 mb-3">
-        <h3 class="font-pixel text-[11px] text-[#4a2e1b] mb-1">INVITE A NEW COMPANION</h3>
-        <p class="text-[11px] text-[#7c4d2b]">Customize fur pattern and colors:</p>
+        <h3 class="font-pixel text-[11px] text-[#4a3525] mb-1">INVITE A NEW COMPANION</h3>
+        <p class="text-[11px] text-[#7c624c]">Customize fur pattern and colors:</p>
       </div>
 
-      <!-- Live Pixel Sprite Preview -->
+      <!-- Live Pixel Preview -->
       <div class="flex flex-col sm:flex-row items-center gap-4 bg-[#243d27] rounded-xl p-3 border-2 border-[#5c3820] mb-4 text-amber-100">
         <div class="bg-[#1b2e1e] rounded-lg p-2 border border-emerald-700/50 flex items-center justify-center shadow-inner">
           <canvas id="previewCatCanvas" width="64" height="48" class="pixel-canvas w-24 h-18"></canvas>
@@ -449,7 +666,7 @@
           <div class="text-[10px] uppercase tracking-wider text-emerald-300 font-bold">Live Pixel Preview</div>
           <div id="previewCatTitle" class="font-pixel text-xs text-amber-200 mt-0.5">Mochi</div>
           <p class="text-[11px] text-amber-100/80 mt-1">
-            Wanders alongside Lilo, seeks shelter in rain, and touches noses in greeting.
+            Wanders alongside Lilo and Cheeto, seeks shelter in rain, and touches noses.
           </p>
         </div>
       </div>
@@ -457,13 +674,12 @@
       <!-- Form Controls -->
       <div class="space-y-3 text-xs">
         <div>
-          <label for="inputCatName" class="block font-bold text-[#4a2e1b] mb-1">Cat Friend's Name</label>
-          <input id="inputCatName" type="text" maxlength="16" value="Mochi" class="w-full rounded-lg border-2 border-[#b88b5a] bg-[#fffdf7] px-3 py-1.5 text-xs font-semibold text-[#3d2516] focus:outline-none focus:border-[#5c3820]" placeholder="e.g., Mochi, Luna, Oliver..." />
+          <label for="inputCatName" class="block font-bold text-[#4a3525] mb-1">Cat Friend's Name</label>
+          <input id="inputCatName" type="text" maxlength="16" value="Mochi" class="w-full rounded-lg border-2 border-[#b88b5a] bg-[#fffdf7] px-3 py-1.5 text-xs font-semibold text-[#3d2516] focus:outline-none focus:border-[#5c3820]" placeholder="e.g., Mochi, Oliver, Luna..." />
         </div>
 
-        <!-- Coat Pattern -->
         <div>
-          <label class="block font-bold text-[#4a2e1b] mb-1">Coat Pattern</label>
+          <label class="block font-bold text-[#4a3525] mb-1">Coat Pattern</label>
           <div id="patternSelector" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
             <button type="button" data-pattern="solid" class="pattern-opt rounded-lg border-2 border-[#5c3820] bg-[#f3dfc1] py-1.5 px-2 font-bold text-[#3d2516] text-center cursor-pointer">Solid</button>
             <button type="button" data-pattern="tuxedo" class="pattern-opt rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] py-1.5 px-2 font-semibold text-[#5c3820] text-center cursor-pointer">Tuxedo</button>
@@ -472,17 +688,15 @@
           </div>
         </div>
 
-        <!-- Coat Color Swatches -->
         <div>
-          <label class="block font-bold text-[#4a2e1b] mb-1">Primary Fur Color</label>
+          <label class="block font-bold text-[#4a3525] mb-1">Primary Fur Color</label>
           <div id="coatColorSelector" class="flex flex-wrap gap-1.5">
             <!-- Populated by JS -->
           </div>
         </div>
 
-        <!-- Eye Color Swatches -->
         <div>
-          <label class="block font-bold text-[#4a2e1b] mb-1">Eye Color</label>
+          <label class="block font-bold text-[#4a3525] mb-1">Eye Color</label>
           <div id="eyeColorSelector" class="flex flex-wrap gap-1.5">
             <!-- Populated by JS -->
           </div>
@@ -503,29 +717,28 @@
   <!-- ==================== APPLICATION SCRIPT ==================== -->
   <script>
     /********************************************************************
-     * LILO'S GARDEN — COZY PIXEL ENGINE & DIEGETIC WORLD
-     * Internal Canvas Resolution: 360 x 220
-     * Storage Key: 'lilos_garden_save_v1'
+     * LILO'S GARDEN — ADAPTIVE CAMERA & TWIN POLAROID ENGINE
+     * World Coordinates Anchored at Center (480, 320)
      ********************************************************************/
     const STORAGE_KEY = 'lilos_garden_save_v1';
-    const INTERNAL_W = 360;
-    const INTERNAL_H = 220;
 
-    // Walkable garden bounds
-    const GARDEN_BOUNDS = {
-      minX: 28,
-      maxX: 332,
-      minY: 54,
-      maxY: 194
+    // World Anchor Center & Landmarks
+    const WORLD_CENTER = { x: 480, y: 320 };
+
+    const LANDMARKS = {
+      shrine:  { x: 340, y: 240, radius: 26, label: "Memorial Stone for Lilo & Cheeto" },
+      bowl:    { x: 480, y: 370, radius: 20, label: "Ceramic Cat Bowl" },
+      shelter: { x: 620, y: 240, radius: 28, label: "Covered Gazebo Shelter" },
+      pond:    { x: 330, y: 380, radius: 24, label: "Birdbath Pond" },
+      rug:     { x: 550, y: 340, radius: 22, label: "Sunny Nap Rug" }
     };
 
-    // Diegetic Landmarks
-    const LANDMARKS = {
-      shrine:  { x: 74,  y: 72,  radius: 24, label: "Lilo's Memorial Stone" },
-      bowl:    { x: 180, y: 150, radius: 18, label: "Ceramic Cat Bowl" },
-      shelter: { x: 282, y: 78,  radius: 26, label: "Covered Cat Shelter" },
-      pond:    { x: 68,  y: 162, radius: 22, label: "Birdbath Pond" },
-      rug:     { x: 200, y: 108, radius: 20, label: "Sunny Nap Rug" }
+    // Walkable Garden Bounds in World Space (around 480, 320)
+    const GARDEN_BOUNDS = {
+      minX: 250,
+      maxX: 710,
+      minY: 195,
+      maxY: 445
     };
 
     // Swatches for Companion Customizer
@@ -542,13 +755,13 @@
 
     const EYE_SWATCHES = [
       { name: 'Lilo Sky Blue', hex: '#29b6f6' },
+      { name: 'Cheeto Amber', hex: '#ffb300' },
       { name: 'Emerald Green', hex: '#4ade80' },
-      { name: 'Warm Amber', hex: '#fbbf24' },
       { name: 'Amethyst Violet', hex: '#c084fc' },
       { name: 'Copper Gold', hex: '#f97316' }
     ];
 
-    // Immutable Anchor Cat: Lilo
+    // Default Permanent Reunited Cats: Lilo & Cheeto
     const DEFAULT_LILO = Object.freeze({
       id: 'lilo',
       name: 'Lilo',
@@ -556,12 +769,27 @@
       coatColor: '#ffffff',
       shadeColor: '#dbe7f5',
       eyeColor: '#29b6f6',
+      eyeColorRight: '#29b6f6',
       noseColor: '#ff9ebb',
+      collarColor: '#1e88e5',
       pattern: 'solid'
     });
 
+    const DEFAULT_CHEETO = Object.freeze({
+      id: 'cheeto',
+      name: 'Cheeto',
+      isDefault: true,
+      coatColor: '#f59e42',
+      shadeColor: '#c96f18',
+      eyeColor: '#29b6f6',      // Heterochromia: Left eye Sky Blue
+      eyeColorRight: '#ffb300', // Heterochromia: Right eye Amber
+      noseColor: '#ff9ebb',
+      collarColor: '#ff9800',
+      pattern: 'tabby'
+    });
+
     /********************************************************************
-     * COZY WEB AUDIO SYNTHESIZER (Purr Modulation, Soft Rain, Chimes)
+     * COZY AUDIO SYNTHESIZER (Purr, Rain, Chimes)
      ********************************************************************/
     class CozyAudio {
       constructor() {
@@ -614,11 +842,10 @@
           carrier.stop(now + 1.3);
           lfo.stop(now + 1.3);
 
-          // Soft bell overtone
           const chime = this.ctx.createOscillator();
           const chimeGain = this.ctx.createGain();
           chime.type = 'sine';
-          chime.frequency.setValueAtTime(587.33, now); // D5
+          chime.frequency.setValueAtTime(587.33, now);
           chimeGain.gain.setValueAtTime(0.03, now);
           chimeGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
           chime.connect(chimeGain);
@@ -633,7 +860,6 @@
         this.init();
         if (!this.ctx || this.rainSource) return;
         try {
-          // Generate 2-second pink-noise buffer for soothing rain on cedar roof
           const bufferSize = this.ctx.sampleRate * 2;
           const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
           const data = buffer.getChannelData(0);
@@ -683,7 +909,7 @@
         if (!this.ctx) return;
         try {
           const now = this.ctx.currentTime;
-          const notes = [392.00, 440.00, 523.25, 659.25]; // G4, A4, C5, E5
+          const notes = [392.00, 440.00, 523.25, 659.25];
           notes.forEach((freq, i) => {
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
@@ -724,7 +950,7 @@
     const sound = new CozyAudio();
 
     /********************************************************************
-     * OPEN-METEO LIVE LOCAL WEATHER SYNC & FALLBACK
+     * OPEN-METEO WEATHER INTEGRATION
      ********************************************************************/
     async function syncLiveWeather(world) {
       if (world.weatherMode !== 'AUTO') return;
@@ -766,33 +992,30 @@
     }
 
     /********************************************************************
-     * 24 DETERMINISTIC FORGET-ME-NOT BLOOM COORDINATES FOR LILO
+     * 24 FORGET-ME-NOT BLOOMS AROUND MEMORIAL STONE
      ********************************************************************/
     const MEMORIAL_BLOOM_COORDS = [
-      // Ring 1 (Inner 8)
-      [-17, 3], [-14, 9], [14, 5], [17, 9], [-12, -7], [13, -6], [-6, 13], [7, 13],
-      // Ring 2 (Mid 8)
-      [-22, 6], [-20, 15], [20, 7], [22, 15], [-17, -13], [16, -12], [-13, 16], [14, 16],
-      // Ring 3 (Outer 8)
-      [-26, 11], [-24, 19], [25, 11], [27, 19], [-22, -16], [21, -16], [-4, 19], [5, 19]
+      [-18, 4], [-15, 11], [15, 6], [18, 11], [-13, -7], [14, -6], [-7, 15], [8, 15],
+      [-23, 7], [-21, 17], [21, 8], [23, 17], [-18, -14], [17, -13], [-14, 19], [15, 19],
+      [-28, 12], [-25, 22], [26, 12], [28, 22], [-23, -18], [22, -18], [-5, 22], [6, 22]
     ];
 
     /********************************************************************
-     * WORLD STATE CONTROLLER
+     * WORLD ENGINE & FINITE STATE MACHINE
      ********************************************************************/
     const world = {
       stats: { pets: 0, meals: 0 },
-      petProgress: 0, // Every 3 pets grows a blue flower
-      blooms: 8,      // Persistent bloomed forget-me-nots (up to 24)
-      bowlLevel: 3,   // 0..3
-      weatherMode: 'AUTO', // 'AUTO' | 'SUNNY' | 'CLOUDY' | 'RAIN' | 'NIGHT'
-      weather: 'SUNNY',    // Current active weather
+      petProgress: 0,
+      blooms: 8,
+      bowlLevel: 3,
+      weatherMode: 'AUTO',
+      weather: 'SUNNY',
       skyDesc: 'Sunny Sky',
       tempC: 24,
-      tributeNote: "Forever loved, forever missed. Enjoy the endless sunshine and treats in your garden, sweet Lilo.",
+      tributeNote: "Forever loved, forever missed. Enjoy the endless sunshine, crunchy kibble, and cozy gazebo naps, sweet Lilo and Cheeto.",
       cats: [],
       particles: [],
-      critters: [], // Butterflies & Fireflies
+      critters: [],
       rainDrops: [],
       pointer: { x: -100, y: -100, hoveredEntity: null },
 
@@ -825,11 +1048,11 @@
       onWeatherUpdated() {
         if (this.weather === 'RAIN') {
           sound.startRain();
-          this.cats.forEach(c => {
+          this.cats.forEach((c, idx) => {
             if (c.state !== 'SHELTERED') {
               c.state = 'SEEK_SHELTER';
-              c.targetX = 274 + Math.random() * 16;
-              c.targetY = 78 + Math.random() * 8;
+              c.targetX = 612 + (idx * 16);
+              c.targetY = 238 + (idx % 2 === 0 ? 0 : 6);
             }
           });
         } else {
@@ -868,17 +1091,20 @@
       },
 
       createCatRuntime(spec, index = 0) {
-        const startX = spec.isDefault ? 148 : 110 + ((index * 47) % 130);
-        const startY = spec.isDefault ? 118 : 95 + ((index * 31) % 65);
+        let startX = 460 + ((index * 42) % 120);
+        let startY = 320 + ((index * 28) % 60);
+        if (spec.id === 'lilo') { startX = 430; startY = 315; }
+        if (spec.id === 'cheeto') { startX = 520; startY = 325; }
+
         return {
           ...spec,
           x: startX,
           y: startY,
           targetX: startX,
           targetY: startY,
-          facing: 1,
-          state: 'IDLE', // 'IDLE' | 'WANDER' | 'SEEK_FOOD' | 'EATING' | 'INTERACT' | 'SEEK_SHELTER' | 'SHELTERED' | 'PLAYFUL'
-          pose: 'sit',   // 'sit' | 'sleep'
+          facing: index % 2 === 0 ? 1 : -1,
+          state: 'IDLE',
+          pose: 'sit',
           stateTimer: 3 + Math.random() * 4,
           animTime: Math.random() * 10,
           playTimer: 0,
@@ -907,34 +1133,40 @@
           if (saved.weatherMode) this.weatherMode = saved.weatherMode;
 
           const companions = Array.isArray(saved.companions)
-            ? saved.companions.filter(c => c && c.id !== 'lilo')
+            ? saved.companions.filter(c => c && c.id !== 'lilo' && c.id !== 'cheeto')
             : [];
 
           this.cats = [
             this.createCatRuntime(DEFAULT_LILO, 0),
-            ...companions.map((c, idx) => this.createCatRuntime(c, idx + 1))
+            this.createCatRuntime(DEFAULT_CHEETO, 1),
+            ...companions.map((c, idx) => this.createCatRuntime(c, idx + 2))
           ];
         } else {
-          this.cats = [this.createCatRuntime(DEFAULT_LILO, 0)];
+          // Initial garden: Lilo & Cheeto reunited
+          this.cats = [
+            this.createCatRuntime(DEFAULT_LILO, 0),
+            this.createCatRuntime(DEFAULT_CHEETO, 1)
+          ];
           this.save();
         }
       },
 
       serialize() {
         const companions = this.cats
-          .filter(c => !c.isDefault && c.id !== 'lilo')
+          .filter(c => !c.isDefault && c.id !== 'lilo' && c.id !== 'cheeto')
           .map(c => ({
             id: c.id,
             name: c.name,
             coatColor: c.coatColor,
             shadeColor: c.shadeColor,
             eyeColor: c.eyeColor,
+            eyeColorRight: c.eyeColorRight || c.eyeColor,
             noseColor: c.noseColor || '#ff9ebb',
             pattern: c.pattern || 'solid'
           }));
 
         return {
-          version: 2,
+          version: 3,
           updatedAt: new Date().toISOString(),
           stats: this.stats,
           petProgress: this.petProgress,
@@ -955,24 +1187,22 @@
 
       initCritters() {
         this.critters = [];
-        // 3 daytime butterflies
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 4; i++) {
           this.critters.push({
             type: 'butterfly',
-            x: 60 + Math.random() * 240,
-            y: 50 + Math.random() * 120,
-            vx: (Math.random() - 0.5) * 15,
+            x: 320 + Math.random() * 320,
+            y: 220 + Math.random() * 180,
+            vx: (Math.random() - 0.5) * 16,
             vy: (Math.random() - 0.5) * 12,
             phase: Math.random() * Math.PI * 2,
-            color: ['#38bdf8', '#f472b6', '#fde047'][i % 3]
+            color: ['#38bdf8', '#f472b6', '#fde047', '#a78bfa'][i % 4]
           });
         }
-        // 12 nighttime fireflies
-        for (let i = 0; i < 12; i++) {
+        for (let i = 0; i < 14; i++) {
           this.critters.push({
             type: 'firefly',
-            x: Math.random() * INTERNAL_W,
-            y: 36 + Math.random() * 150,
+            x: 240 + Math.random() * 480,
+            y: 190 + Math.random() * 260,
             vx: (Math.random() - 0.5) * 8,
             vy: (Math.random() - 0.5) * 6,
             phase: Math.random() * Math.PI * 2
@@ -982,12 +1212,12 @@
 
       initRain() {
         this.rainDrops = [];
-        for (let i = 0; i < 65; i++) {
+        for (let i = 0; i < 80; i++) {
           this.rainDrops.push({
-            x: Math.random() * (INTERNAL_W + 40) - 20,
-            y: Math.random() * INTERNAL_H,
-            speed: 180 + Math.random() * 80,
-            len: 4 + Math.random() * 4
+            x: 200 + Math.random() * 600,
+            y: 100 + Math.random() * 400,
+            speed: 210 + Math.random() * 90,
+            len: 5 + Math.random() * 4
           });
         }
       },
@@ -998,8 +1228,8 @@
           this.particles.push({
             x: x + (Math.random() * 10 - 5),
             y: y - 8 + (Math.random() * 4 - 2),
-            vx: (Math.random() - 0.5) * 12,
-            vy: -14 - Math.random() * 10,
+            vx: (Math.random() - 0.5) * 14,
+            vy: -15 - Math.random() * 12,
             life: 1.1 + Math.random() * 0.4,
             maxLife: 1.5,
             type
@@ -1027,13 +1257,12 @@
         this.stats.pets++;
         this.petProgress = (this.petProgress || 0) + 1;
 
-        // Every 3 pets, bloom a persistent forget-me-not flower for Lilo
         if (this.petProgress >= 3) {
           this.petProgress = 0;
           if (this.blooms < 24) {
             this.blooms++;
             this.spawnHeart(LANDMARKS.shrine.x, LANDMARKS.shrine.y - 10, 'sparkle');
-            showToast('A new blue forget-me-not bloomed for Lilo! 💠', '💠');
+            showToast('A new blue forget-me-not bloomed! 💠', '💠');
           }
         }
 
@@ -1048,16 +1277,15 @@
         this.spawnHeart(LANDMARKS.bowl.x, LANDMARKS.bowl.y - 4, 'sparkle');
         this.cats.forEach((cat, idx) => {
           if (this.weather === 'RAIN' && cat.state === 'SHELTERED') {
-            // In heavy rain, cats stay cozy under gazebo unless very hungry
             if (Math.random() < 0.4) {
               cat.state = 'SEEK_FOOD';
-              cat.targetX = LANDMARKS.bowl.x + (idx * 14 - 7);
+              cat.targetX = LANDMARKS.bowl.x + (idx * 16 - 12);
               cat.targetY = LANDMARKS.bowl.y + 2;
             }
           } else {
             cat.state = 'SEEK_FOOD';
             cat.pose = 'sit';
-            cat.targetX = LANDMARKS.bowl.x + (idx * 14 - 7);
+            cat.targetX = LANDMARKS.bowl.x + (idx * 16 - 12);
             cat.targetY = LANDMARKS.bowl.y + 2;
           }
         });
@@ -1068,46 +1296,46 @@
       pickRandomGardenPoint() {
         if (Math.random() < 0.28) {
           return {
-            x: LANDMARKS.rug.x + (Math.random() * 20 - 10),
-            y: LANDMARKS.rug.y + (Math.random() * 14 - 7)
+            x: LANDMARKS.rug.x + (Math.random() * 22 - 11),
+            y: LANDMARKS.rug.y + (Math.random() * 16 - 8)
           };
         }
         for (let tries = 0; tries < 10; tries++) {
           const tx = GARDEN_BOUNDS.minX + Math.random() * (GARDEN_BOUNDS.maxX - GARDEN_BOUNDS.minX);
           const ty = GARDEN_BOUNDS.minY + Math.random() * (GARDEN_BOUNDS.maxY - GARDEN_BOUNDS.minY);
-          if (Math.hypot(tx - LANDMARKS.pond.x, ty - LANDMARKS.pond.y) > 26 &&
-              Math.hypot(tx - LANDMARKS.shrine.x, ty - LANDMARKS.shrine.y) > 22) {
+          if (Math.hypot(tx - LANDMARKS.pond.x, ty - LANDMARKS.pond.y) > 28 &&
+              Math.hypot(tx - LANDMARKS.shrine.x, ty - LANDMARKS.shrine.y) > 26) {
             return { x: tx, y: ty };
           }
         }
-        return { x: 180, y: 120 };
+        return { x: 480, y: 320 };
       },
 
       update(dt, time) {
-        // 1. Update Rain Animation
+        // Rain
         if (this.weather === 'RAIN') {
           for (let i = 0; i < this.rainDrops.length; i++) {
             const drop = this.rainDrops[i];
             drop.y += drop.speed * dt;
-            drop.x -= 30 * dt; // Slight wind slant
-            if (drop.y > INTERNAL_H) {
-              drop.y = -5;
-              drop.x = Math.random() * (INTERNAL_W + 40) - 10;
+            drop.x -= 30 * dt;
+            if (drop.y > 520) {
+              drop.y = 120;
+              drop.x = 200 + Math.random() * 600;
             }
           }
         }
 
-        // 2. Update Butterflies & Fireflies
+        // Critters
         this.critters.forEach(cr => {
           cr.x += cr.vx * dt + Math.sin(time * 2 + cr.phase) * 12 * dt;
           cr.y += cr.vy * dt + Math.cos(time * 1.5 + cr.phase) * 10 * dt;
-          if (cr.x < 15) { cr.x = 15; cr.vx = Math.abs(cr.vx); }
-          if (cr.x > INTERNAL_W - 15) { cr.x = INTERNAL_W - 15; cr.vx = -Math.abs(cr.vx); }
-          if (cr.y < 42) { cr.y = 42; cr.vy = Math.abs(cr.vy); }
-          if (cr.y > INTERNAL_H - 24) { cr.y = INTERNAL_H - 24; cr.vy = -Math.abs(cr.vy); }
+          if (cr.x < GARDEN_BOUNDS.minX) { cr.x = GARDEN_BOUNDS.minX; cr.vx = Math.abs(cr.vx); }
+          if (cr.x > GARDEN_BOUNDS.maxX) { cr.x = GARDEN_BOUNDS.maxX; cr.vx = -Math.abs(cr.vx); }
+          if (cr.y < GARDEN_BOUNDS.minY - 20) { cr.y = GARDEN_BOUNDS.minY - 20; cr.vy = Math.abs(cr.vy); }
+          if (cr.y > GARDEN_BOUNDS.maxY + 10) { cr.y = GARDEN_BOUNDS.maxY + 10; cr.vy = -Math.abs(cr.vy); }
         });
 
-        // 3. Update Each Cat's FSM
+        // Cats FSM
         for (let i = 0; i < this.cats.length; i++) {
           const cat = this.cats[i];
           cat.stateTimer -= dt;
@@ -1115,23 +1343,20 @@
           if (cat.socialCooldown > 0) cat.socialCooldown -= dt;
           if (cat.labelAlpha > 0) cat.labelAlpha = Math.max(0, cat.labelAlpha - dt * 0.25);
 
-          // Sleep breathing z bubble
           if ((cat.state === 'IDLE' || cat.state === 'SHELTERED') && cat.pose === 'sleep' && Math.random() < dt * 0.6) {
             this.spawnSleepZ(cat.x, cat.y);
           }
 
-          // Rain Shelter Reaction: If raining and outside gazebo, run to shelter
           if (this.weather === 'RAIN' && cat.state !== 'SHELTERED' && cat.state !== 'SEEK_SHELTER' && cat.state !== 'INTERACT') {
             cat.state = 'SEEK_SHELTER';
-            cat.targetX = 274 + (i * 8);
-            cat.targetY = 78 + (i % 2 === 0 ? 0 : 5);
+            cat.targetX = 610 + (i * 16);
+            cat.targetY = 238 + (i % 2 === 0 ? 0 : 6);
           }
 
-          // Playful Reaction: Check nearby butterflies or fireflies
           if ((cat.state === 'IDLE' || cat.state === 'WANDER') && this.weather !== 'RAIN') {
             for (const cr of this.critters) {
-              const activeCritter = (this.weather === 'NIGHT' && cr.type === 'firefly') || (this.weather !== 'NIGHT' && cr.type === 'butterfly');
-              if (activeCritter && Math.hypot(cat.x - cr.x, cat.y - cr.y) < 22 && Math.random() < dt * 0.5) {
+              const active = (this.weather === 'NIGHT' && cr.type === 'firefly') || (this.weather !== 'NIGHT' && cr.type === 'butterfly');
+              if (active && Math.hypot(cat.x - cr.x, cat.y - cr.y) < 24 && Math.random() < dt * 0.5) {
                 cat.state = 'PLAYFUL';
                 cat.playTimer = 2.2;
                 cat.targetX = cr.x;
@@ -1146,7 +1371,7 @@
             case 'IDLE': {
               if (this.bowlLevel > 0 && Math.random() < dt * 0.08) {
                 cat.state = 'SEEK_FOOD';
-                cat.targetX = LANDMARKS.bowl.x + (Math.random() * 14 - 7);
+                cat.targetX = LANDMARKS.bowl.x + (Math.random() * 16 - 8);
                 cat.targetY = LANDMARKS.bowl.y + (Math.random() * 6 - 2);
                 break;
               }
@@ -1180,7 +1405,7 @@
                   cat.stateTimer = 6;
                 } else {
                   cat.state = 'IDLE';
-                  const onRug = Math.hypot(cat.x - LANDMARKS.rug.x, cat.y - LANDMARKS.rug.y) < 22;
+                  const onRug = Math.hypot(cat.x - LANDMARKS.rug.x, cat.y - LANDMARKS.rug.y) < 24;
                   cat.pose = (onRug || Math.random() < 0.32) ? 'sleep' : 'sit';
                   cat.stateTimer = 4 + Math.random() * 5;
                 }
@@ -1194,7 +1419,6 @@
             }
 
             case 'SHELTERED': {
-              // Stay cozy under gazebo while raining
               if (this.weather !== 'RAIN') {
                 cat.state = 'IDLE';
                 cat.stateTimer = 3;
@@ -1242,7 +1466,7 @@
           }
         }
 
-        // 4. Social Nose-Boops
+        // Nose-boop social interaction between cats
         if (this.cats.length > 1) {
           for (let i = 0; i < this.cats.length; i++) {
             for (let j = i + 1; j < this.cats.length; j++) {
@@ -1250,7 +1474,7 @@
               const b = this.cats[j];
               if (a.socialCooldown <= 0 && b.socialCooldown <= 0) {
                 const d = Math.hypot(a.x - b.x, a.y - b.y);
-                if (d < 18 && Math.random() < dt * 0.5) {
+                if (d < 20 && Math.random() < dt * 0.5) {
                   a.socialCooldown = 18;
                   b.socialCooldown = 18;
                   this.spawnHeart((a.x + b.x) / 2, Math.min(a.y, b.y) - 8, 'heart');
@@ -1260,7 +1484,7 @@
           }
         }
 
-        // 5. Update Floating Particles
+        // Particle updates
         for (let i = this.particles.length - 1; i >= 0; i--) {
           const p = this.particles[i];
           p.x += p.vx * dt;
@@ -1269,7 +1493,6 @@
           if (p.life <= 0) this.particles.splice(i, 1);
         }
 
-        // Update Mood Whisper Pill
         this.updateLiveMoodTicker();
       },
 
@@ -1278,15 +1501,15 @@
         const el = document.getElementById('whisperMood');
         if (!lilo || !el) return;
 
-        let moodText = "Lilo: Enjoying the garden";
+        let moodText = "Lilo & Cheeto: Reunited";
         if (lilo.state === 'SHELTERED') moodText = "Lilo: Cozy under gazebo porch 🏡";
-        else if (lilo.state === 'SEEK_SHELTER') moodText = "Lilo: Trotting to dry shelter 🌧️";
+        else if (lilo.state === 'SEEK_SHELTER') moodText = "Lilo: Running to gazebo 🌧️";
         else if (lilo.state === 'EATING') moodText = "Lilo: Munching tasty kibble 🐟";
-        else if (lilo.state === 'SEEK_FOOD') moodText = "Lilo: Trotting to the food bowl 🥣";
+        else if (lilo.state === 'SEEK_FOOD') moodText = "Lilo: Trotting to food bowl 🥣";
         else if (lilo.state === 'INTERACT') moodText = "Lilo: Purring happily with love ♥";
         else if (lilo.state === 'PLAYFUL') moodText = "Lilo: Pouncing at butterflies ♪";
-        else if (lilo.state === 'IDLE' && lilo.pose === 'sleep') moodText = "Lilo: Napping peacefully 💤";
-        else if (lilo.state === 'WANDER') moodText = "Lilo: Strolling along path 🐾";
+        else if (lilo.state === 'IDLE' && lilo.pose === 'sleep') moodText = "Lilo: Napping in the sun 💤";
+        else if (lilo.state === 'WANDER') moodText = "Lilo: Exploring garden with Cheeto 🐾";
 
         el.textContent = moodText;
       },
@@ -1311,7 +1534,7 @@
     };
 
     /********************************************************************
-     * PIXEL SPRITE RENDERER
+     * PROCEDURAL PIXEL CAT SPRITE (With Heterochromia Support)
      ********************************************************************/
     function drawPixelCat(ctx, cat, time) {
       const x = Math.round(cat.x);
@@ -1325,7 +1548,6 @@
       ctx.save();
       ctx.translate(x, y);
 
-      // Ground shadow
       ctx.fillStyle = 'rgba(15, 28, 17, 0.32)';
       if (isSleeping) {
         ctx.fillRect(-8, -1, 16, 4);
@@ -1339,7 +1561,8 @@
 
       const coat = cat.coatColor || '#ffffff';
       const shade = cat.shadeColor || '#dbe7f5';
-      const eye = cat.eyeColor || '#29b6f6';
+      const eyeLeft = cat.eyeColor || '#29b6f6';
+      const eyeRight = cat.eyeColorRight || cat.eyeColor || '#29b6f6'; // Heterochromia support
       const nose = cat.noseColor || '#ff9ebb';
       const pattern = cat.pattern || 'solid';
 
@@ -1348,7 +1571,6 @@
         ctx.fillRect(Math.round(rx), Math.round(ry), w, h);
       };
 
-      // Sleeping Curled Posture
       if (isSleeping) {
         const breath = Math.sin(time * 2.4 + cat.seed) > 0 ? 1 : 0;
         px(-7, -7 + breath, 14, 6, coat);
@@ -1380,20 +1602,17 @@
         return;
       }
 
-      // Active Animation Cycles
       const walkCycle = isWalking ? Math.floor(time * 9 + cat.seed) % 4 : 0;
       const hopY = isPlayful ? Math.round(Math.abs(Math.sin(time * 10)) * -3) : 0;
       const bounceY = hopY + (isWalking ? (walkCycle % 2 === 1 ? -1 : 0) : (isPetted ? -1 : 0));
       const headDipY = isEating ? (Math.floor(time * 8) % 2 === 0 ? 3 : 2) : 0;
 
-      // Tail
       const tailWag = Math.sin(time * (isPetted || isPlayful ? 12 : 4.5) + cat.seed);
       const tailOffsetY = tailWag > 0.35 ? -1 : (tailWag < -0.35 ? 1 : 0);
       px(-8, -8 + bounceY, 2, 3, coat);
       px(-9, -11 + bounceY + tailOffsetY, 2, 4, coat);
       px(-9, -8 + bounceY, 1, 2, shade);
 
-      // Torso
       px(-6, -8 + bounceY, 11, 6, coat);
       px(-6, -4 + bounceY, 11, 2, shade);
 
@@ -1408,13 +1627,13 @@
         px(0, -7 + bounceY, 3, 3, '#2d3748');
       }
 
-      // Collar on Lilo
-      if (cat.isDefault) {
-        px(2, -5 + bounceY, 3, 1, '#38bdf8');
+      // Collar
+      if (cat.collarColor || cat.isDefault) {
+        const col = cat.collarColor || (cat.id === 'cheeto' ? '#ff9800' : '#1e88e5');
+        px(2, -5 + bounceY, 3, 1, col);
         px(4, -4 + bounceY, 1, 1, '#fde047');
       }
 
-      // Paws
       const pawColor = pattern === 'tuxedo' ? '#ffffff' : coat;
       if (isWalking) {
         const legA = (walkCycle === 0 || walkCycle === 3) ? 0 : -1;
@@ -1430,14 +1649,12 @@
         px(3, -2, 2, 2, pawColor);
       }
 
-      // Head
       const hx = 0;
       const hy = -13 + bounceY + headDipY;
       px(hx, hy, 8, 6, coat);
       px(hx + 1, hy - 1, 6, 1, coat);
       px(hx, hy + 5, 8, 1, shade);
 
-      // Ears
       px(hx + 1, hy - 3, 2, 2, coat);
       px(hx + 5, hy - 3, 2, 2, coat);
       px(hx + 1, hy - 2, 1, 1, nose);
@@ -1451,30 +1668,27 @@
         px(hx + 2, hy + 4, 4, 2, '#ffffff');
       }
 
-      // Eyes
       const isBlinking = (Math.sin(time * 1.7 + cat.seed * 3) > 0.94) || isEating;
       if (isPetted || isBlinking) {
         px(hx + 2, hy + 2, 2, 1, '#334155');
         px(hx + 5, hy + 2, 2, 1, '#334155');
       } else {
-        px(hx + 2, hy + 1, 2, 2, eye);
-        px(hx + 5, hy + 1, 2, 2, eye);
-        if (cat.isDefault) {
-          px(hx + 2, hy + 1, 1, 1, '#7dd3fc');
-          px(hx + 5, hy + 1, 1, 1, '#7dd3fc');
-        }
+        // Left Eye
+        px(hx + 2, hy + 1, 2, 2, eyeLeft);
+        // Right Eye (Amber for Cheeto!)
+        px(hx + 5, hy + 1, 2, 2, eyeRight);
+        // Glistening shine pixel
+        px(hx + 2, hy + 1, 1, 1, '#ffffff');
+        px(hx + 5, hy + 1, 1, 1, '#ffffff');
       }
 
-      // Nose
       px(hx + 4, hy + 3, 1, 1, nose);
 
-      // Cheeks when petted
       if (isPetted) {
         px(hx + 1, hy + 3, 1, 1, '#fda4af');
         px(hx + 6, hy + 3, 1, 1, '#fda4af');
       }
 
-      // Musical note emote above head if playful
       if (isPlayful) {
         px(hx + 2, hy - 8, 3, 1, '#fef08a');
         px(hx + 4, hy - 7, 1, 2, '#fef08a');
@@ -1483,11 +1697,10 @@
 
       ctx.restore();
 
-      // Floating nameplate when hovered
       if (cat.labelAlpha > 0.02) {
         ctx.save();
         ctx.globalAlpha = Math.min(1, cat.labelAlpha);
-        ctx.font = 'bold 7px Inter, sans-serif';
+        ctx.font = 'bold 7px Quicksand, sans-serif';
         ctx.textAlign = 'center';
         const textW = ctx.measureText(cat.name).width + 8;
         ctx.fillStyle = 'rgba(24, 16, 10, 0.78)';
@@ -1499,22 +1712,22 @@
     }
 
     /********************************************************************
-     * GARDEN SCENERY, FORGET-ME-NOT BLOOMS & GAZEBO SHELTER
+     * SCENERY & COVERED GAZEBO RENDERER
      ********************************************************************/
     const GRASS_TUFT_LIST = [];
     const GENERAL_FLOWERS = [];
     (function initStaticGarden() {
-      let seed = 2026;
+      let seed = 3050;
       const rand = () => {
         seed = (seed * 16807) % 2147483647;
         return (seed - 1) / 2147483646;
       };
 
-      for (let i = 0; i < 90; i++) {
-        const gx = Math.floor(16 + rand() * (INTERNAL_W - 32));
-        const gy = Math.floor(44 + rand() * (INTERNAL_H - 58));
-        if (Math.hypot(gx - LANDMARKS.pond.x, gy - LANDMARKS.pond.y) < 25) continue;
-        if (Math.hypot(gx - LANDMARKS.shelter.x, gy - LANDMARKS.shelter.y) < 32) continue;
+      for (let i = 0; i < 110; i++) {
+        const gx = Math.floor(220 + rand() * 520);
+        const gy = Math.floor(180 + rand() * 280);
+        if (Math.hypot(gx - LANDMARKS.pond.x, gy - LANDMARKS.pond.y) < 28) continue;
+        if (Math.hypot(gx - LANDMARKS.shelter.x, gy - LANDMARKS.shelter.y) < 36) continue;
         GRASS_TUFT_LIST.push({
           x: gx, y: gy,
           shade: rand() > 0.5 ? '#3f7d3b' : '#579c4c',
@@ -1523,12 +1736,12 @@
       }
 
       const colors = ['#fde047', '#f472b6', '#ffffff', '#bae6fd'];
-      for (let i = 0; i < 35; i++) {
-        const fx = Math.floor(20 + rand() * (INTERNAL_W - 40));
-        const fy = Math.floor(48 + rand() * (INTERNAL_H - 62));
-        if (Math.hypot(fx - LANDMARKS.pond.x, fy - LANDMARKS.pond.y) < 26) continue;
-        if (Math.hypot(fx - LANDMARKS.shelter.x, fy - LANDMARKS.shelter.y) < 34) continue;
-        if (Math.hypot(fx - LANDMARKS.shrine.x, fy - LANDMARKS.shrine.y) < 32) continue;
+      for (let i = 0; i < 40; i++) {
+        const fx = Math.floor(230 + rand() * 500);
+        const fy = Math.floor(190 + rand() * 260);
+        if (Math.hypot(fx - LANDMARKS.pond.x, fy - LANDMARKS.pond.y) < 30) continue;
+        if (Math.hypot(fx - LANDMARKS.shelter.x, fy - LANDMARKS.shelter.y) < 38) continue;
+        if (Math.hypot(fx - LANDMARKS.shrine.x, fy - LANDMARKS.shrine.y) < 34) continue;
         GENERAL_FLOWERS.push({
           x: fx, y: fy,
           color: colors[Math.floor(rand() * colors.length)],
@@ -1537,22 +1750,49 @@
       }
     })();
 
-    // Cobblestones
     const PATH_STONES = [
-      { x: 176, y: 42, w: 12, h: 7 }, { x: 173, y: 53, w: 14, h: 8 },
-      { x: 168, y: 65, w: 13, h: 7 }, { x: 158, y: 76, w: 14, h: 8 },
-      { x: 144, y: 82, w: 12, h: 7 }, { x: 126, y: 78, w: 13, h: 7 },
-      { x: 108, y: 74, w: 12, h: 7 }, { x: 92,  y: 72, w: 11, h: 7 },
-      { x: 172, y: 89, w: 13, h: 8 }, { x: 176, y: 104, w: 12, h: 7 },
-      { x: 179, y: 118, w: 14, h: 8 }, { x: 180, y: 132, w: 13, h: 7 }
+      { x: 476, y: 180, w: 14, h: 8 }, { x: 472, y: 194, w: 16, h: 9 },
+      { x: 466, y: 208, w: 15, h: 8 }, { x: 454, y: 222, w: 16, h: 9 },
+      { x: 438, y: 232, w: 14, h: 8 }, { x: 416, y: 236, w: 15, h: 8 },
+      { x: 394, y: 238, w: 14, h: 8 }, { x: 372, y: 239, w: 14, h: 8 },
+      { x: 470, y: 246, w: 15, h: 8 }, { x: 474, y: 262, w: 14, h: 8 },
+      { x: 478, y: 278, w: 16, h: 9 }, { x: 480, y: 294, w: 15, h: 8 },
+      { x: 478, y: 310, w: 16, h: 9 }, { x: 476, y: 326, w: 15, h: 8 },
+      { x: 478, y: 342, w: 16, h: 9 }
     ];
 
     function drawGardenScenery(ctx, time) {
-      // 1. Checkerboard Grass Base
+      // Seamless Background Expanse for Any Mobile Aspect Ratio / Device Viewport
+      const viewLeft = -camera.x - 30;
+      const viewTop = -camera.y - 30;
+      const viewW = canvas.width + 60;
+      const viewH = canvas.height + 60;
+
+      // Base lush deep-forest surround
+      ctx.fillStyle = '#224426';
+      ctx.fillRect(viewLeft, viewTop, viewW, viewH);
+
+      // North Forest Canopy (above garden fence)
+      if (viewTop < 140) {
+        ctx.fillStyle = '#172d1a';
+        ctx.fillRect(viewLeft, viewTop, viewW, 140 - viewTop);
+        ctx.fillStyle = '#1e3a22';
+        for (let fx = Math.floor(viewLeft / 28) * 28; fx < viewLeft + viewW; fx += 28) {
+          ctx.fillRect(fx, 114 + (Math.abs(fx % 56) === 0 ? 5 : 0), 22, 26);
+        }
+      }
+
+      // South Meadow (below garden)
+      if (viewTop + viewH > 500) {
+        ctx.fillStyle = '#3c7536';
+        ctx.fillRect(viewLeft, 500, viewW, viewTop + viewH - 500);
+      }
+
+      // Grass Field
       ctx.fillStyle = '#478942';
-      ctx.fillRect(0, 0, INTERNAL_W, INTERNAL_H);
-      for (let ty = 0; ty < INTERNAL_H; ty += 16) {
-        for (let tx = 0; tx < INTERNAL_W; tx += 16) {
+      ctx.fillRect(180, 120, 600, 380);
+      for (let ty = 120; ty < 500; ty += 16) {
+        for (let tx = 180; tx < 780; tx += 16) {
           if (((tx / 16) + (ty / 16)) % 2 === 0) {
             ctx.fillStyle = '#4c9146';
             ctx.fillRect(tx, ty, 16, 16);
@@ -1560,31 +1800,31 @@
         }
       }
 
-      // 2. Horizon Hedge
+      // Top Hedge
       ctx.fillStyle = '#2d5c2b';
-      ctx.fillRect(0, 0, INTERNAL_W, 28);
+      ctx.fillRect(180, 120, 600, 36);
       ctx.fillStyle = '#386e35';
-      for (let hx = 0; hx < INTERNAL_W; hx += 12) {
-        ctx.fillRect(hx, 14 + (hx % 24 === 0 ? 2 : 0), 10, 14);
+      for (let hx = 180; hx < 780; hx += 14) {
+        ctx.fillRect(hx, 138 + (hx % 28 === 0 ? 3 : 0), 12, 18);
       }
 
-      // 3. Wooden Fence
+      // Wooden Fence along Top
       ctx.fillStyle = 'rgba(15, 28, 17, 0.28)';
-      ctx.fillRect(8, 34, INTERNAL_W - 16, 4);
+      ctx.fillRect(190, 162, 580, 5);
       ctx.fillStyle = '#8c5832';
-      ctx.fillRect(10, 22, INTERNAL_W - 20, 3);
-      ctx.fillRect(10, 29, INTERNAL_W - 20, 3);
-      for (let fx = 10; fx < INTERNAL_W - 10; fx += 22) {
-        if (fx > 160 && fx < 195) continue; // Entrance gap
+      ctx.fillRect(190, 146, 580, 4);
+      ctx.fillRect(190, 155, 580, 4);
+      for (let fx = 195; fx < 770; fx += 26) {
+        if (fx > 455 && fx < 505) continue; // Gate gap
         ctx.fillStyle = '#6e4223';
-        ctx.fillRect(fx, 17, 6, 19);
+        ctx.fillRect(fx, 139, 7, 23);
         ctx.fillStyle = '#a86e42';
-        ctx.fillRect(fx + 1, 18, 4, 16);
+        ctx.fillRect(fx + 1, 140, 5, 20);
         ctx.fillStyle = '#c98d5c';
-        ctx.fillRect(fx + 1, 17, 4, 2);
+        ctx.fillRect(fx + 1, 139, 5, 3);
       }
 
-      // 4. Cobblestones
+      // Path
       PATH_STONES.forEach(st => {
         ctx.fillStyle = '#64748b';
         ctx.fillRect(st.x, st.y + 1, st.w, st.h);
@@ -1594,7 +1834,7 @@
         ctx.fillRect(st.x + 1, st.y + 1, st.w - 4, 2);
       });
 
-      // 5. Swaying Grass
+      // Grass tufts
       GRASS_TUFT_LIST.forEach(g => {
         const sway = Math.round(Math.sin(time * 2 + g.phase) * 0.7);
         ctx.fillStyle = g.shade;
@@ -1602,7 +1842,7 @@
         ctx.fillRect(g.x + 2 + sway, g.y + 1, 1, 2);
       });
 
-      // 6. Birdbath Pond
+      // Birdbath Pond
       const px = LANDMARKS.pond.x;
       const py = LANDMARKS.pond.y;
       ctx.fillStyle = '#57534e';
@@ -1622,21 +1862,21 @@
       ctx.fillStyle = '#f472b6';
       ctx.fillRect(px - 7, py + 1, 2, 2);
 
-      // 7. Sunny Nap Rug
+      // Picnic Rug
       const rx = LANDMARKS.rug.x;
       const ry = LANDMARKS.rug.y;
       ctx.fillStyle = 'rgba(15, 28, 17, 0.25)';
-      ctx.fillRect(rx - 19, ry - 11, 38, 22);
+      ctx.fillRect(rx - 20, ry - 12, 40, 24);
       ctx.fillStyle = '#fef3c7';
-      ctx.fillRect(rx - 18, ry - 12, 36, 22);
+      ctx.fillRect(rx - 19, ry - 13, 38, 24);
       ctx.fillStyle = '#f59e0b';
-      for (let bx = rx - 16; bx < rx + 16; bx += 8) {
-        for (let by = ry - 10; by < ry + 8; by += 8) {
+      for (let bx = rx - 17; bx < rx + 17; bx += 8) {
+        for (let by = ry - 11; by < ry + 9; by += 8) {
           if (((bx + by) / 8) % 2 === 0) ctx.fillRect(bx, by, 4, 4);
         }
       }
 
-      // 8. General Wildflowers
+      // Wildflowers
       GENERAL_FLOWERS.forEach(f => {
         const bob = Math.sin(time * 2.5 + f.phase) > 0.6 ? -1 : 0;
         ctx.fillStyle = '#2e6b30';
@@ -1648,125 +1888,121 @@
       });
     }
 
-    // Draw Covered Wooden Cat Shelter (Gazebo Deck & Berry Cushion)
     function drawShelterDeck(ctx, time) {
       const sx = LANDMARKS.shelter.x;
       const sy = LANDMARKS.shelter.y;
 
-      // Ground shadow
       ctx.fillStyle = 'rgba(15, 28, 17, 0.4)';
-      ctx.fillRect(sx - 26, sy - 10, 52, 28);
+      ctx.fillRect(sx - 28, sy - 10, 56, 30);
 
-      // Cedar wood flooring
       ctx.fillStyle = '#532e16';
-      ctx.fillRect(sx - 24, sy - 8, 48, 24);
+      ctx.fillRect(sx - 26, sy - 8, 52, 26);
       ctx.fillStyle = '#78431e';
-      ctx.fillRect(sx - 23, sy - 9, 46, 24);
-      // Floor plank lines
+      ctx.fillRect(sx - 25, sy - 9, 50, 26);
       ctx.fillStyle = '#452310';
-      for (let py = sy - 6; py < sy + 14; py += 5) {
-        ctx.fillRect(sx - 23, py, 46, 1);
+      for (let py = sy - 6; py < sy + 16; py += 5) {
+        ctx.fillRect(sx - 25, py, 50, 1);
       }
 
       // Berry Velvet Cushion
-      ctx.fillStyle = '#831843'; // Deep berry velvet
-      ctx.fillRect(sx - 15, sy - 4, 30, 14);
-      ctx.fillStyle = '#9f1239'; // Rich ruby berry
-      ctx.fillRect(sx - 14, sy - 5, 28, 13);
-      ctx.fillStyle = '#be123c'; // Cushion highlight
-      ctx.fillRect(sx - 12, sy - 4, 24, 2);
-      // Gold tufting buttons
+      ctx.fillStyle = '#831843';
+      ctx.fillRect(sx - 16, sy - 4, 32, 15);
+      ctx.fillStyle = '#9f1239';
+      ctx.fillRect(sx - 15, sy - 5, 30, 14);
+      ctx.fillStyle = '#be123c';
+      ctx.fillRect(sx - 13, sy - 4, 26, 2);
       ctx.fillStyle = '#fbbf24';
-      ctx.fillRect(sx - 8, sy + 1, 2, 2);
-      ctx.fillRect(sx + 6, sy + 1, 2, 2);
+      ctx.fillRect(sx - 8, sy + 2, 2, 2);
+      ctx.fillRect(sx + 7, sy + 2, 2, 2);
 
       // Back Posts
       ctx.fillStyle = '#532e16';
-      ctx.fillRect(sx - 22, sy - 28, 4, 20);
-      ctx.fillRect(sx + 18, sy - 28, 4, 20);
+      ctx.fillRect(sx - 24, sy - 30, 4, 22);
+      ctx.fillRect(sx + 20, sy - 30, 4, 22);
     }
 
-    // Draw Shelter Roof Overhead (Depth-Sorted at y = 92)
     function drawShelterRoofOverhead(ctx, time) {
       const sx = LANDMARKS.shelter.x;
       const sy = LANDMARKS.shelter.y;
 
       // Front Posts
       ctx.fillStyle = '#532e16';
-      ctx.fillRect(sx - 22, sy - 10, 4, 25);
-      ctx.fillRect(sx + 18, sy - 10, 4, 25);
+      ctx.fillRect(sx - 24, sy - 10, 4, 26);
+      ctx.fillRect(sx + 20, sy - 10, 4, 26);
       ctx.fillStyle = '#8c5832';
-      ctx.fillRect(sx - 21, sy - 10, 2, 25);
-      ctx.fillRect(sx + 19, sy - 10, 2, 25);
+      ctx.fillRect(sx - 23, sy - 10, 2, 26);
+      ctx.fillRect(sx + 21, sy - 10, 2, 26);
 
-      // Hanging Warm Lantern
+      // Lantern
       const lanternGlow = Math.sin(time * 3) * 0.15 + 0.85;
       ctx.fillStyle = '#1e1e24';
-      ctx.fillRect(sx - 1, sy - 24, 2, 7); // Chain
-      ctx.fillRect(sx - 4, sy - 17, 8, 9); // Lantern cage
+      ctx.fillRect(sx - 1, sy - 26, 2, 8);
+      ctx.fillRect(sx - 4, sy - 18, 8, 10);
       ctx.fillStyle = '#fef08a';
-      ctx.fillRect(sx - 2, sy - 15, 4, 5); // Glowing core
+      ctx.fillRect(sx - 2, sy - 16, 4, 6);
 
-      // Radial warm lantern glow
-      const grad = ctx.createRadialGradient(sx, sy - 12, 2, sx, sy - 12, 34);
+      const grad = ctx.createRadialGradient(sx, sy - 13, 2, sx, sy - 13, 38);
       grad.addColorStop(0, `rgba(253, 224, 71, ${0.35 * lanternGlow})`);
       grad.addColorStop(1, 'rgba(253, 224, 71, 0)');
       ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.arc(sx, sy - 12, 34, 0, Math.PI * 2);
+      ctx.arc(sx, sy - 13, 38, 0, Math.PI * 2);
       ctx.fill();
 
-      // Cedar Shingle Roof
+      // Roof
       ctx.fillStyle = '#452310';
-      ctx.fillRect(sx - 28, sy - 34, 56, 14);
+      ctx.fillRect(sx - 30, sy - 36, 60, 15);
       ctx.fillStyle = '#6e3818';
-      ctx.fillRect(sx - 26, sy - 36, 52, 13);
+      ctx.fillRect(sx - 28, sy - 38, 56, 14);
       ctx.fillStyle = '#8c4820';
-      ctx.fillRect(sx - 24, sy - 38, 48, 12);
+      ctx.fillRect(sx - 26, sy - 40, 52, 13);
       ctx.fillStyle = '#a85828';
-      ctx.fillRect(sx - 18, sy - 42, 36, 9);
+      ctx.fillRect(sx - 20, sy - 44, 40, 10);
       ctx.fillStyle = '#c86f34';
-      ctx.fillRect(sx - 10, sy - 45, 20, 6);
+      ctx.fillRect(sx - 12, sy - 47, 24, 7);
       ctx.fillStyle = '#5c2a10';
-      ctx.fillRect(sx - 2, sy - 47, 4, 4); // Peak cap
+      ctx.fillRect(sx - 2, sy - 49, 4, 4);
     }
 
-    // Draw Lilo's Memorial Stone & Bloomed Blue Forget-Me-Nots
     function drawMemorialStone(ctx, time, hovered) {
       const sx = LANDMARKS.shrine.x;
       const sy = LANDMARKS.shrine.y;
 
-      // Base shadow
       ctx.fillStyle = 'rgba(15, 28, 17, 0.35)';
-      ctx.fillRect(sx - 15, sy + 2, 30, 5);
+      ctx.fillRect(sx - 16, sy + 2, 32, 6);
 
-      // Mossy stone base & headstone
       ctx.fillStyle = '#64748b';
-      ctx.fillRect(sx - 13, sy - 4, 26, 8);
+      ctx.fillRect(sx - 14, sy - 4, 28, 9);
       ctx.fillStyle = '#94a3b8';
-      ctx.fillRect(sx - 12, sy - 5, 24, 6);
+      ctx.fillRect(sx - 13, sy - 5, 26, 7);
       ctx.fillStyle = '#64748b';
-      ctx.fillRect(sx - 10, sy - 22, 20, 18);
+      ctx.fillRect(sx - 11, sy - 23, 22, 19);
       ctx.fillStyle = '#94a3b8';
-      ctx.fillRect(sx - 9, sy - 24, 18, 19);
+      ctx.fillRect(sx - 10, sy - 25, 20, 20);
       ctx.fillStyle = '#cbd5e1';
-      ctx.fillRect(sx - 7, sy - 25, 14, 2);
+      ctx.fillRect(sx - 8, sy - 26, 16, 2);
 
-      // Pulsing blue paw emblem
-      const glow = Math.sin(time * 3) > 0 ? '#38bdf8' : '#7dd3fc';
-      ctx.fillStyle = glow;
-      ctx.fillRect(sx - 2, sy - 16, 4, 3);
-      ctx.fillRect(sx - 4, sy - 19, 2, 2);
-      ctx.fillRect(sx - 1, sy - 20, 2, 2);
-      ctx.fillRect(sx + 2, sy - 19, 2, 2);
+      // Double Paw Emblem (Lilo & Cheeto)
+      const glowLilo = Math.sin(time * 3) > 0 ? '#38bdf8' : '#7dd3fc';
+      const glowCheeto = Math.sin(time * 3 + 1.5) > 0 ? '#ffb300' : '#fde047';
+      // Left Paw (Lilo Blue)
+      ctx.fillStyle = glowLilo;
+      ctx.fillRect(sx - 5, sy - 17, 3, 3);
+      ctx.fillRect(sx - 7, sy - 19, 2, 2);
+      ctx.fillRect(sx - 4, sy - 20, 2, 2);
+      // Right Paw (Cheeto Amber)
+      ctx.fillStyle = glowCheeto;
+      ctx.fillRect(sx + 2, sy - 17, 3, 3);
+      ctx.fillRect(sx + 1, sy - 20, 2, 2);
+      ctx.fillRect(sx + 4, sy - 19, 2, 2);
 
       // Garland
       ctx.fillStyle = '#4ade80';
-      ctx.fillRect(sx - 9, sy - 23, 5, 3);
+      ctx.fillRect(sx - 10, sy - 24, 5, 3);
       ctx.fillStyle = '#38bdf8';
-      ctx.fillRect(sx - 8, sy - 24, 2, 2);
+      ctx.fillRect(sx - 9, sy - 25, 2, 2);
 
-      // Render Persistent Forget-Me-Not Blooms around the Memorial Stone
+      // Bloomed Forget-Me-Nots
       const bloomCount = Math.min(world.blooms, MEMORIAL_BLOOM_COORDS.length);
       for (let i = 0; i < bloomCount; i++) {
         const [ox, oy] = MEMORIAL_BLOOM_COORDS[i];
@@ -1774,90 +2010,151 @@
         const fy = sy + oy;
         const bob = Math.sin(time * 2.8 + i) > 0.65 ? -1 : 0;
 
-        // Stem
         ctx.fillStyle = '#256d27';
         ctx.fillRect(fx, fy + 1, 1, 2);
-
-        // Radiant Blue Petals
         ctx.fillStyle = i % 2 === 0 ? '#38bdf8' : '#60a5fa';
         ctx.fillRect(fx - 1, fy + bob, 3, 2);
-        // Yellow center stamen
         ctx.fillStyle = '#fef08a';
         ctx.fillRect(fx, fy + bob, 1, 1);
       }
 
-      // Hover Tooltip
       if (hovered) {
-        ctx.font = 'bold 7px Inter, sans-serif';
+        ctx.font = 'bold 7px Quicksand, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
-        ctx.fillRect(sx - 38, sy - 38, 76, 11);
+        ctx.fillRect(sx - 45, sy - 40, 90, 11);
         ctx.fillStyle = '#bae6fd';
-        ctx.fillText("Lilo's Tribute 💠", sx, sy - 30);
+        ctx.fillText("Lilo & Cheeto 💠", sx, sy - 32);
       }
     }
 
-    // Draw Ceramic Food Bowl
     function drawFoodBowl(ctx, bowlLevel, hovered) {
       const bx = LANDMARKS.bowl.x;
       const by = LANDMARKS.bowl.y;
 
       ctx.fillStyle = 'rgba(15, 28, 17, 0.3)';
-      ctx.fillRect(bx - 11, by - 4, 22, 9);
+      ctx.fillRect(bx - 12, by - 4, 24, 10);
       ctx.fillStyle = '#cbd5e1';
-      ctx.fillRect(bx - 10, by - 5, 20, 9);
+      ctx.fillRect(bx - 11, by - 5, 22, 10);
       ctx.fillStyle = '#94a3b8';
-      ctx.fillRect(bx - 9, by - 4, 18, 7);
+      ctx.fillRect(bx - 10, by - 4, 20, 8);
 
       ctx.fillStyle = '#0284c7';
-      ctx.fillRect(bx - 7, by - 3, 14, 6);
+      ctx.fillRect(bx - 8, by - 3, 16, 7);
       ctx.fillStyle = '#38bdf8';
-      ctx.fillRect(bx - 6, by - 4, 12, 5);
+      ctx.fillRect(bx - 7, by - 4, 14, 6);
       ctx.fillStyle = '#e0f2fe';
-      ctx.fillRect(bx - 5, by - 3, 10, 3);
+      ctx.fillRect(bx - 6, by - 3, 12, 4);
 
       if (bowlLevel >= 1) {
         ctx.fillStyle = '#92400e';
-        ctx.fillRect(bx - 4, by - 3, 8, 2);
+        ctx.fillRect(bx - 5, by - 3, 10, 2);
       }
       if (bowlLevel >= 2) {
         ctx.fillStyle = '#b45309';
-        ctx.fillRect(bx - 5, by - 4, 10, 2);
+        ctx.fillRect(bx - 6, by - 4, 12, 2);
         ctx.fillStyle = '#78350f';
-        ctx.fillRect(bx - 2, by - 4, 2, 1);
+        ctx.fillRect(bx - 3, by - 4, 2, 1);
         ctx.fillRect(bx + 2, by - 3, 2, 1);
       }
       if (bowlLevel >= 3) {
         ctx.fillStyle = '#d97706';
-        ctx.fillRect(bx - 3, by - 5, 6, 2);
+        ctx.fillRect(bx - 4, by - 5, 8, 2);
         ctx.fillStyle = '#f59e0b';
         ctx.fillRect(bx - 1, by - 5, 2, 1);
       }
 
       if (hovered) {
-        ctx.font = 'bold 7px Inter, sans-serif';
+        ctx.font = 'bold 7px Quicksand, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillStyle = 'rgba(24, 16, 10, 0.88)';
-        ctx.fillRect(bx - 28, by - 16, 56, 9);
+        ctx.fillRect(bx - 30, by - 17, 60, 9);
         ctx.fillStyle = '#fde68a';
-        ctx.fillText(bowlLevel > 0 ? 'Food Bowl' : 'Tap to Refill 🥣', bx, by - 9);
+        ctx.fillText(bowlLevel > 0 ? 'Food Bowl' : 'Tap to Refill 🥣', bx, by - 10);
       }
     }
 
     /********************************************************************
-     * MAIN CANVAS RENDER PIPELINE (360 x 220)
+     * ADAPTIVE VIEWPORT CAMERA & RENDER PIPELINE
      ********************************************************************/
-    const canvas = document.getElementById('gardenCanvas');
+    const canvas = document.getElementById('garden-canvas');
     const ctx = canvas.getContext('2d');
+    let camera = { x: 0, y: 0, scale: 1 };
+
+    function resizeGardenViewport() {
+      const isMobile = window.innerWidth < 820;
+      const viewW = window.innerWidth || document.documentElement.clientWidth;
+      const viewH = window.innerHeight || document.documentElement.clientHeight;
+
+      if (isMobile) {
+        canvas.style.width = '100vw';
+        canvas.style.height = '100dvh';
+        canvas.style.maxWidth = '100vw';
+        canvas.style.maxHeight = '100dvh';
+
+        const aspect = viewW / viewH;
+        if (aspect < 1) {
+          // Portrait phone: Guarantee min horizontal width 500px visible around 480
+          canvas.width = 500;
+          canvas.height = Math.round(500 / aspect);
+        } else {
+          // Landscape phone: Guarantee min vertical height 340px visible around 320
+          canvas.height = 340;
+          canvas.width = Math.round(340 * aspect);
+        }
+      } else {
+        // Desktop centered letterbox-free presentation
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
+        canvas.style.maxWidth = '1060px';
+        canvas.style.maxHeight = '660px';
+
+        canvas.width = 540;
+        canvas.height = 340;
+      }
+
+      // Camera offset to keep World Center (480, 320) centered on screen
+      camera.x = Math.round((canvas.width / 2) - WORLD_CENTER.x);
+      camera.y = Math.round((canvas.height / 2) - WORLD_CENTER.y);
+      camera.scale = 1;
+    }
+
+    function getCanvasWorldCoords(evt) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = (evt.touches && evt.touches.length > 0) ? evt.touches[0].clientX : evt.clientX;
+      const clientY = (evt.touches && evt.touches.length > 0) ? evt.touches[0].clientY : evt.clientY;
+
+      const canvasX = ((clientX - rect.left) / rect.width) * canvas.width;
+      const canvasY = ((clientY - rect.top) / rect.height) * canvas.height;
+
+      return {
+        x: canvasX - camera.x,
+        y: canvasY - camera.y
+      };
+    }
+
+    function findCatAt(px, py, isTouch = false) {
+      const mult = isTouch ? 1.45 : 1.0;
+      const sorted = [...world.cats].sort((a, b) => b.y - a.y);
+      for (const cat of sorted) {
+        if (Math.abs(px - cat.x) <= 15 * mult && py >= cat.y - 20 * mult && py <= cat.y + 8 * mult) {
+          return cat;
+        }
+      }
+      return null;
+    }
 
     function renderGarden(time) {
-      ctx.clearRect(0, 0, INTERNAL_W, INTERNAL_H);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // 1. Static Garden Scenery & Background Deck
+      ctx.save();
+      ctx.translate(camera.x, camera.y);
+
+      // Scenery & Deck
       drawGardenScenery(ctx, time);
       drawShelterDeck(ctx, time);
 
-      // 2. Depth-Sorted Entities (Memorial Stone, Bowl, Shelter Roof, Cats)
+      // Depth-Sorted entities
       const renderables = [
         {
           y: LANDMARKS.shrine.y,
@@ -1868,7 +2165,7 @@
           draw: () => drawFoodBowl(ctx, world.bowlLevel, world.pointer.hoveredEntity === 'bowl')
         },
         {
-          y: 92, // Shelter roof overhead
+          y: 254, // Shelter roof overhead
           draw: () => drawShelterRoofOverhead(ctx, time)
         },
         ...world.cats.map(cat => ({
@@ -1880,18 +2177,15 @@
       renderables.sort((a, b) => a.y - b.y);
       renderables.forEach(item => item.draw());
 
-      // 3. Critters (Butterflies / Fireflies)
+      // Critters
       world.critters.forEach(cr => {
         const cx = Math.round(cr.x);
         const cy = Math.round(cr.y);
         if (cr.type === 'butterfly' && world.weather !== 'NIGHT' && world.weather !== 'RAIN') {
           const wing = Math.floor(time * 10) % 2 === 0;
           ctx.fillStyle = cr.color || '#38bdf8';
-          if (wing) {
-            ctx.fillRect(cx - 1, cy, 3, 2);
-          } else {
-            ctx.fillRect(cx, cy - 1, 1, 3);
-          }
+          if (wing) ctx.fillRect(cx - 1, cy, 3, 2);
+          else ctx.fillRect(cx, cy - 1, 1, 3);
         } else if (cr.type === 'firefly' && world.weather === 'NIGHT') {
           const pulse = (Math.sin(time * 4 + cr.phase) + 1) * 0.5;
           ctx.fillStyle = `rgba(250, 204, 21, ${0.3 + pulse * 0.7})`;
@@ -1899,7 +2193,7 @@
         }
       });
 
-      // 4. Floating Particles (Hearts, Sparkles, Sleep Zs)
+      // Particles
       world.particles.forEach(p => {
         const alpha = Math.max(0, Math.min(1, p.life / p.maxLife));
         ctx.save();
@@ -1930,68 +2224,31 @@
         ctx.restore();
       });
 
-      // 5. Weather Lighting & Ambient Filters
+      // Weather lighting filters
       if (world.weather === 'CLOUDY') {
         ctx.fillStyle = 'rgba(148, 163, 184, 0.12)';
-        ctx.fillRect(0, 0, INTERNAL_W, INTERNAL_H);
+        ctx.fillRect(-camera.x, -camera.y, canvas.width, canvas.height);
       } else if (world.weather === 'RAIN') {
         ctx.fillStyle = 'rgba(30, 41, 59, 0.32)';
-        ctx.fillRect(0, 0, INTERNAL_W, INTERNAL_H);
+        ctx.fillRect(-camera.x, -camera.y, canvas.width, canvas.height);
 
-        // Falling Pixel Rain Streaks
         ctx.fillStyle = 'rgba(186, 230, 253, 0.7)';
         world.rainDrops.forEach(d => {
           ctx.fillRect(Math.round(d.x), Math.round(d.y), 1, Math.round(d.len));
         });
       } else if (world.weather === 'NIGHT') {
         ctx.fillStyle = 'rgba(15, 23, 42, 0.48)';
-        ctx.fillRect(0, 0, INTERNAL_W, INTERNAL_H);
+        ctx.fillRect(-camera.x, -camera.y, canvas.width, canvas.height);
       }
+
+      ctx.restore();
     }
 
     /********************************************************************
-     * RESPONSIVE CANVAS & TOUCH HIT DETECTION
+     * TOUCH & POINTER INTERACTIONS
      ********************************************************************/
-    function resizeCanvasDisplay() {
-      const mainEl = document.querySelector('main');
-      if (!mainEl) return;
-      const availW = Math.max(260, mainEl.clientWidth - 20);
-      const availH = Math.max(160, mainEl.clientHeight - 20);
-      const aspect = INTERNAL_W / INTERNAL_H;
-
-      let targetW = availW;
-      let targetH = targetW / aspect;
-      if (targetH > availH) {
-        targetH = availH;
-        targetW = targetH * aspect;
-      }
-
-      canvas.style.width = `${Math.floor(targetW)}px`;
-      canvas.style.height = `${Math.floor(targetH)}px`;
-    }
-
-    function getCanvasPixelCoords(evt) {
-      const rect = canvas.getBoundingClientRect();
-      const clientX = (evt.touches && evt.touches.length > 0) ? evt.touches[0].clientX : evt.clientX;
-      const clientY = (evt.touches && evt.touches.length > 0) ? evt.touches[0].clientY : evt.clientY;
-      return {
-        x: ((clientX - rect.left) / rect.width) * INTERNAL_W,
-        y: ((clientY - rect.top) / rect.height) * INTERNAL_H
-      };
-    }
-
-    function findCatAt(px, py) {
-      const sorted = [...world.cats].sort((a, b) => b.y - a.y);
-      for (const cat of sorted) {
-        if (Math.abs(px - cat.x) <= 13 && py >= cat.y - 16 && py <= cat.y + 5) {
-          return cat;
-        }
-      }
-      return null;
-    }
-
     canvas.addEventListener('pointermove', (evt) => {
-      const pt = getCanvasPixelCoords(evt);
+      const pt = getCanvasWorldCoords(evt);
       world.pointer.x = pt.x;
       world.pointer.y = pt.y;
 
@@ -2010,54 +2267,282 @@
 
     canvas.addEventListener('pointerdown', (evt) => {
       evt.preventDefault();
-      const hint = document.getElementById('hintOverlay');
-      if (hint) hint.style.opacity = '0';
+      const isTouch = evt.pointerType === 'touch';
+      const touchMult = isTouch ? 1.45 : 1.0;
+      const pt = getCanvasWorldCoords(evt);
 
-      const pt = getCanvasPixelCoords(evt);
-
-      // 1. Diegetic Cat Petting
-      const hitCat = findCatAt(pt.x, pt.y);
+      // 1. Diegetic Petting
+      const hitCat = findCatAt(pt.x, pt.y, isTouch);
       if (hitCat) {
         world.petCat(hitCat);
         return;
       }
 
-      // 2. Diegetic Memorial Stone Tap -> Opens Lilo's Tribute Card
-      if (Math.hypot(pt.x - LANDMARKS.shrine.x, pt.y - (LANDMARKS.shrine.y - 10)) <= LANDMARKS.shrine.radius) {
-        openModal('modalTribute');
+      // 2. Memorial Stone -> Opens Tribute Modal
+      if (Math.hypot(pt.x - LANDMARKS.shrine.x, pt.y - (LANDMARKS.shrine.y - 10)) <= LANDMARKS.shrine.radius * touchMult) {
+        openModal('tribute-modal');
         return;
       }
 
-      // 3. Diegetic Food Bowl Tap -> Refills Bowl directly
-      if (Math.hypot(pt.x - LANDMARKS.bowl.x, pt.y - LANDMARKS.bowl.y) <= LANDMARKS.bowl.radius) {
+      // 3. Food Bowl -> Refills Directly
+      if (Math.hypot(pt.x - LANDMARKS.bowl.x, pt.y - LANDMARKS.bowl.y) <= LANDMARKS.bowl.radius * touchMult) {
         world.feedBowl();
         return;
       }
 
-      // 4. Tapping open grass guides Lilo
+      // 4. Tap Open Grass -> Calls Lilo or Cheeto
       if (pt.x >= GARDEN_BOUNDS.minX && pt.x <= GARDEN_BOUNDS.maxX &&
           pt.y >= GARDEN_BOUNDS.minY && pt.y <= GARDEN_BOUNDS.maxY) {
-        const lilo = world.cats[0];
-        if (lilo && lilo.state !== 'EATING' && lilo.state !== 'SHELTERED') {
-          lilo.state = 'WANDER';
-          lilo.pose = 'sit';
-          lilo.targetX = pt.x;
-          lilo.targetY = pt.y;
-          lilo.labelAlpha = 1.2;
+        const cat = world.cats[Math.floor(Math.random() * Math.min(2, world.cats.length))];
+        if (cat && cat.state !== 'EATING' && cat.state !== 'SHELTERED') {
+          cat.state = 'WANDER';
+          cat.pose = 'sit';
+          cat.targetX = pt.x;
+          cat.targetY = pt.y;
+          cat.labelAlpha = 1.2;
           world.spawnHeart(pt.x, pt.y, 'sparkle');
         }
       }
     });
 
     /********************************************************************
-     * MODALS & UI HANDLERS
+     * TWIN POLAROID 3-TIER FALLBACK & UPLOADER SYSTEM
+     ********************************************************************/
+    function drawPixelArtPortrait(canvasEl, catType) {
+      canvasEl.width = 64;
+      canvasEl.height = 64;
+      const c = canvasEl.getContext('2d');
+      const w = 64;
+      const h = 64;
+      c.clearRect(0, 0, w, h);
+
+      if (catType === 'lilo') {
+        // Deep blue starry night backdrop
+        c.fillStyle = '#0f172a';
+        c.fillRect(0, 0, w, h);
+        c.fillStyle = '#38bdf8';
+        c.fillRect(10, 8, 2, 2);
+        c.fillRect(52, 12, 2, 2);
+        c.fillRect(30, 6, 2, 2);
+        c.fillRect(16, 22, 1, 1);
+        c.fillRect(48, 24, 1, 1);
+
+        // Soft glowing crescent moon
+        c.fillStyle = '#bae6fd';
+        c.fillRect(46, 6, 4, 4);
+        c.fillStyle = '#0f172a';
+        c.fillRect(45, 5, 3, 4);
+
+        // Lush green lawn
+        c.fillStyle = '#225528';
+        c.fillRect(0, 42, w, 22);
+        c.fillStyle = '#2f7038';
+        c.fillRect(0, 42, w, 3);
+
+        // Forget-me-not flower beside Lilo
+        c.fillStyle = '#22c55e';
+        c.fillRect(14, 44, 1, 4);
+        c.fillStyle = '#38bdf8';
+        c.fillRect(13, 42, 3, 3);
+        c.fillStyle = '#fde047';
+        c.fillRect(14, 43, 1, 1);
+
+        drawPixelCat(c, {
+          ...DEFAULT_LILO,
+          x: 34,
+          y: 54,
+          facing: 1,
+          state: 'IDLE',
+          pose: 'sit',
+          seed: 0,
+          labelAlpha: 0
+        }, 0);
+      } else {
+        // Warm sunset amber golden backdrop for Cheeto
+        c.fillStyle = '#451a03';
+        c.fillRect(0, 0, w, h);
+        c.fillStyle = '#78350f';
+        c.fillRect(0, 18, w, 24);
+        c.fillStyle = '#fbbf24';
+        c.fillRect(12, 10, 2, 2);
+        c.fillRect(50, 8, 2, 2);
+        c.fillRect(28, 14, 2, 2);
+
+        // Sunbeam patch
+        c.fillStyle = 'rgba(251, 191, 36, 0.25)';
+        c.fillRect(18, 0, 16, 44);
+
+        // Lawn
+        c.fillStyle = '#225528';
+        c.fillRect(0, 42, w, 22);
+        c.fillStyle = '#2f7038';
+        c.fillRect(0, 42, w, 3);
+
+        // Golden dandelion flower
+        c.fillStyle = '#22c55e';
+        c.fillRect(50, 44, 1, 4);
+        c.fillStyle = '#fbbf24';
+        c.fillRect(49, 42, 3, 3);
+        c.fillStyle = '#fef08a';
+        c.fillRect(50, 43, 1, 1);
+
+        drawPixelCat(c, {
+          ...DEFAULT_CHEETO,
+          x: 32,
+          y: 54,
+          facing: -1,
+          state: 'IDLE',
+          pose: 'sit',
+          seed: 1,
+          labelAlpha: 0
+        }, 0);
+      }
+    }
+
+    function initPolaroidFrame(catType, imgEl, canvasEl, inputEl, storageKey, defaultSrc, cardEl) {
+      const renderFallback = () => {
+        imgEl.style.display = 'none';
+        canvasEl.style.display = 'block';
+        drawPixelArtPortrait(canvasEl, catType);
+      };
+
+      const showImage = () => {
+        imgEl.style.display = 'block';
+        canvasEl.style.display = 'none';
+      };
+
+      imgEl.onerror = renderFallback;
+      imgEl.onload = showImage;
+
+      // Priority 1: Check localStorage for user-uploaded photo
+      const userPhoto = localStorage.getItem(storageKey);
+      if (userPhoto) {
+        imgEl.src = userPhoto;
+      } else {
+        // Priority 2: Attempt to load default path
+        imgEl.src = defaultSrc;
+      }
+
+      // Handle immediate cache or failure
+      if (imgEl.complete) {
+        if (imgEl.naturalWidth === 0) {
+          renderFallback();
+        } else {
+          showImage();
+        }
+      }
+
+      // Stop click bubbling on input to avoid recursive activation
+      inputEl.addEventListener('click', (e) => e.stopPropagation());
+
+      // Click card to trigger image file picker
+      cardEl.addEventListener('click', (e) => {
+        if (e.target === inputEl) return;
+        inputEl.click();
+      });
+
+      // Photo upload & 260x260 downscaling
+      inputEl.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (re) => {
+          const tempImg = new Image();
+          tempImg.onload = () => {
+            const offCanvas = document.createElement('canvas');
+            offCanvas.width = 260;
+            offCanvas.height = 260;
+            const offCtx = offCanvas.getContext('2d');
+
+            // Center square crop
+            const minDim = Math.min(tempImg.width, tempImg.height);
+            const sx = (tempImg.width - minDim) / 2;
+            const sy = (tempImg.height - minDim) / 2;
+
+            offCtx.drawImage(tempImg, sx, sy, minDim, minDim, 0, 0, 260, 260);
+
+            const compressedDataUrl = offCanvas.toDataURL('image/jpeg', 0.82);
+            try {
+              localStorage.setItem(storageKey, compressedDataUrl);
+            } catch (err) {
+              console.warn('localStorage quota exceeded', err);
+            }
+
+            imgEl.src = compressedDataUrl;
+            imgEl.style.display = 'block';
+            canvasEl.style.display = 'none';
+
+            showToast(`Updated ${catType === 'lilo' ? 'Lilo' : 'Cheeto'}'s photo! 📸`, '📸');
+          };
+          tempImg.src = re.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    /********************************************************************
+     * INTRO OVERLAY PREVIEW CANVAS
+     ********************************************************************/
+    function renderIntroCanvas() {
+      const c = document.getElementById('intro-canvas');
+      if (!c) return;
+      const ictx = c.getContext('2d');
+      ictx.clearRect(0, 0, c.width, c.height);
+
+      // Starry sky & hill
+      ictx.fillStyle = '#1e3a24';
+      ictx.fillRect(0, 0, c.width, c.height);
+      ictx.fillStyle = '#4ade80';
+      ictx.fillRect(20, 10, 2, 2);
+      ictx.fillRect(85, 12, 2, 2);
+
+      // Grass hill
+      ictx.fillStyle = '#3f7d3b';
+      ictx.fillRect(0, 36, c.width, 26);
+
+      // Lilo and Cheeto touching noses with a heart
+      drawPixelCat(ictx, {
+        ...DEFAULT_LILO,
+        x: 44,
+        y: 44,
+        facing: 1,
+        state: 'IDLE',
+        pose: 'sit',
+        seed: 0,
+        labelAlpha: 0
+      }, 0);
+
+      drawPixelCat(ictx, {
+        ...DEFAULT_CHEETO,
+        x: 66,
+        y: 44,
+        facing: -1,
+        state: 'IDLE',
+        pose: 'sit',
+        seed: 1,
+        labelAlpha: 0
+      }, 0);
+
+      // Floating heart between them
+      ictx.fillStyle = '#fb7185';
+      ictx.fillRect(53, 24, 2, 2);
+      ictx.fillRect(56, 24, 2, 2);
+      ictx.fillRect(52, 25, 7, 2);
+      ictx.fillRect(53, 27, 5, 1);
+      ictx.fillRect(54, 28, 3, 1);
+      ictx.fillRect(55, 29, 1, 1);
+    }
+
+    /********************************************************************
+     * MODALS, ROSTER & TOASTS
      ********************************************************************/
     let customizerState = {
       name: 'Mochi',
       pattern: 'solid',
       coatColor: COAT_SWATCHES[0].hex,
       shadeColor: COAT_SWATCHES[0].shade,
-      eyeColor: EYE_SWATCHES[1].hex
+      eyeColor: EYE_SWATCHES[0].hex
     };
 
     function showToast(message, icon = '✨') {
@@ -2078,9 +2563,8 @@
       if (!el) return;
       el.classList.add('active');
 
-      if (id === 'modalTribute') {
+      if (id === 'tribute-modal') {
         document.getElementById('inputTributeNote').value = world.tributeNote;
-        document.getElementById('tributeQuoteDisplay').textContent = `"${world.tributeNote}"`;
       }
     }
 
@@ -2109,15 +2593,14 @@
         }
       } else if (e.key === 'p' || e.key === 'P') {
         if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-          const lilo = world.cats[0];
-          if (lilo) world.petCat(lilo);
+          const cat = world.cats[0];
+          if (cat) world.petCat(cat);
         }
       } else if (e.key === 'w' || e.key === 'W') {
         world.cycleWeather();
       }
     });
 
-    // Populate Residents inside Friends Modal
     function renderFriendsList() {
       const list = document.getElementById('residentList');
       if (!list) return;
@@ -2133,11 +2616,11 @@
         badge.appendChild(dot);
 
         const nameLabel = document.createElement('span');
-        nameLabel.textContent = cat.isDefault ? `★ ${cat.name} (Lilo)` : cat.name;
+        nameLabel.textContent = cat.isDefault ? `★ ${cat.name}` : cat.name;
         badge.appendChild(nameLabel);
 
         const petBtn = document.createElement('button');
-        petBtn.className = 'ml-1 px-2 py-0.5 rounded-full bg-rose-200 text-rose-800 text-[10px] font-bold hover:bg-rose-300 cursor-pointer';
+        petBtn.className = 'ml-1 px-2.5 py-0.5 rounded-full bg-rose-200 text-rose-800 text-[10px] font-bold hover:bg-rose-300 cursor-pointer';
         petBtn.textContent = '♥ Pet';
         petBtn.addEventListener('click', () => {
           world.petCat(cat);
@@ -2162,7 +2645,6 @@
       });
     }
 
-    // Initialize Customizer Swatches
     function initCustomizerUI() {
       const coatContainer = document.getElementById('coatColorSelector');
       COAT_SWATCHES.forEach((sw, i) => {
@@ -2224,11 +2706,8 @@
       });
     }
 
-    // Mini preview canvases in modals
     const previewCanvas = document.getElementById('previewCatCanvas');
     const previewCtx = previewCanvas.getContext('2d');
-    const tributeCanvas = document.getElementById('tributePortraitCanvas');
-    const tributeCtx = tributeCanvas.getContext('2d');
 
     function renderMiniCanvases(time) {
       if (document.getElementById('modalFriends').classList.contains('active')) {
@@ -2241,32 +2720,18 @@
           facing: 1, state: 'WANDER', pose: 'sit', seed: 1, labelAlpha: 0
         }, time);
       }
-
-      if (document.getElementById('modalTribute').classList.contains('active')) {
-        tributeCtx.clearRect(0, 0, 96, 64);
-        tributeCtx.fillStyle = '#0f172a';
-        tributeCtx.fillRect(0, 0, 96, 64);
-        tributeCtx.fillStyle = '#38bdf8';
-        tributeCtx.fillRect(18, 12, 1, 1);
-        tributeCtx.fillRect(74, 16, 1, 1);
-        tributeCtx.fillRect(48, 8, 2, 2);
-        tributeCtx.fillStyle = '#3f7d3b';
-        tributeCtx.fillRect(0, 44, 96, 20);
-        tributeCtx.fillStyle = '#38bdf8';
-        tributeCtx.fillRect(24, 43, 3, 2);
-        tributeCtx.fillRect(68, 44, 3, 2);
-
-        drawPixelCat(tributeCtx, {
-          ...DEFAULT_LILO,
-          x: 48, y: 48,
-          facing: 1, state: 'IDLE', pose: 'sit', seed: 0, labelAlpha: 0
-        }, time);
-      }
     }
 
     /********************************************************************
-     * BUTTON BINDINGS
+     * BUTTON BINDINGS & ENTRY
      ********************************************************************/
+    document.getElementById('btnEnterGarden').addEventListener('click', () => {
+      sound.init();
+      sound.playPurr();
+      const intro = document.getElementById('intro-overlay');
+      intro.classList.add('hidden-intro');
+    });
+
     document.getElementById('btnFeed').addEventListener('click', () => world.feedBowl());
     document.getElementById('btnOpenFriends').addEventListener('click', () => openModal('modalFriends'));
     document.getElementById('btnWeather').addEventListener('click', () => world.cycleWeather());
@@ -2274,7 +2739,7 @@
     document.getElementById('btnAudio').addEventListener('click', () => {
       sound.enabled = !sound.enabled;
       document.getElementById('audioIcon').textContent = sound.enabled ? '🔊' : '🔇';
-      showToast(sound.enabled ? 'Cozy garden audio enabled' : 'Garden audio muted', sound.enabled ? '🔊' : '🔇');
+      showToast(sound.enabled ? 'Cozy audio enabled' : 'Cozy audio muted', sound.enabled ? '🔊' : '🔇');
     });
 
     document.getElementById('btnConfirmAddCat').addEventListener('click', () => {
@@ -2286,6 +2751,7 @@
         coatColor: customizerState.coatColor,
         shadeColor: customizerState.shadeColor,
         eyeColor: customizerState.eyeColor,
+        eyeColorRight: customizerState.eyeColor,
         noseColor: '#ff9ebb',
         pattern: customizerState.pattern
       };
@@ -2295,30 +2761,26 @@
       sound.playPurr();
       world.save();
       closeModal('modalFriends');
-      showToast(`${name} is now wandering the garden with Lilo!`, '🐾');
+      showToast(`${name} joined Lilo and Cheeto! 🐾`, '🐾');
     });
 
     document.getElementById('btnSaveTributeNote').addEventListener('click', () => {
       const note = document.getElementById('inputTributeNote').value.trim();
       if (note) {
         world.tributeNote = note;
-        document.getElementById('tributeQuoteDisplay').textContent = `"${note}"`;
         world.save();
-        showToast("Lilo's tribute memory saved ♥", '💠');
+        showToast("Lilo & Cheeto's tribute note saved ♥", '💠');
       }
     });
 
     document.getElementById('btnPetLiloNow').addEventListener('click', () => {
-      const lilo = world.cats[0];
-      if (lilo) {
-        world.petCat(lilo);
-        closeModal('modalTribute');
-        showToast('Sent warm chin scratches and love to Lilo ♥', '💠');
-      }
+      world.cats.slice(0, 2).forEach(c => world.petCat(c));
+      closeModal('tribute-modal');
+      showToast('Sent warm chin scratches to Lilo and Cheeto ♥', '💠');
     });
 
     /********************************************************************
-     * MAIN GAME LOOP
+     * MAIN GAME LOOP & INITIALIZATION
      ********************************************************************/
     let lastTimestamp = 0;
 
@@ -2335,12 +2797,36 @@
       requestAnimationFrame(gameLoop);
     }
 
-    window.addEventListener('resize', resizeCanvasDisplay);
+    window.addEventListener('resize', resizeGardenViewport);
+    window.addEventListener('orientationchange', resizeGardenViewport);
 
     window.onload = function () {
       initCustomizerUI();
       world.init();
-      resizeCanvasDisplay();
+      resizeGardenViewport();
+      renderIntroCanvas();
+
+      // Initialize Twin Polaroid Photo Frames with 3-Tier Fallback
+      initPolaroidFrame(
+        'lilo',
+        document.getElementById('lilo-polaroid-img'),
+        document.getElementById('lilo-polaroid-canvas'),
+        document.getElementById('lilo-photo-input'),
+        'liloPhotoData',
+        './assets/lilo.jpg',
+        document.getElementById('polaroidLilo')
+      );
+
+      initPolaroidFrame(
+        'cheeto',
+        document.getElementById('cheeto-polaroid-img'),
+        document.getElementById('cheeto-polaroid-canvas'),
+        document.getElementById('cheeto-photo-input'),
+        'cheetoPhotoData',
+        './assets/cheeto.jpg',
+        document.getElementById('polaroidCheeto')
+      );
+
       requestAnimationFrame(gameLoop);
     };
   </script>
