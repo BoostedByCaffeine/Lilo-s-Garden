@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lilos-garden-pwa-v2';
+const CACHE_NAME = 'lilos-garden-pwa-v4';
 
 const CORE_ASSETS = [
   './',
@@ -6,6 +6,7 @@ const CORE_ASSETS = [
   './style.css',
   './app.js',
   './manifest.json',
+  './favicon.png',
   './assets/lilo.jpg',
   './assets/cheeto.jpg',
   './assets/icon-192.png',
@@ -13,12 +14,12 @@ const CORE_ASSETS = [
 ];
 
 // Install: Pre-cache core files and optional assets safely
-self.addEventListener('install', event => {
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(async cache => {
+    caches.open(CACHE_NAME).then(async (cache) => {
       await Promise.allSettled(
-        CORE_ASSETS.map(url =>
-          fetch(url).then(response => {
+        CORE_ASSETS.map((url) =>
+          fetch(url).then((response) => {
             if (response.ok) {
               return cache.put(url, response);
             }
@@ -30,14 +31,14 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
-// Activate: Clean up old caches when version bumps
-self.addEventListener('activate', event => {
+// Activate: Clean up old caches (such as broken v1/v2 caches)
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then(keys =>
+    caches.keys().then((keys) =>
       Promise.all(
         keys
-          .filter(key => key !== CACHE_NAME)
-          .map(key => caches.delete(key))
+          .filter((key) => key !== CACHE_NAME)
+          .map((key) => caches.delete(key))
       )
     )
   );
@@ -45,30 +46,33 @@ self.addEventListener('activate', event => {
 });
 
 // Fetch: Network-first for live weather API; Stale-While-Revalidate for app assets
-self.addEventListener('fetch', event => {
+self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
 
-  // Live Open-Meteo API: try network first, ignore cache if offline
+  // Live Open-Meteo API: try network first, fallback gracefully if offline
   if (url.hostname.includes('open-meteo.com')) {
     event.respondWith(
-      fetch(request).catch(() => new Response(JSON.stringify({ offline: true }), {
-        headers: { 'Content-Type': 'application/json' }
-      }))
+      fetch(request).catch(
+        () =>
+          new Response(JSON.stringify({ offline: true }), {
+            headers: { 'Content-Type': 'application/json' }
+          })
+      )
     );
     return;
   }
 
   // App shell & assets: Stale-While-Revalidate
   event.respondWith(
-    caches.match(request).then(cachedResponse => {
+    caches.match(request).then((cachedResponse) => {
       const networkFetch = fetch(request)
-        .then(networkResponse => {
+        .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             const clone = networkResponse.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
           }
           return networkResponse;
         })
