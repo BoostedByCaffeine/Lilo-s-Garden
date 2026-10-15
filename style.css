@@ -49,6 +49,36 @@ html {
   line-height: 1.4;
 }
 
+/* ==================== PIXELARTICONS SYSTEM ==================== */
+.pixel-icon {
+  display: inline-block;
+  width: 1.15em;
+  height: 1.15em;
+  vertical-align: -0.16em;
+  fill: currentColor;
+  shape-rendering: crispEdges;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.pixel-icon-sm {
+  width: 0.95em;
+  height: 0.95em;
+  vertical-align: -0.12em;
+}
+
+.pixel-icon-lg {
+  width: 1.5em;
+  height: 1.5em;
+  vertical-align: -0.22em;
+}
+
+.pixel-icon-xl {
+  width: 2em;
+  height: 2em;
+  vertical-align: -0.26em;
+}
+
 /* ==================== GARDEN STAGE & PIXEL CANVAS ==================== */
 #garden-stage {
   position: relative;

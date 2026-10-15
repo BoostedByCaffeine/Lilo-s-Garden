@@ -298,6 +298,39 @@ const sound = new CozyAudio();
 /********************************************************************
  * 3. SAFE DOM HELPERS & TOAST NOTIFICATIONS
  ********************************************************************/
+const PIXEL_ICONS = {
+  heart: 'M13 22h-2v-2h2v2Zm-2-2H9v-2h2v2Zm4 0h-2v-2h2v2Zm-6-2H7v-2h2v2Zm8 0h-2v-2h2v2ZM7 16H5v-2h2v2Zm12 0h-2v-2h2v2ZM5 14H3v-2h2v2Zm16 0h-2v-2h2v2ZM3 12H1V6h2v6Zm20 0h-2V6h2v6ZM13 8h-2V6h2v2ZM5 6H3V4h2v2Zm6 0H9V4h2v2Zm4 0h-2V4h2v2Zm6 0h-2V4h2v2ZM9 4H5V2h4v2Zm10 0h-4V2h4v2Z',
+  'heart-solid': 'M5 2h4v2h2v2h2V4h2V2h4v2h2v2h2v6h-2v2h-2v2h-2v2h-2v2h-2v2h-2v-2H9v-2H7v-2H5v-2H3v-2H1V6h2V4h2V2z',
+  paw: 'M4 5h3v4H4V5zm4-2h3v4H8V3zm5 0h3v4h-3V3zm4 2h3v4h-3V5zm-9 5h8v2h2v4h-2v4H8v-4H6v-4h2v-2z',
+  sun: 'M13 22h-2v-3h2v3Zm-6-3H5v-2h2v2Zm12 0h-2v-2h2v2Zm-4-2H9v-2h6v2Zm-6-2H7V9h2v6Zm8 0h-2V9h2v6ZM5 13H2v-2h3v2Zm17 0h-3v-2h3v2Zm-7-4H9V7h6v2ZM7 7H5V5h2v2Zm12 0h-2V5h2v2Zm-6-2h-2V2h2v3Z',
+  'cloud-sun': 'M14 22H4v-2h10v2ZM4 20H2v-4h2v4Zm12 0h-2v-4h2v4Zm-6-2H8v-2h2v2Zm-2-2H4v-2h4v2Zm6 0h-2v-2h2v2Zm-2-2H8v-2h4v2Zm12-1h-4v-2h4v2Zm-6-1h-2v-2h2v2ZM8 10H6V8h2v2Zm8 0h-2V8h2v2Zm-2-2H8V6h6v2ZM6 6H4V4h2v2Zm14 0h-2V4h2v2ZM4 4H2V2h2v2Zm9 0h-2V0h2v4Zm9 0h-2V2h2v2Z',
+  cloud: 'M22 20H2v-2h20v2ZM2 18H0v-6h2v6Zm22 0h-2v-6h2v6Zm-6-6v2h-2v-2h2ZM4 12H2v-2h2v2Zm6 0H8v-2h2v2Zm10-2h2v2h-4V8h2v2ZM8 10H4V8h4v2Zm2-2H8V6h2v2Zm8 0h-2V6h2v2Zm-2-2h-6V4h6v2Z',
+  moon: 'M18 22H8v-2h10v2ZM8 20H6v-2h2v2Zm12 0h-2v-2h2v2ZM6 18H4v-2h2v2Zm16 0h-2v-4h-2v-2h2v-2h2v8ZM4 16H2V6h2v10Zm14 0h-6v-2h6v2Zm-6-2h-2v-2h2v2Zm-2-2H8V6h2v6ZM6 6H4V4h2v2Zm8-2h-2v2h-2V4H6V2h8v2Z',
+  waves: 'M10 20H6v-2h4v2Zm8 0h-4v-2h4v2ZM6 18H2v-2h4v2Zm8 0h-4v-2h4v2Zm8 0h-4v-2h4v2Zm-12-4H6v-2h4v2Zm8 0h-4v-2h4v2ZM6 12H2v-2h4v2Zm8 0h-4v-2h4v2Zm8 0h-4v-2h4v2ZM10 8H6V6h4v2Zm8 0h-4V6h4v2ZM6 6H2V4h4v2Zm8 0h-4V4h4v2Zm8-2v2h-4V4h4Z',
+  'volume-3': 'M11 22H9v-2H7v-2h2V6H7V4h2V2h2v20Zm8 0h-6v-2h6v2Zm2-2h-2v-2h2v2ZM7 18H5v-2h2v2Zm10 0h-4v-2h4v2Zm6 0h-2V6h2v12ZM5 10H3v4h2v2H1V8h4v2Zm14 6h-2V8h2v8Zm-4-2h-2v-4h2v4ZM7 8H5V6h2v2Zm10 0h-4V6h4v2Zm4-2h-2V4h2v2Zm-2-2h-6V2h6v2Z',
+  'volume-x': 'M13 22h-2v-2H9v-2h2V6H9V4h2V2h2v20Zm-4-4H7v-2h2v2Zm-2-8H5v4h2v2H3V8h4v2Zm10.001 5.224h-2v-2H17v-2h-1.999v-2h2v2H19v2h-1.999v2Zm3.999 0h-2v-2h2v2Zm0-4h-2v-2h2v2ZM9 8H7V6h2v2Z',
+  target: 'M19 23H5v-2h14v2ZM5 21H3v-2h2v2Zm16 0h-2v-2h2v2ZM3 19H1V5h2v14Zm12 0H9v-2h6v2Zm8 0h-2V5h2v14ZM9 17H7v-2h2v2Zm8 0h-2v-2h2v2ZM7 15H5V9h2v6Zm6 0h-2v-2h2v2Zm6 0h-2V9h2v6Zm-8-2H9v-2h2v2Zm4 0h-2v-2h2v2Zm-2-2h-2V9h2v2ZM9 9H7V7h2v2Zm8 0h-2V7h2v2Zm-2-2H9V5h6v2ZM5 5H3V3h2v2Zm16 0h-2V3h2v2Zm-2-2H5V1h14v2Z',
+  map: 'M4 20h2v2H2V6h2v14Zm12 0h2v2h-4v-2h-2v-2h2V8h-2V6h4v14Zm-8 0H6v-2h2v2Zm12 0h-2v-2h2v2ZM10 4h2v2h-2v10h2v2H8V4H6V2h4v2Zm12 14h-2V4h-2V2h4v16ZM6 6H4V4h2v2Zm12 0h-2V4h2v2Z',
+  'zoom-in': 'M22 22h-2v-2h2v2Zm-2-2h-2v-2h2v2Zm-6-2H6v-2h8v2Zm4 0h-2v-2h2v2ZM6 16H4v-2h2v2Zm10 0h-2v-2h2v2ZM4 14H2V6h2v8Zm7-5h3v2h-3v3H9v-3H6V9h3V6h2v3Zm7 5h-2V6h2v8ZM6 6H4V4h2v2Zm10 0h-2V4h2v2Zm-2-2H6V2h8v2Z',
+  camera: 'M20 21H4v-2h16v2ZM4 19H2V7h2v12Zm18 0h-2V7h2v12Zm-8-3h-4v-2h4v2Zm-4-2H8v-4h2v4Zm6 0h-2v-4h2v4Zm-2-4h-4V8h4v2ZM8 7H4V5h4v2Zm12 0h-4V5h4v2Zm-4-2H8V3h8v2Z',
+  link: 'M11 18H4v-2h7v2Zm9 0h-7v-2h7v2ZM4 16H2V8h2v8Zm18 0h-2V8h2v8Zm-5-3H7v-2h10v2Zm-6-5H4V6h7v2Zm9 0h-7V6h7v2Z',
+  download: 'M19 21H5v-2h14v2ZM5 19H3v-4h2v4Zm16 0h-2v-4h2v4Zm-8-8h4v2h-2v2h-2v2h-2v-2H9v-2H7v-2h4V3h2v8Z',
+  smartphone: 'M18 22H6v-2h12v2ZM6 20H4V4h2v16Zm14 0h-2V4h2v16Zm-7-1h-2v-2h2v2Zm5-15H6V2h12v2Z',
+  image: 'M8 20h6v-2h2v2h4v2H4v-2h2v-2h2v2Zm-4 0H2V4h2v16Zm18 0h-2v-4h-2v-2h2V4h2v16Zm-12-2H8v-2h2v2Zm4 0h-2v-2h2v2Zm-2-2h-2v-2h2v2Zm4 0h-2v-2h2v2Zm2-2h-2v-2h2v2Zm-8-2H8v-2h2v2Zm-2-2H6V8h2v2Zm4 0h-2V8h2v2Zm-2-2H8V6h2v2Zm10-4H4V2h16v2Z',
+  'grid-2x2': 'M20 4h-7v7h7V4h2v16h-2v-7h-7v7h7v2H4v-2h7v-7H4v7H2V4h2v7h7V4H4V2h16v2Z',
+  close: 'M7 19H5v-2h2v2Zm12 0h-2v-2h2v2ZM9 15v2H7v-2h2Zm8 2h-2v-2h2v2Zm-6-2H9v-2h2v2Zm4 0h-2v-2h2v2Zm-2-2h-2v-2h2v2Zm-2-2H9V9h2v2Zm4 0h-2V9h2v2ZM9 9H7V7h2v2Zm8 0h-2V7h2v2ZM7 7H5V5h2v2Zm12 0h-2V5h2v2Z',
+  leaf: 'M3 22H1v-4h2v4Zm10 0H9v-2h4v2Zm-4-2H5v-2h4v2Zm8 0h-4v-2h4v2ZM5 18H3v-2h2v2Zm14 0h-2v-2h2v2Zm-8-2H5v-2h6v2Zm10 0h-2V4h2v12ZM5 14H3v-4h2v4Zm8 0h-2v-2h2v2Zm-6-4H5V8h2v2Zm6-2H7V6h6v2Zm4-2h-4V4h4v2Zm2-2h-2V2h2v2Z',
+  coffee: 'M20 20H2v-2h18v2Zm-4-4H6v-2h10v2Zm4-10h-2v4h2v2h-2v2h-2V6H6v8H4V4h16v2Zm2 4h-2V6h2v4Z',
+  fish: 'M18 19h-6v-2h6v2ZM4 9h2v2H4v2h2v2H4v2H2V7h2v2Zm8 8h-2v-2h2v2Zm8 0h-2v-2h2v2Zm-10-2H8v-2h2v2Zm12 0h-2V9h2v6ZM8 13H6v-2h2v2Zm9-1h-2v-2h2v2Zm-7-1H8V9h2v2Zm2-2h-2V7h2v2Zm8 0h-2V7h2v2Zm-2-2h-6V5h6v2Z',
+  users: 'M2 22H0v-4h2v4Zm14 0h-2v-4h2v4Zm8 0h-2v-4h2v4ZM4 18H2v-2h2v2Zm10 0h-2v-2h2v2Zm8 0h-2v-2h2v2Zm-10-2H4v-2h8v2Zm8 0h-4v-2h4v2Zm-9-4H5v-2h6v2Zm8 0h-4v-2h4v2ZM5 10H3V4h2v6Zm8 0h-2V4h2v6Zm8 0h-2V4h2v6ZM11 4H5V2h6v2Zm8 0h-4V2h4v2Z',
+  sparkle: 'M13 23h-2v-4h2v4Zm-2-4H9v-4h2v4Zm4 0h-2v-4h2v4Zm-6-4H5v-2h4v2Zm10-2v2h-4v-2h4ZM5 13H1v-2h4v2Zm18 0h-4v-2h4v2ZM9 11H5V9h4v2Zm10 0h-4V9h4v2Zm-8-2H9V5h2v4Zm4 0h-2V5h2v4Zm-2-4h-2V1h2v4Z'
+};
+
+function getPixelIcon(name, extraClass = '', extraStyle = '') {
+  const d = PIXEL_ICONS[name] || PIXEL_ICONS['sparkle'];
+  return `<svg class="pixel-icon ${extraClass}" style="${extraStyle}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" shape-rendering="crispEdges"><path d="${d}"/></svg>`;
+}
+
 function safeOn(id, event, handler) {
   const el = document.getElementById(id);
   if (el) el.addEventListener(event, handler);
@@ -308,11 +341,41 @@ function safeText(id, text) {
   if (el) el.textContent = text;
 }
 
-function showToast(message, icon = '💙') {
+function showToast(message, icon = 'heart-solid', iconColor = '') {
   const box = document.getElementById('toastBox');
   if (!box) return;
   safeText('toastText', message);
-  safeText('toastIcon', icon);
+  const iconEl = document.getElementById('toastIcon');
+  if (iconEl) {
+    let iconName = icon;
+    if (icon === '💙' || icon === '💛' || icon === '♥' || icon === 'heart') iconName = 'heart-solid';
+    else if (icon === '🐾') iconName = 'paw';
+    else if (icon === '🌿') iconName = 'leaf';
+    else if (icon === '🔊') iconName = 'volume-3';
+    else if (icon === '🔇') iconName = 'volume-x';
+    else if (icon === '🔗') iconName = 'link';
+    else if (icon === '📲') iconName = 'download';
+    else if (icon === '🖼️') iconName = 'image';
+    else if (icon === '📌') iconName = 'grid-2x2';
+    else if (icon === '📷') iconName = 'camera';
+    else if (icon === '🎯') iconName = 'target';
+    else if (icon === '🗺️') iconName = 'map';
+    else if (icon === '🔍') iconName = 'zoom-in';
+    else if (icon === '🥣') iconName = 'fish';
+    else if (icon === '☀️') iconName = 'sun';
+    else if (icon === '⛅') iconName = 'cloud-sun';
+    else if (icon === '🌧️') iconName = 'waves';
+    else if (icon === '🌙') iconName = 'moon';
+
+    let colorStyle = iconColor ? `color: ${iconColor};` : '';
+    if (!iconColor) {
+      if (iconName === 'heart-solid' || iconName === 'heart') colorStyle = 'color: #38bdf8;';
+      else if (iconName === 'paw') colorStyle = 'color: #d97706;';
+      else if (iconName === 'leaf') colorStyle = 'color: #4ade80;';
+      else if (iconName === 'fish') colorStyle = 'color: #fbbf24;';
+    }
+    iconEl.innerHTML = getPixelIcon(iconName, '', colorStyle);
+  }
   box.classList.remove('opacity-0', '-translate-y-2');
   box.classList.add('opacity-100', 'translate-y-0');
   clearTimeout(box._timer);
@@ -433,14 +496,14 @@ const world = {
     this.weatherMode = modes[nextIdx];
     if (this.weatherMode === 'AUTO') {
       syncLiveWeather(this);
-      showToast('Live Weather: Open-Meteo GPS', '🌤️');
+      showToast('Live Weather: Open-Meteo GPS', 'cloud-sun');
     } else {
       this.weather = this.weatherMode;
       const map = {
-        SUNNY: { desc: 'Sunny Sky', temp: 25, icon: '☀️' },
-        CLOUDY: { desc: 'Cloudy Sky', temp: 21, icon: '⛅' },
-        RAIN: { desc: 'Rain Shower', temp: 18, icon: '🌧️' },
-        NIGHT: { desc: 'Firefly Night', temp: 16, icon: '🌙' }
+        SUNNY: { desc: 'Sunny Sky', temp: 25, icon: 'sun' },
+        CLOUDY: { desc: 'Cloudy Sky', temp: 21, icon: 'cloud-sun' },
+        RAIN: { desc: 'Rain Shower', temp: 18, icon: 'waves' },
+        NIGHT: { desc: 'Firefly Night', temp: 16, icon: 'moon' }
       };
       this.skyDesc = map[this.weather].desc;
       this.tempC = map[this.weather].temp;
@@ -486,7 +549,7 @@ const world = {
             try { saved = JSON.parse(decodedStr); } catch (e2) { }
           }
           if (saved) {
-            setTimeout(() => showToast('Garden loaded from shared link!', '🌿'), 600);
+            setTimeout(() => showToast('Garden loaded from shared link!', 'leaf'), 600);
           }
         }
       }
@@ -641,12 +704,12 @@ const world = {
       if (this.blooms < 24) {
         this.blooms++;
         this.spawnHeart(LANDMARKS.shrine.x, LANDMARKS.shrine.y - 10, 'sparkle');
-        showToast('A new blue forget-me-not bloomed! ✿', '💙');
+        showToast('A new blue forget-me-not bloomed!', 'sparkle', '#38bdf8');
       } else {
-        showToast(`${cat.name} purred warmly! ♥`, '🐾');
+        showToast(`${cat.name} purred warmly!`, 'heart-solid', '#f43f5e');
       }
     } else {
-      showToast(`${cat.name} chirped & purred! ♥`, '💙');
+      showToast(`${cat.name} chirped & purred!`, 'heart-solid', '#38bdf8');
     }
 
     this.spawnHeart(cat.x, cat.y - 6, 'heart');
@@ -663,7 +726,7 @@ const world = {
       cat.targetX = LANDMARKS.bowl.x + (idx * 16 - 12);
       cat.targetY = LANDMARKS.bowl.y + 2;
     });
-    showToast('Ceramic bowl filled with crunchy kibble!', '🥣');
+    showToast('Ceramic bowl filled with crunchy kibble!', 'fish', '#fbbf24');
     this.save();
   },
 
@@ -871,7 +934,7 @@ const world = {
     else if (lilo.state === 'SEEK_SHELTER') moodText = "Lilo: Trotting to shelter";
     else if (lilo.state === 'EATING') moodText = "Lilo: Munching kibble";
     else if (lilo.state === 'SEEK_FOOD') moodText = "Lilo: Running to bowl";
-    else if (lilo.state === 'INTERACT') moodText = "Lilo: Purring happily ♥";
+    else if (lilo.state === 'INTERACT') moodText = "Lilo: Purring happily";
     else if (lilo.state === 'PLAYFUL') moodText = "Lilo: Chasing butterflies";
     else if (lilo.state === 'IDLE' && lilo.pose === 'sleep') moodText = "Lilo: Napping in sun";
     else if (lilo.state === 'WANDER') moodText = "Lilo: Exploring with Cheeto";
@@ -886,8 +949,17 @@ const world = {
     const bowlLabels = ['Empty', 'Low', 'Half', 'Full'];
     safeText('bowlBadge', bowlLabels[this.bowlLevel] || 'Full');
 
-    const iconMap = { SUNNY: '☀️', CLOUDY: '⛅', RAIN: '🌧️', NIGHT: '🌙' };
-    safeText('weatherIcon', iconMap[this.weather] || '☀️');
+    const weatherIconEl = document.getElementById('weatherIcon');
+    if (weatherIconEl) {
+      const weatherMap = {
+        SUNNY: { icon: 'sun', color: '#f59e0b' },
+        CLOUDY: { icon: 'cloud-sun', color: '#38bdf8' },
+        RAIN: { icon: 'waves', color: '#60a5fa' },
+        NIGHT: { icon: 'moon', color: '#a78bfa' }
+      };
+      const w = weatherMap[this.weather] || weatherMap.SUNNY;
+      weatherIconEl.innerHTML = getPixelIcon(w.icon, '', `color: ${w.color};`);
+    }
     safeText(
       'weatherText',
       `${this.tempC}°C • ${this.skyDesc}${this.weatherMode === 'AUTO' ? ' (Live)' : ''}`
@@ -972,13 +1044,13 @@ function updateCameraBtnUI() {
   const text = document.getElementById('cameraBtnText');
   if (!icon || !text) return;
   if (!camera.followCatId) {
-    icon.textContent = '🎯';
+    icon.innerHTML = getPixelIcon('target', 'text-sky-200');
     text.textContent = 'Follow Lilo';
   } else if (camera.userZoom >= 1.3) {
-    icon.textContent = '🗺️';
+    icon.innerHTML = getPixelIcon('map', 'text-sky-200');
     text.textContent = 'Wide View';
   } else {
-    icon.textContent = '🔍';
+    icon.innerHTML = getPixelIcon('zoom-in', 'text-sky-200');
     text.textContent = 'Zoom In';
   }
 }
@@ -1425,7 +1497,7 @@ function drawMemorialStone(c, time, hovered) {
     c.fillStyle = 'rgba(15, 23, 42, 0.88)';
     c.fillRect(sx - 45, sy - 40, 90, 11);
     c.fillStyle = '#bae6fd';
-    c.fillText('Lilo & Cheeto 💙💛', sx, sy - 32);
+    c.fillText('Lilo & Cheeto Sanctuary', sx, sy - 32);
   }
 }
 
@@ -1819,7 +1891,7 @@ function initPolaroidFrame(catType, imgEl, canvasEl, inputEl, storageKey, defaul
         } catch (err) { }
         imgEl.src = compressedDataUrl;
         showImage();
-        showToast(`Updated ${catType === 'lilo' ? 'Lilo' : 'Cheeto'}'s photo! 📷`, '💙');
+        showToast(`Updated ${catType === 'lilo' ? 'Lilo' : 'Cheeto'}'s photo!`, 'camera');
       };
       tempImg.src = re.target.result;
     };
@@ -1905,13 +1977,18 @@ function renderFriendsList() {
     badge.appendChild(dot);
 
     const nameLabel = document.createElement('span');
-    nameLabel.textContent = cat.isDefault ? `🐾 ${cat.name}` : cat.name;
+    nameLabel.className = 'inline-flex items-center gap-1';
+    if (cat.isDefault) {
+      nameLabel.innerHTML = `${getPixelIcon('paw', 'pixel-icon-sm')}<span>${cat.name}</span>`;
+    } else {
+      nameLabel.textContent = cat.name;
+    }
     badge.appendChild(nameLabel);
 
     const petBtn = document.createElement('button');
     petBtn.type = 'button';
-    petBtn.className = 'ml-1 px-2.5 py-0.5 rounded-full bg-rose-200 text-rose-800 text-[10px] font-bold hover:bg-rose-300 cursor-pointer';
-    petBtn.textContent = '♥ Pet';
+    petBtn.className = 'ml-1 px-2.5 py-0.5 rounded-full bg-rose-200 text-rose-800 text-[10px] font-bold hover:bg-rose-300 cursor-pointer inline-flex items-center gap-1';
+    petBtn.innerHTML = `${getPixelIcon('heart-solid', 'pixel-icon-sm')}<span>Pet</span>`;
     petBtn.addEventListener('click', () => {
       world.petCat(cat);
       camera.followCatId = cat.id;
@@ -1922,12 +1999,12 @@ function renderFriendsList() {
     if (!cat.isDefault) {
       const delBtn = document.createElement('button');
       delBtn.type = 'button';
-      delBtn.className = 'ml-1 text-stone-500 hover:text-rose-700 font-bold cursor-pointer text-xs';
-      delBtn.textContent = '✕';
+      delBtn.className = 'ml-1 text-stone-500 hover:text-rose-700 font-bold cursor-pointer text-xs inline-flex items-center';
+      delBtn.innerHTML = getPixelIcon('close', 'pixel-icon-sm');
       delBtn.addEventListener('click', () => {
         world.cats = world.cats.filter((c) => c.id !== cat.id);
         world.save();
-        showToast(`${cat.name} headed home for a nap.`, '🐾');
+        showToast(`${cat.name} headed home for a nap.`, 'paw');
       });
       badge.appendChild(delBtn);
     }
@@ -2047,25 +2124,28 @@ safeOn('btnWeather', 'click', () => world.cycleWeather());
 
 safeOn('btnAudio', 'click', () => {
   sound.enabled = !sound.enabled;
-  safeText('audioIcon', sound.enabled ? '🔊' : '🔇');
+  const audioEl = document.getElementById('audioIcon');
+  if (audioEl) {
+    audioEl.innerHTML = getPixelIcon(sound.enabled ? 'volume-3' : 'volume-x');
+  }
   if (!sound.enabled) sound.stopRain();
   else if (world.weather === 'RAIN') sound.startRain();
-  showToast(sound.enabled ? 'Cozy audio enabled' : 'Cozy audio muted', sound.enabled ? '🔊' : '🔇');
+  showToast(sound.enabled ? 'Cozy audio enabled' : 'Cozy audio muted', sound.enabled ? 'volume-3' : 'volume-x');
 });
 
 safeOn('btnCameraMode', 'click', () => {
   if (camera.followCatId !== 'lilo') {
     camera.followCatId = 'lilo';
     camera.userZoom = window.innerWidth < 768 ? 1.45 : 1.15;
-    showToast('Camera following Lilo 🎯', '🐾');
+    showToast('Camera following Lilo', 'target');
   } else if (camera.userZoom >= 1.3) {
     camera.userZoom = 0.85;
     camera.x = 480;
     camera.y = 310;
-    showToast('Garden Wide Overview 🗺️', '🌿');
+    showToast('Garden Wide Overview', 'map');
   } else {
     camera.userZoom = 1.65;
-    showToast('Zoomed in on Lilo 🔍', '💙');
+    showToast('Zoomed in on Lilo', 'zoom-in');
   }
   clampCamera();
   updateCameraBtnUI();
@@ -2092,7 +2172,7 @@ safeOn('btnConfirmAddCat', 'click', () => {
   world.save();
   if (nameInput) nameInput.value = '';
   closeModal('modalFriends');
-  showToast(`${name} joined Lilo and Cheeto!`, '🐾');
+  showToast(`${name} joined Lilo and Cheeto!`, 'paw');
 });
 
 // Cross-Device Save Link & PWA Install Handlers
@@ -2104,7 +2184,7 @@ safeOn('copy-garden-link-btn', 'click', async () => {
   window.location.hash = `garden=${encoded}`;
   try {
     await navigator.clipboard.writeText(shareUrl);
-    showToast('Garden Save URL copied to clipboard!', '🔗');
+    showToast('Garden Save URL copied to clipboard!', 'link');
   } catch (err) {
     prompt('Copy your Garden Save URL:', shareUrl);
   }
@@ -2116,12 +2196,12 @@ safeOn('install-pwa-btn', 'click', async () => {
     try {
       const { outcome } = await deferredInstallPrompt.userChoice;
       if (outcome === 'accepted') {
-        showToast("Lilo's Garden installed to Home Screen!", '📲');
+        showToast("Lilo's Garden installed to Home Screen!", 'download');
       }
     } catch (e) { }
     deferredInstallPrompt = null;
   } else {
-    showToast("Tap your browser menu (⋮ or Share) -> 'Add to Home Screen'", '📲');
+    showToast("Select 'Add to Home Screen' in browser menu", 'download');
   }
 });
 
@@ -2130,7 +2210,7 @@ safeOn('btnAndroidWallpaper', 'click', () => {
   if (window.AndroidBridge && typeof window.AndroidBridge.openWallpaperPicker === 'function') {
     window.AndroidBridge.openWallpaperPicker();
   } else {
-    showToast('Available in Lilo Garden Android APK!', '🖼️');
+    showToast('Available in Lilo Garden Android APK!', 'image');
   }
 });
 
@@ -2138,7 +2218,7 @@ safeOn('btnAndroidWidget', 'click', () => {
   if (window.AndroidBridge && typeof window.AndroidBridge.pinWidget === 'function') {
     window.AndroidBridge.pinWidget();
   } else {
-    showToast('Available in Lilo Garden Android APK!', '📌');
+    showToast('Available in Lilo Garden Android APK!', 'grid-2x2');
   }
 });
 
@@ -2149,7 +2229,7 @@ safeOn('btnSaveTributeNote', 'click', () => {
     world.tributeNote = note;
     world.save();
     closeModal('tribute-modal');
-    showToast("Lilo & Cheeto's tribute note saved", '🌿');
+    showToast("Lilo & Cheeto's tribute note saved", 'leaf');
   }
 });
 
