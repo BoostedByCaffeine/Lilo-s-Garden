@@ -1395,70 +1395,110 @@
       }
     }
 
-    /********************************************************************
-     * ADAPTIVE VIEWPORT CAMERA & RENDER PIPELINE
-     ********************************************************************/
+    /*************************************************************************
+     * MOBILE ZOOM, 1-FINGER PAN & 2-FINGER PINCH CAMERA CONTROLLER
+     *************************************************************************/
+    const WORLD_W = 960;
+    const WORLD_H = 600;
+
     const canvas = document.getElementById('garden-canvas');
     const ctx = canvas.getContext('2d');
-    let camera = { x: 0, y: 0, scale: 1 };
 
-    function resizeGardenViewport() {
+    const camera = {
+      x: 480, // Starts centered near Lilo & Cheeto
+      y: 310,
+      zoom: window.innerWidth < 820 ? 1.9 : 1.0,
+      minZoom: window.innerWidth < 820 ? 1.0 : 0.85,
+      maxZoom: 3.2,
+      followCatId: 'lilo',
+      isDragging: false,
+      dragMoved: false,
+      startX: 0,
+      startY: 0,
+      camStartX: 0,
+      camStartY: 0,
+      pinchStartDist: 0,
+      pinchStartZoom: 1.9,
+      isMouseDown: false
+    };
+
+    function updateCanvasResolution() {
       const isMobile = window.innerWidth < 820;
-      const viewW = window.innerWidth || document.documentElement.clientWidth;
-      const viewH = window.innerHeight || document.documentElement.clientHeight;
-
       if (isMobile) {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
         canvas.style.width = '100vw';
         canvas.style.height = '100dvh';
         canvas.style.maxWidth = '100vw';
         canvas.style.maxHeight = '100dvh';
-
-        const aspect = viewW / viewH;
-        if (aspect < 1) {
-          // Portrait phone: Guarantee min horizontal width 500px visible around 480
-          canvas.width = 500;
-          canvas.height = Math.round(500 / aspect);
-        } else {
-          // Landscape phone: Guarantee min vertical height 340px visible around 320
-          canvas.height = 340;
-          canvas.width = Math.round(340 * aspect);
+        if (camera.zoom < 1.3) {
+          camera.zoom = 1.9; // Keep cats large and cozy on mobile portrait
         }
       } else {
-        // Desktop centered letterbox-free presentation
         canvas.style.width = '100%';
         canvas.style.height = '100%';
         canvas.style.maxWidth = '1060px';
         canvas.style.maxHeight = '660px';
 
-        canvas.width = 540;
-        canvas.height = 340;
+        const stage = document.getElementById('garden-stage');
+        const stageW = stage ? stage.clientWidth : window.innerWidth;
+        const stageH = stage ? stage.clientHeight : window.innerHeight;
+        canvas.width = Math.min(1060, stageW) || 960;
+        canvas.height = Math.min(660, stageH) || 600;
+        if (camera.zoom > 2.2) {
+          camera.zoom = 1.0;
+        }
       }
-
-      // Camera offset to keep World Center (480, 320) centered on screen
-      camera.x = Math.round((canvas.width / 2) - WORLD_CENTER.x);
-      camera.y = Math.round((canvas.height / 2) - WORLD_CENTER.y);
-      camera.scale = 1;
+      clampCamera();
     }
 
-    function getCanvasWorldCoords(evt) {
+    function clampCamera() {
+      const halfViewW = (canvas.width / 2) / camera.zoom;
+      const halfViewH = (canvas.height / 2) / camera.zoom;
+
+      const minX = Math.min(WORLD_W / 2, halfViewW);
+      const maxX = Math.max(WORLD_W / 2, WORLD_W - halfViewW);
+      const minY = Math.min(WORLD_H / 2, halfViewH);
+      const maxY = Math.max(WORLD_H / 2, WORLD_H - halfViewH);
+
+      camera.x = Math.max(minX, Math.min(maxX, camera.x));
+      camera.y = Math.max(minY, Math.min(maxY, camera.y));
+    }
+
+    // Convert screen tap (clientX, clientY) -> Garden World (x, y)
+    function screenToWorld(clientX, clientY) {
       const rect = canvas.getBoundingClientRect();
-      const clientX = (evt.touches && evt.touches.length > 0) ? evt.touches[0].clientX : evt.clientX;
-      const clientY = (evt.touches && evt.touches.length > 0) ? evt.touches[0].clientY : evt.clientY;
-
-      const canvasX = ((clientX - rect.left) / rect.width) * canvas.width;
-      const canvasY = ((clientY - rect.top) / rect.height) * canvas.height;
-
+      const sx = (clientX - rect.left) * (canvas.width / rect.width);
+      const sy = (clientY - rect.top) * (canvas.height / rect.height);
       return {
-        x: canvasX - camera.x,
-        y: canvasY - camera.y
+        x: (sx - canvas.width / 2) / camera.zoom + camera.x,
+        y: (sy - canvas.height / 2) / camera.zoom + camera.y
       };
     }
 
+    function updateCameraBtnUI() {
+      const icon = document.getElementById('cameraBtnIcon');
+      const text = document.getElementById('cameraBtnText');
+      if (!icon || !text) return;
+      if (!camera.followCatId) {
+        icon.textContent = '🎯';
+        text.textContent = 'Follow Lilo';
+      } else {
+        if (camera.zoom >= 1.6) {
+          icon.textContent = '🔍';
+          text.textContent = 'Wide View';
+        } else {
+          icon.textContent = '🔍';
+          text.textContent = '2x Zoom';
+        }
+      }
+    }
+
     function findCatAt(px, py, isTouch = false) {
-      const mult = isTouch ? 1.45 : 1.0;
+      const mult = isTouch ? 1.6 : 1.0;
       const sorted = [...world.cats].sort((a, b) => b.y - a.y);
       for (const cat of sorted) {
-        if (Math.abs(px - cat.x) <= 15 * mult && py >= cat.y - 20 * mult && py <= cat.y + 8 * mult) {
+        if (Math.abs(px - cat.x) <= 16 * mult && py >= cat.y - 22 * mult && py <= cat.y + 10 * mult) {
           return cat;
         }
       }
@@ -1469,7 +1509,9 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       ctx.save();
-      ctx.translate(camera.x, camera.y);
+      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.scale(camera.zoom, camera.zoom);
+      ctx.translate(-camera.x, -camera.y);
 
       // Scenery & Deck
       drawGardenScenery(ctx, time);
@@ -1545,52 +1587,37 @@
         ctx.restore();
       });
 
-      // Weather lighting filters
-      if (world.weather === 'CLOUDY') {
-        ctx.fillStyle = 'rgba(148, 163, 184, 0.12)';
-        ctx.fillRect(-camera.x, -camera.y, canvas.width, canvas.height);
-      } else if (world.weather === 'RAIN') {
-        ctx.fillStyle = 'rgba(30, 41, 59, 0.32)';
-        ctx.fillRect(-camera.x, -camera.y, canvas.width, canvas.height);
-
+      // Rain drops (world space)
+      if (world.weather === 'RAIN') {
         ctx.fillStyle = 'rgba(186, 230, 253, 0.7)';
         world.rainDrops.forEach(d => {
           ctx.fillRect(Math.round(d.x), Math.round(d.y), 1, Math.round(d.len));
         });
-      } else if (world.weather === 'NIGHT') {
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.48)';
-        ctx.fillRect(-camera.x, -camera.y, canvas.width, canvas.height);
       }
 
-      ctx.restore();
+      ctx.restore(); // Restore camera transform
+
+      // Weather lighting filters across full screen canvas
+      if (world.weather === 'CLOUDY') {
+        ctx.fillStyle = 'rgba(148, 163, 184, 0.12)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      } else if (world.weather === 'RAIN') {
+        ctx.fillStyle = 'rgba(30, 41, 59, 0.32)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      } else if (world.weather === 'NIGHT') {
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.48)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
     }
 
     /********************************************************************
-     * TOUCH & POINTER INTERACTIONS
+     * TOUCH & POINTER INTERACTIONS (Pan, Pinch, Tap & Pet)
      ********************************************************************/
-    canvas.addEventListener('pointermove', (evt) => {
-      const pt = getCanvasWorldCoords(evt);
-      world.pointer.x = pt.x;
-      world.pointer.y = pt.y;
+    let lastTouchTime = 0;
 
-      const hitCat = findCatAt(pt.x, pt.y);
-      if (hitCat) {
-        hitCat.labelAlpha = Math.max(hitCat.labelAlpha, 0.9);
-        world.pointer.hoveredEntity = 'cat';
-      } else if (Math.hypot(pt.x - LANDMARKS.shrine.x, pt.y - (LANDMARKS.shrine.y - 10)) <= LANDMARKS.shrine.radius) {
-        world.pointer.hoveredEntity = 'shrine';
-      } else if (Math.hypot(pt.x - LANDMARKS.bowl.x, pt.y - LANDMARKS.bowl.y) <= LANDMARKS.bowl.radius) {
-        world.pointer.hoveredEntity = 'bowl';
-      } else {
-        world.pointer.hoveredEntity = null;
-      }
-    });
-
-    canvas.addEventListener('pointerdown', (evt) => {
-      evt.preventDefault();
-      const isTouch = evt.pointerType === 'touch';
-      const touchMult = isTouch ? 1.45 : 1.0;
-      const pt = getCanvasWorldCoords(evt);
+    function handleCanvasTap(clientX, clientY, isTouch = false) {
+      const touchMult = isTouch ? 1.5 : 1.0;
+      const pt = screenToWorld(clientX, clientY);
 
       // 1. Diegetic Petting
       const hitCat = findCatAt(pt.x, pt.y, isTouch);
@@ -1624,6 +1651,130 @@
           world.spawnHeart(pt.x, pt.y, 'sparkle');
         }
       }
+    }
+
+    // 1-Finger Drag Panning & 2-Finger Pinch Zooming
+    canvas.addEventListener('touchstart', e => {
+      if (e.touches.length === 1) {
+        camera.isDragging = true;
+        camera.dragMoved = false;
+        camera.startX = e.touches[0].clientX;
+        camera.startY = e.touches[0].clientY;
+        camera.camStartX = camera.x;
+        camera.camStartY = camera.y;
+      } else if (e.touches.length === 2) {
+        camera.isDragging = false;
+        camera.dragMoved = true;
+        camera.pinchStartDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        camera.pinchStartZoom = camera.zoom;
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', e => {
+      e.preventDefault(); // Prevent page bounce while panning garden
+      if (e.touches.length === 1 && camera.isDragging) {
+        const dx = e.touches[0].clientX - camera.startX;
+        const dy = e.touches[0].clientY - camera.startY;
+        if (Math.hypot(dx, dy) > 8) {
+          camera.dragMoved = true;
+          camera.followCatId = null;
+          updateCameraBtnUI();
+        }
+
+        camera.x = camera.camStartX - dx / camera.zoom;
+        camera.y = camera.camStartY - dy / camera.zoom;
+        clampCamera();
+      } else if (e.touches.length === 2 && camera.pinchStartDist > 0) {
+        const dist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        const scale = dist / camera.pinchStartDist;
+        camera.zoom = Math.max(camera.minZoom, Math.min(camera.maxZoom, camera.pinchStartZoom * scale));
+        clampCamera();
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', e => {
+      camera.isDragging = false;
+      camera.pinchStartDist = 0;
+      if (!camera.dragMoved && e.changedTouches && e.changedTouches.length === 1) {
+        lastTouchTime = Date.now();
+        handleCanvasTap(e.changedTouches[0].clientX, e.changedTouches[0].clientY, true);
+      }
+    });
+
+    // Mouse Wheel Zoom
+    canvas.addEventListener('wheel', e => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.12 : 0.89;
+      camera.zoom = Math.max(camera.minZoom, Math.min(camera.maxZoom, camera.zoom * zoomFactor));
+      clampCamera();
+      updateCameraBtnUI();
+    }, { passive: false });
+
+    // Desktop Mouse Drag Panning
+    canvas.addEventListener('mousedown', e => {
+      if (e.button !== 0) return;
+      camera.isMouseDown = true;
+      camera.dragMoved = false;
+      camera.startX = e.clientX;
+      camera.startY = e.clientY;
+      camera.camStartX = camera.x;
+      camera.camStartY = camera.y;
+    });
+
+    window.addEventListener('mousemove', e => {
+      if (camera.isMouseDown) {
+        const dx = e.clientX - camera.startX;
+        const dy = e.clientY - camera.startY;
+        if (Math.hypot(dx, dy) > 6) {
+          camera.dragMoved = true;
+          camera.followCatId = null;
+          updateCameraBtnUI();
+        }
+        camera.x = camera.camStartX - dx / camera.zoom;
+        camera.y = camera.camStartY - dy / camera.zoom;
+        clampCamera();
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      camera.isMouseDown = false;
+    });
+
+    // Mouse Hover & Click
+    canvas.addEventListener('mousemove', evt => {
+      const pt = screenToWorld(evt.clientX, evt.clientY);
+      world.pointer.x = pt.x;
+      world.pointer.y = pt.y;
+
+      const hitCat = findCatAt(pt.x, pt.y);
+      if (hitCat) {
+        hitCat.labelAlpha = Math.max(hitCat.labelAlpha, 0.9);
+        world.pointer.hoveredEntity = 'cat';
+      } else if (Math.hypot(pt.x - LANDMARKS.shrine.x, pt.y - (LANDMARKS.shrine.y - 10)) <= LANDMARKS.shrine.radius) {
+        world.pointer.hoveredEntity = 'shrine';
+      } else if (Math.hypot(pt.x - LANDMARKS.bowl.x, pt.y - LANDMARKS.bowl.y) <= LANDMARKS.bowl.radius) {
+        world.pointer.hoveredEntity = 'bowl';
+      } else {
+        world.pointer.hoveredEntity = null;
+      }
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      world.pointer.hoveredEntity = null;
+      world.pointer.x = -100;
+      world.pointer.y = -100;
+    });
+
+    canvas.addEventListener('click', evt => {
+      if (Date.now() - lastTouchTime < 450) return;
+      if (camera.dragMoved) return;
+      handleCanvasTap(evt.clientX, evt.clientY, false);
     });
 
     /********************************************************************
@@ -1880,7 +2031,7 @@
     }
 
     function openModal(id) {
-      const el = document.getElementById(id);
+      const el = document.getElementById(id) || (id === 'friends-modal' ? document.getElementById('modalFriends') : null);
       if (!el) return;
       el.classList.add('active');
 
@@ -1890,7 +2041,7 @@
     }
 
     function closeModal(id) {
-      const el = document.getElementById(id);
+      const el = document.getElementById(id) || (id === 'friends-modal' ? document.getElementById('modalFriends') : null);
       if (!el) return;
       el.classList.remove('active');
     }
@@ -2086,20 +2237,98 @@
     });
 
     
-      // PWA Install Button
-      const installBtn = document.getElementById('btnInstallPwa');
-      if (installBtn) {
-        installBtn.addEventListener('click', async () => {
-          if (deferredInstallPrompt) {
-            deferredInstallPrompt.prompt();
+      // Cross-Device Save & Offline App Buttons
+      function encodeGardenState(state) {
+        try {
+          return encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(state)))));
+        } catch (e) {
+          return encodeURIComponent(JSON.stringify(state));
+        }
+      }
+
+      function getGardenShareUrl() {
+        const state = world.serialize();
+        const encoded = encodeGardenState(state);
+        const baseUrl = `${window.location.origin}${window.location.pathname}`.replace(/#.*$/, '');
+        return `${baseUrl}#garden=${encoded}`;
+      }
+
+      const copyBtn = document.getElementById('copy-garden-link-btn');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', async () => {
+          const shareUrl = getGardenShareUrl();
+          try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              await navigator.clipboard.writeText(shareUrl);
+            } else {
+              throw new Error('Clipboard API unavailable');
+            }
+            showToast('🔗 Garden Save URL copied!', '🔗');
+          } catch (err) {
+            const ta = document.createElement('textarea');
+            ta.value = shareUrl;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            try {
+              document.execCommand('copy');
+              showToast('🔗 Garden Save URL copied!', '🔗');
+            } catch (e) {
+              prompt('Copy your Garden Save URL:', shareUrl);
+            }
+            document.body.removeChild(ta);
+          }
+        });
+      }
+
+      const handlePwaInstall = async () => {
+        if (deferredInstallPrompt) {
+          deferredInstallPrompt.prompt();
+          try {
             const { outcome } = await deferredInstallPrompt.userChoice;
             if (outcome === 'accepted') {
               showToast("Lilo's Garden added to Home Screen! 📲", '📲');
             }
-            deferredInstallPrompt = null;
+          } catch (e) {}
+          deferredInstallPrompt = null;
+        } else {
+          showToast("Tap your browser menu (⋮ or Share) -> 'Add to Home screen' to install offline!", '📲');
+        }
+      };
+
+      const pwaBtn = document.getElementById('install-pwa-btn');
+      if (pwaBtn) pwaBtn.addEventListener('click', handlePwaInstall);
+
+      const installBtn = document.getElementById('btnInstallPwa');
+      if (installBtn) installBtn.addEventListener('click', handlePwaInstall);
+
+      // Camera Floating Toggle Button
+      const camBtn = document.getElementById('btnCameraMode');
+      if (camBtn) {
+        camBtn.addEventListener('click', () => {
+          if (camera.followCatId !== 'lilo') {
+            camera.followCatId = 'lilo';
+            const lilo = world.cats.find(c => c.id === 'lilo');
+            if (lilo) {
+              camera.x = lilo.x;
+              camera.y = lilo.y;
+            }
+            if (camera.zoom < 1.6) camera.zoom = 1.9;
+            clampCamera();
+            showToast('Camera following Lilo 🎯', '🎯');
           } else {
-            showToast('On Safari/Chrome tap "Add to Home Screen" 📲', '📲');
+            if (camera.zoom >= 1.6) {
+              camera.zoom = 1.15;
+              showToast('Garden Overview (Wide) 🔍', '🔍');
+            } else {
+              camera.zoom = 1.9;
+              showToast('Zoomed 2x on Lilo 🔍', '🔍');
+            }
+            clampCamera();
           }
+          updateCameraBtnUI();
         });
       }
 
@@ -2129,6 +2358,16 @@
       lastTimestamp = timestamp;
       const elapsedSeconds = timestamp / 1000;
 
+      if (camera.followCatId && !camera.isDragging && !camera.isMouseDown) {
+        const targetCat = world.cats.find(c => c.id === camera.followCatId);
+        if (targetCat) {
+          const lerp = 0.05;
+          camera.x += (targetCat.x - camera.x) * lerp;
+          camera.y += (targetCat.y - camera.y) * lerp;
+          clampCamera();
+        }
+      }
+
       world.update(dt, elapsedSeconds);
       renderGarden(elapsedSeconds);
       renderMiniCanvases(elapsedSeconds);
@@ -2136,13 +2375,14 @@
       requestAnimationFrame(gameLoop);
     }
 
-    window.addEventListener('resize', resizeGardenViewport);
-    window.addEventListener('orientationchange', resizeGardenViewport);
+    window.addEventListener('resize', updateCanvasResolution);
+    window.addEventListener('orientationchange', updateCanvasResolution);
 
     window.onload = function () {
       initCustomizerUI();
       world.init();
-      resizeGardenViewport();
+      updateCanvasResolution();
+      updateCameraBtnUI();
       renderIntroCanvas();
 
       // Initialize Twin Polaroid Photo Frames with 3-Tier Fallback
