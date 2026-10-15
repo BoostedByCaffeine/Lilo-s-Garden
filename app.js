@@ -1,21 +1,28 @@
 // PWA Service Worker Registration & Install Prompt
-    let deferredInstallPrompt = null;
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(() => {});
-      });
-    }
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredInstallPrompt = e;
-      const installBtn = document.getElementById('btnInstallPwa');
-      if (installBtn) installBtn.style.display = 'inline-flex';
-    });
+let deferredInstallPrompt = null;
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const installBtn = document.getElementById('btnInstallPwa') || document.getElementById('install-pwa-btn');
+  if (installBtn) installBtn.style.display = 'inline-flex';
+});
 
-    /********************************************************************
-     * LILO'S GARDEN — ADAPTIVE CAMERA & TWIN POLAROID ENGINE
-     * World Coordinates Anchored at Center (480, 320)
-     ********************************************************************/
+/********************************************************************
+ * 1. CANVAS & CONTEXT DECLARATION (Top of File)
+ ********************************************************************/
+const canvas = document.getElementById('garden-canvas');
+const ctx = canvas ? canvas.getContext('2d') : null;
+let introAwake = false;
+
+/********************************************************************
+ * LILO'S GARDEN — ADAPTIVE CAMERA & TWIN POLAROID ENGINE
+ * World Coordinates Anchored at Center (480, 320)
+ ********************************************************************/
     const STORAGE_KEY = 'lilos_garden_save_v1';
 
     // World Anchor Center & Landmarks
@@ -241,9 +248,45 @@
           osc.stop(now + 0.11);
         } catch (e) {}
       }
+
+      playMeow(catType = 'lilo') {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+        try {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          const isLilo = catType === 'lilo';
+          const baseFreq = isLilo ? 540 : 440;
+          const peakFreq = isLilo ? 780 : 640;
+          const endFreq = isLilo ? 500 : 400;
+
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(baseFreq, now);
+          osc.frequency.linearRampToValueAtTime(peakFreq, now + 0.09);
+          osc.frequency.exponentialRampToValueAtTime(endFreq, now + 0.32);
+
+          gain.gain.setValueAtTime(0.001, now);
+          gain.gain.linearRampToValueAtTime(0.07, now + 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.36);
+        } catch (e) {}
+      }
     }
 
     const sound = new CozyAudio();
+
+    // Static audio bridges for failsafe calls
+    CozyAudio.init = () => sound.init();
+    CozyAudio.playMeow = (cat) => sound.playMeow(cat);
+    CozyAudio.playPurr = () => sound.playPurr();
+    CozyAudio.playFeedSound = () => sound.playFeedSound();
+    CozyAudio.playMunchPop = () => sound.playMunchPop();
 
     /********************************************************************
      * OPEN-METEO WEATHER INTEGRATION
@@ -299,7 +342,9 @@
     /********************************************************************
      * WORLD ENGINE & FINITE STATE MACHINE
      ********************************************************************/
-    const world = {
+    const gardenState = {
+      get currentSky() { return this.weather; },
+      set currentSky(v) { this.weather = v; },
       stats: { pets: 0, meals: 0 },
       petProgress: 0,
       blooms: 8,
@@ -832,23 +877,155 @@
       },
 
       syncUI() {
-        document.getElementById('statBlooms').textContent = this.blooms;
-        document.getElementById('modalBloomCount').textContent = `${this.blooms} / 24`;
-        document.getElementById('catCountBadge').textContent = this.cats.length;
+        safeText('statBlooms', this.blooms);
+        safeText('modalBloomCount', `${this.blooms} / 24`);
+        safeText('catCountBadge', this.cats.length);
 
         const bowlLabels = ['Empty', 'Low', 'Half', 'Full'];
-        const bowlBadge = document.getElementById('bowlBadge');
-        if (bowlBadge) {
-          bowlBadge.textContent = bowlLabels[this.bowlLevel] || 'Full';
-        }
+        safeText('bowlBadge', bowlLabels[this.bowlLevel] || 'Full');
 
         const iconMap = { SUNNY: '☀️', CLOUDY: '☁️', RAIN: '🌧️', NIGHT: '✨' };
-        document.getElementById('weatherIcon').textContent = iconMap[this.weather] || '☀️';
-        document.getElementById('weatherText').textContent = `${this.tempC}°C • ${this.skyDesc}${this.weatherMode === 'AUTO' ? ' (Live)' : ''}`;
+        safeText('weatherIcon', iconMap[this.weather] || '☀️');
+        safeText('weatherText', `${this.tempC}°C • ${this.skyDesc}${this.weatherMode === 'AUTO' ? ' (Live)' : ''}`);
 
         renderFriendsList();
       }
     };
+
+    const world = gardenState;
+
+    /*************************************************************************
+     * PATCH 1: NULL-SAFE DOM HELPER & FAILSAFE INTRO BUTTON
+     * (Place near the top of app.js right after canvas & gardenState)
+     *************************************************************************/
+    function safeOn(id, event, handler) {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener(event, handler);
+    }
+
+    function safeText(id, text) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = text;
+    }
+
+    // Guaranteed Intro Overlay dismissal (cannot be blocked by audio/UI errors)
+    function dismissIntroOverlay() {
+      try {
+        if (typeof sound !== 'undefined' && sound.init) {
+          sound.init();
+          if (sound.playMeow) sound.playMeow('lilo');
+          setTimeout(() => { if (sound.playMeow) sound.playMeow('cheeto'); }, 220);
+          setTimeout(() => { if (sound.playPurr) sound.playPurr(); }, 420);
+        }
+        if (typeof CozyAudio !== 'undefined' && typeof CozyAudio.init === 'function') {
+          CozyAudio.init();
+          if (CozyAudio.playMeow) CozyAudio.playMeow('lilo');
+          setTimeout(() => { if (CozyAudio.playMeow) CozyAudio.playMeow('cheeto'); }, 220);
+          setTimeout(() => { if (CozyAudio.playPurr) CozyAudio.playPurr(); }, 420);
+        }
+      } catch (err) {
+        console.warn('Audio init skipped:', err);
+      }
+
+      introAwake = true;
+      setTimeout(() => {
+        const overlay = document.getElementById('intro-overlay');
+        if (overlay) {
+          overlay.classList.add('hidden-intro');
+          overlay.style.opacity = '0';
+          overlay.style.pointerEvents = 'none';
+          setTimeout(() => { overlay.style.display = 'none'; }, 850);
+        }
+      }, 450);
+    }
+
+    // Attach to #enter-garden-btn AND any button inside #intro-overlay as fallback
+    document.addEventListener('DOMContentLoaded', () => {
+      const enterBtn =
+        document.getElementById('enter-garden-btn') ||
+        document.getElementById('btnEnterGarden') ||
+        document.querySelector('#intro-overlay button');
+      if (enterBtn) {
+        enterBtn.onclick = dismissIntroOverlay;
+      }
+    });
+
+    /*************************************************************************
+     * PATCH 2: SAFE CAMERA INITIALIZATION (Place AFTER canvas & gardenState)
+     *************************************************************************/
+    const WORLD_W = 960;
+    const WORLD_H = 600;
+
+    const camera = {
+      x: 480,
+      y: 300,
+      zoom: window.innerWidth < 768 ? 1.85 : 1.0,
+      minZoom: window.innerWidth < 768 ? 1.15 : 0.85,
+      maxZoom: 3.0,
+      followCatId: 'lilo',
+      isDragging: false,
+      dragMoved: false,
+      startX: 0,
+      startY: 0,
+      camStartX: 480,
+      camStartY: 300,
+      pinchStartDist: 0,
+      pinchStartZoom: 1.85,
+      isMouseDown: false
+    };
+
+    function clampCamera() {
+      if (!canvas) return;
+      const halfW = (canvas.width / 2) / camera.zoom;
+      const halfH = (canvas.height / 2) / camera.zoom;
+
+      const minX = Math.min(WORLD_W / 2, halfW);
+      const maxX = Math.max(WORLD_W / 2, WORLD_W - halfW);
+      const minY = Math.min(WORLD_H / 2, halfH);
+      const maxY = Math.max(WORLD_H / 2, WORLD_H - halfH);
+
+      camera.x = Math.max(minX, Math.min(maxX, camera.x));
+      camera.y = Math.max(minY, Math.min(maxY, camera.y));
+    }
+
+    function updateCanvasResolution() {
+      if (!canvas) return;
+      const isMobile = window.innerWidth < 768;
+      canvas.width = isMobile ? window.innerWidth : 960;
+      canvas.height = isMobile ? window.innerHeight : 600;
+      if (isMobile && camera.zoom < 1.2) camera.zoom = 1.85;
+      if (!isMobile && camera.zoom > 1.2 && !camera.dragMoved) camera.zoom = 1.0;
+      clampCamera();
+    }
+
+    function screenToWorld(clientX, clientY) {
+      if (!canvas) return { x: clientX, y: clientY };
+      const rect = canvas.getBoundingClientRect();
+      const sx = (clientX - rect.left) * (canvas.width / rect.width);
+      const sy = (clientY - rect.top) * (canvas.height / rect.height);
+      return {
+        x: (sx - canvas.width / 2) / camera.zoom + camera.x,
+        y: (sy - canvas.height / 2) / camera.zoom + camera.y
+      };
+    }
+
+    function updateCameraBtnUI() {
+      const icon = document.getElementById('cameraBtnIcon');
+      const text = document.getElementById('cameraBtnText');
+      if (!icon || !text) return;
+      if (!camera.followCatId) {
+        icon.textContent = '🎯';
+        text.textContent = 'Follow Lilo';
+      } else {
+        if (camera.zoom >= 1.6) {
+          icon.textContent = '🔍';
+          text.textContent = 'Wide View';
+        } else {
+          icon.textContent = '🔍';
+          text.textContent = '2x Zoom';
+        }
+      }
+    }
 
     /********************************************************************
      * PROCEDURAL PIXEL CAT SPRITE (With Heterochromia Support)
@@ -1395,104 +1572,7 @@
       }
     }
 
-    /*************************************************************************
-     * MOBILE ZOOM, 1-FINGER PAN & 2-FINGER PINCH CAMERA CONTROLLER
-     *************************************************************************/
-    const WORLD_W = 960;
-    const WORLD_H = 600;
 
-    const canvas = document.getElementById('garden-canvas');
-    const ctx = canvas.getContext('2d');
-
-    const camera = {
-      x: 480, // Starts centered near Lilo & Cheeto
-      y: 310,
-      zoom: window.innerWidth < 820 ? 1.9 : 1.0,
-      minZoom: window.innerWidth < 820 ? 1.0 : 0.85,
-      maxZoom: 3.2,
-      followCatId: 'lilo',
-      isDragging: false,
-      dragMoved: false,
-      startX: 0,
-      startY: 0,
-      camStartX: 0,
-      camStartY: 0,
-      pinchStartDist: 0,
-      pinchStartZoom: 1.9,
-      isMouseDown: false
-    };
-
-    function updateCanvasResolution() {
-      const isMobile = window.innerWidth < 820;
-      if (isMobile) {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        canvas.style.width = '100vw';
-        canvas.style.height = '100dvh';
-        canvas.style.maxWidth = '100vw';
-        canvas.style.maxHeight = '100dvh';
-        if (camera.zoom < 1.3) {
-          camera.zoom = 1.9; // Keep cats large and cozy on mobile portrait
-        }
-      } else {
-        canvas.style.width = '100%';
-        canvas.style.height = '100%';
-        canvas.style.maxWidth = '1060px';
-        canvas.style.maxHeight = '660px';
-
-        const stage = document.getElementById('garden-stage');
-        const stageW = stage ? stage.clientWidth : window.innerWidth;
-        const stageH = stage ? stage.clientHeight : window.innerHeight;
-        canvas.width = Math.min(1060, stageW) || 960;
-        canvas.height = Math.min(660, stageH) || 600;
-        if (camera.zoom > 2.2) {
-          camera.zoom = 1.0;
-        }
-      }
-      clampCamera();
-    }
-
-    function clampCamera() {
-      const halfViewW = (canvas.width / 2) / camera.zoom;
-      const halfViewH = (canvas.height / 2) / camera.zoom;
-
-      const minX = Math.min(WORLD_W / 2, halfViewW);
-      const maxX = Math.max(WORLD_W / 2, WORLD_W - halfViewW);
-      const minY = Math.min(WORLD_H / 2, halfViewH);
-      const maxY = Math.max(WORLD_H / 2, WORLD_H - halfViewH);
-
-      camera.x = Math.max(minX, Math.min(maxX, camera.x));
-      camera.y = Math.max(minY, Math.min(maxY, camera.y));
-    }
-
-    // Convert screen tap (clientX, clientY) -> Garden World (x, y)
-    function screenToWorld(clientX, clientY) {
-      const rect = canvas.getBoundingClientRect();
-      const sx = (clientX - rect.left) * (canvas.width / rect.width);
-      const sy = (clientY - rect.top) * (canvas.height / rect.height);
-      return {
-        x: (sx - canvas.width / 2) / camera.zoom + camera.x,
-        y: (sy - canvas.height / 2) / camera.zoom + camera.y
-      };
-    }
-
-    function updateCameraBtnUI() {
-      const icon = document.getElementById('cameraBtnIcon');
-      const text = document.getElementById('cameraBtnText');
-      if (!icon || !text) return;
-      if (!camera.followCatId) {
-        icon.textContent = '🎯';
-        text.textContent = 'Follow Lilo';
-      } else {
-        if (camera.zoom >= 1.6) {
-          icon.textContent = '🔍';
-          text.textContent = 'Wide View';
-        } else {
-          icon.textContent = '🔍';
-          text.textContent = '2x Zoom';
-        }
-      }
-    }
 
     function findCatAt(px, py, isTouch = false) {
       const mult = isTouch ? 1.6 : 1.0;
@@ -1505,9 +1585,34 @@
       return null;
     }
 
-    function renderGarden(time) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    /*************************************************************************
+     * PATCH 3: BALANCED CAMERA RENDER IN drawGardenScene()
+     *************************************************************************/
+    function drawAtmosphereOverlay(activeSky, width, height) {
+      if (!ctx) return;
+      if (activeSky === 'CLOUDY') {
+        ctx.fillStyle = 'rgba(148, 163, 184, 0.12)';
+        ctx.fillRect(0, 0, width, height);
+      } else if (activeSky === 'RAIN') {
+        ctx.fillStyle = 'rgba(30, 41, 59, 0.32)';
+        ctx.fillRect(0, 0, width, height);
+      } else if (activeSky === 'NIGHT') {
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.48)';
+        ctx.fillRect(0, 0, width, height);
+      }
+    }
 
+    function drawGardenScene(time = 0) {
+      if (!canvas || !ctx) return;
+      const activeSky =
+        gardenState.weatherMode === 'AUTO' ? gardenState.currentSky : gardenState.weatherMode;
+
+      // 1. Clear full screen viewport with base grass color (eliminates empty borders)
+      ctx.fillStyle =
+        activeSky === 'NIGHT' ? '#2c4c3e' : activeSky === 'RAIN' ? '#4f7d58' : '#68a357';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // 2. Enter Camera World Space (Balanced save/restore)
       ctx.save();
       ctx.translate(canvas.width / 2, canvas.height / 2);
       ctx.scale(camera.zoom, camera.zoom);
@@ -1595,20 +1700,13 @@
         });
       }
 
-      ctx.restore(); // Restore camera transform
+      ctx.restore(); // <-- CRITICAL: Exit Camera World Space
 
-      // Weather lighting filters across full screen canvas
-      if (world.weather === 'CLOUDY') {
-        ctx.fillStyle = 'rgba(148, 163, 184, 0.12)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      } else if (world.weather === 'RAIN') {
-        ctx.fillStyle = 'rgba(30, 41, 59, 0.32)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      } else if (world.weather === 'NIGHT') {
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.48)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      }
+      // 3. Draw Screen-Space Weather Tint over entire viewport
+      drawAtmosphereOverlay(activeSky, canvas.width, canvas.height);
     }
+
+    const renderGarden = drawGardenScene;
 
     /********************************************************************
      * TOUCH & POINTER INTERACTIONS (Pan, Pinch, Tap & Pet)
@@ -1872,6 +1970,7 @@
     }
 
     function initPolaroidFrame(catType, imgEl, canvasEl, inputEl, storageKey, defaultSrc, cardEl) {
+      if (!imgEl || !canvasEl || !inputEl || !cardEl) return;
       const renderFallback = () => {
         imgEl.style.display = 'none';
         canvasEl.style.display = 'block';
@@ -2119,47 +2218,51 @@
 
     function initCustomizerUI() {
       const coatContainer = document.getElementById('coatColorSelector');
-      COAT_SWATCHES.forEach((sw, i) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = `w-7 h-7 rounded-lg border-2 transition transform hover:scale-105 cursor-pointer ${
-          i === 0 ? 'border-[#3d2516] ring-2 ring-amber-500' : 'border-[#b88b5a]'
-        }`;
-        btn.style.backgroundColor = sw.hex;
-        btn.title = sw.name;
-        btn.addEventListener('click', () => {
-          customizerState.coatColor = sw.hex;
-          customizerState.shadeColor = sw.shade;
-          Array.from(coatContainer.children).forEach(c => c.className = 'w-7 h-7 rounded-lg border-2 border-[#b88b5a] transition transform hover:scale-105 cursor-pointer');
-          btn.className = 'w-7 h-7 rounded-lg border-2 border-[#3d2516] ring-2 ring-amber-500 transition transform scale-105 cursor-pointer';
+      if (coatContainer) {
+        COAT_SWATCHES.forEach((sw, i) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `w-7 h-7 rounded-lg border-2 transition transform hover:scale-105 cursor-pointer ${
+            i === 0 ? 'border-[#3d2516] ring-2 ring-amber-500' : 'border-[#b88b5a]'
+          }`;
+          btn.style.backgroundColor = sw.hex;
+          btn.title = sw.name;
+          btn.addEventListener('click', () => {
+            customizerState.coatColor = sw.hex;
+            customizerState.shadeColor = sw.shade;
+            Array.from(coatContainer.children).forEach(c => c.className = 'w-7 h-7 rounded-lg border-2 border-[#b88b5a] transition transform hover:scale-105 cursor-pointer');
+            btn.className = 'w-7 h-7 rounded-lg border-2 border-[#3d2516] ring-2 ring-amber-500 transition transform scale-105 cursor-pointer';
+          });
+          coatContainer.appendChild(btn);
         });
-        coatContainer.appendChild(btn);
-      });
+      }
 
       const eyeContainer = document.getElementById('eyeColorSelector');
-      EYE_SWATCHES.forEach((sw, i) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = `px-2 py-1 rounded-lg border-2 text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer ${
-          i === 0 ? 'border-[#3d2516] bg-[#f3dfc1]' : 'border-[#c8ab89] bg-[#fff9ea]'
-        }`;
-        const dot = document.createElement('span');
-        dot.className = 'w-2.5 h-2.5 rounded-full border border-black/30';
-        dot.style.backgroundColor = sw.hex;
-        const txt = document.createElement('span');
-        txt.textContent = sw.name.split(' ').pop();
-        btn.appendChild(dot);
-        btn.appendChild(txt);
+      if (eyeContainer) {
+        EYE_SWATCHES.forEach((sw, i) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `px-2 py-1 rounded-lg border-2 text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer ${
+            i === 0 ? 'border-[#3d2516] bg-[#f3dfc1]' : 'border-[#c8ab89] bg-[#fff9ea]'
+          }`;
+          const dot = document.createElement('span');
+          dot.className = 'w-2.5 h-2.5 rounded-full border border-black/30';
+          dot.style.backgroundColor = sw.hex;
+          const txt = document.createElement('span');
+          txt.textContent = sw.name.split(' ').pop();
+          btn.appendChild(dot);
+          btn.appendChild(txt);
 
-        btn.addEventListener('click', () => {
-          customizerState.eyeColor = sw.hex;
-          Array.from(eyeContainer.children).forEach(c => {
-            c.className = 'px-2 py-1 rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer';
+          btn.addEventListener('click', () => {
+            customizerState.eyeColor = sw.hex;
+            Array.from(eyeContainer.children).forEach(c => {
+              c.className = 'px-2 py-1 rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer';
+            });
+            btn.className = 'px-2 py-1 rounded-lg border-2 border-[#3d2516] bg-[#f3dfc1] text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer';
           });
-          btn.className = 'px-2 py-1 rounded-lg border-2 border-[#3d2516] bg-[#f3dfc1] text-[11px] font-bold flex items-center gap-1.5 transition cursor-pointer';
+          eyeContainer.appendChild(btn);
         });
-        eyeContainer.appendChild(btn);
-      });
+      }
 
       document.querySelectorAll('.pattern-opt').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -2172,17 +2275,21 @@
       });
 
       const nameInput = document.getElementById('inputCatName');
-      nameInput.addEventListener('input', () => {
-        customizerState.name = nameInput.value.trim() || 'Mochi';
-        document.getElementById('previewCatTitle').textContent = customizerState.name;
-      });
+      if (nameInput) {
+        nameInput.addEventListener('input', () => {
+          customizerState.name = nameInput.value.trim() || 'Mochi';
+          const title = document.getElementById('previewCatTitle');
+          if (title) title.textContent = customizerState.name;
+        });
+      }
     }
 
     const previewCanvas = document.getElementById('previewCatCanvas');
-    const previewCtx = previewCanvas.getContext('2d');
+    const previewCtx = previewCanvas ? previewCanvas.getContext('2d') : null;
 
     function renderMiniCanvases(time) {
-      if (document.getElementById('modalFriends').classList.contains('active')) {
+      const modal = document.getElementById('modalFriends');
+      if (modal && modal.classList.contains('active') && previewCtx) {
         previewCtx.clearRect(0, 0, 64, 48);
         previewCtx.fillStyle = '#3f7d3b';
         previewCtx.fillRect(0, 32, 64, 16);
@@ -2195,27 +2302,25 @@
     }
 
     /********************************************************************
-     * BUTTON BINDINGS & ENTRY
+     * BUTTON BINDINGS & ENTRY (Null-Safe via safeOn)
      ********************************************************************/
-    document.getElementById('btnEnterGarden').addEventListener('click', () => {
-      sound.init();
-      sound.playPurr();
-      const intro = document.getElementById('intro-overlay');
-      intro.classList.add('hidden-intro');
-    });
+    safeOn('enter-garden-btn', 'click', dismissIntroOverlay);
+    safeOn('btnEnterGarden', 'click', dismissIntroOverlay);
 
-    document.getElementById('btnFeed').addEventListener('click', () => world.feedBowl());
-    document.getElementById('btnOpenFriends').addEventListener('click', () => openModal('modalFriends'));
-    document.getElementById('btnWeather').addEventListener('click', () => world.cycleWeather());
+    safeOn('btnFeed', 'click', () => world.feedBowl());
+    safeOn('btnOpenFriends', 'click', () => openModal('modalFriends'));
+    safeOn('btnWeather', 'click', () => world.cycleWeather());
 
-    document.getElementById('btnAudio').addEventListener('click', () => {
+    safeOn('btnAudio', 'click', () => {
       sound.enabled = !sound.enabled;
-      document.getElementById('audioIcon').textContent = sound.enabled ? '🔊' : '🔇';
+      const icon = document.getElementById('audioIcon');
+      if (icon) icon.textContent = sound.enabled ? '🔊' : '🔇';
       showToast(sound.enabled ? 'Cozy audio enabled' : 'Cozy audio muted', sound.enabled ? '🔊' : '🔇');
     });
 
-    document.getElementById('btnConfirmAddCat').addEventListener('click', () => {
-      const name = (document.getElementById('inputCatName').value || 'Mochi').trim().slice(0, 16);
+    safeOn('btnConfirmAddCat', 'click', () => {
+      const nameInput = document.getElementById('inputCatName');
+      const name = (nameInput ? nameInput.value : 'Mochi').trim().slice(0, 16) || 'Mochi';
       const newSpec = {
         id: 'cat_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
         name,
@@ -2236,104 +2341,95 @@
       showToast(`${name} joined Lilo and Cheeto! 🐾`, '🐾');
     });
 
-    
-      // Cross-Device Save & Offline App Buttons
-      function encodeGardenState(state) {
-        try {
-          return encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(state)))));
-        } catch (e) {
-          return encodeURIComponent(JSON.stringify(state));
-        }
+    // Cross-Device Save & Offline App Buttons
+    function encodeGardenState(state) {
+      try {
+        return encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(state)))));
+      } catch (e) {
+        return encodeURIComponent(JSON.stringify(state));
       }
+    }
 
-      function getGardenShareUrl() {
-        const state = world.serialize();
-        const encoded = encodeGardenState(state);
-        const baseUrl = `${window.location.origin}${window.location.pathname}`.replace(/#.*$/, '');
-        return `${baseUrl}#garden=${encoded}`;
-      }
+    function getGardenShareUrl() {
+      const state = world.serialize();
+      const encoded = encodeGardenState(state);
+      const baseUrl = `${window.location.origin}${window.location.pathname}`.replace(/#.*$/, '');
+      return `${baseUrl}#garden=${encoded}`;
+    }
 
-      const copyBtn = document.getElementById('copy-garden-link-btn');
-      if (copyBtn) {
-        copyBtn.addEventListener('click', async () => {
-          const shareUrl = getGardenShareUrl();
-          try {
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-              await navigator.clipboard.writeText(shareUrl);
-            } else {
-              throw new Error('Clipboard API unavailable');
-            }
-            showToast('🔗 Garden Save URL copied!', '🔗');
-          } catch (err) {
-            const ta = document.createElement('textarea');
-            ta.value = shareUrl;
-            ta.style.position = 'fixed';
-            ta.style.opacity = '0';
-            document.body.appendChild(ta);
-            ta.focus();
-            ta.select();
-            try {
-              document.execCommand('copy');
-              showToast('🔗 Garden Save URL copied!', '🔗');
-            } catch (e) {
-              prompt('Copy your Garden Save URL:', shareUrl);
-            }
-            document.body.removeChild(ta);
-          }
-        });
-      }
-
-      const handlePwaInstall = async () => {
-        if (deferredInstallPrompt) {
-          deferredInstallPrompt.prompt();
-          try {
-            const { outcome } = await deferredInstallPrompt.userChoice;
-            if (outcome === 'accepted') {
-              showToast("Lilo's Garden added to Home Screen! 📲", '📲');
-            }
-          } catch (e) {}
-          deferredInstallPrompt = null;
+    safeOn('copy-garden-link-btn', 'click', async () => {
+      const shareUrl = getGardenShareUrl();
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(shareUrl);
         } else {
-          showToast("Tap your browser menu (⋮ or Share) -> 'Add to Home screen' to install offline!", '📲');
+          throw new Error('Clipboard API unavailable');
         }
-      };
-
-      const pwaBtn = document.getElementById('install-pwa-btn');
-      if (pwaBtn) pwaBtn.addEventListener('click', handlePwaInstall);
-
-      const installBtn = document.getElementById('btnInstallPwa');
-      if (installBtn) installBtn.addEventListener('click', handlePwaInstall);
-
-      // Camera Floating Toggle Button
-      const camBtn = document.getElementById('btnCameraMode');
-      if (camBtn) {
-        camBtn.addEventListener('click', () => {
-          if (camera.followCatId !== 'lilo') {
-            camera.followCatId = 'lilo';
-            const lilo = world.cats.find(c => c.id === 'lilo');
-            if (lilo) {
-              camera.x = lilo.x;
-              camera.y = lilo.y;
-            }
-            if (camera.zoom < 1.6) camera.zoom = 1.9;
-            clampCamera();
-            showToast('Camera following Lilo 🎯', '🎯');
-          } else {
-            if (camera.zoom >= 1.6) {
-              camera.zoom = 1.15;
-              showToast('Garden Overview (Wide) 🔍', '🔍');
-            } else {
-              camera.zoom = 1.9;
-              showToast('Zoomed 2x on Lilo 🔍', '🔍');
-            }
-            clampCamera();
-          }
-          updateCameraBtnUI();
-        });
+        showToast('🔗 Garden Save URL copied!', '🔗');
+      } catch (err) {
+        const ta = document.createElement('textarea');
+        ta.value = shareUrl;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        try {
+          document.execCommand('copy');
+          showToast('🔗 Garden Save URL copied!', '🔗');
+        } catch (e) {
+          prompt('Copy your Garden Save URL:', shareUrl);
+        }
+        document.body.removeChild(ta);
       }
+    });
 
-    document.getElementById('btnSaveTributeNote').addEventListener('click', () => {
-      const note = document.getElementById('inputTributeNote').value.trim();
+    const handlePwaInstall = async () => {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        try {
+          const { outcome } = await deferredInstallPrompt.userChoice;
+          if (outcome === 'accepted') {
+            showToast("Lilo's Garden added to Home Screen! 📲", '📲');
+          }
+        } catch (e) {}
+        deferredInstallPrompt = null;
+      } else {
+        showToast("Tap your browser menu (⋮ or Share) -> 'Add to Home screen' to install offline!", '📲');
+      }
+    };
+
+    safeOn('install-pwa-btn', 'click', handlePwaInstall);
+    safeOn('btnInstallPwa', 'click', handlePwaInstall);
+
+    // Camera Floating Toggle Button
+    safeOn('btnCameraMode', 'click', () => {
+      if (camera.followCatId !== 'lilo') {
+        camera.followCatId = 'lilo';
+        const lilo = world.cats.find(c => c.id === 'lilo');
+        if (lilo) {
+          camera.x = lilo.x;
+          camera.y = lilo.y;
+        }
+        if (camera.zoom < 1.6) camera.zoom = 1.9;
+        clampCamera();
+        showToast('Camera following Lilo 🎯', '🎯');
+      } else {
+        if (camera.zoom >= 1.6) {
+          camera.zoom = 1.15;
+          showToast('Garden Overview (Wide) 🔍', '🔍');
+        } else {
+          camera.zoom = 1.9;
+          showToast('Zoomed 2x on Lilo 🔍', '🔍');
+        }
+        clampCamera();
+      }
+      updateCameraBtnUI();
+    });
+
+    safeOn('btnSaveTributeNote', 'click', () => {
+      const input = document.getElementById('inputTributeNote');
+      const note = input ? input.value.trim() : '';
       if (note) {
         world.tributeNote = note;
         world.save();
@@ -2341,7 +2437,7 @@
       }
     });
 
-    document.getElementById('btnPetLiloNow').addEventListener('click', () => {
+    safeOn('btnPetLiloNow', 'click', () => {
       world.cats.slice(0, 2).forEach(c => world.petCat(c));
       closeModal('tribute-modal');
       showToast('Sent warm chin scratches to Lilo and Cheeto ♥', '💠');
@@ -2375,10 +2471,17 @@
       requestAnimationFrame(gameLoop);
     }
 
+    const mainLoop = gameLoop;
+    window.mainLoop = gameLoop;
+
     window.addEventListener('resize', updateCanvasResolution);
     window.addEventListener('orientationchange', updateCanvasResolution);
 
-    window.onload = function () {
+    let gameInitialized = false;
+    function initGame() {
+      if (gameInitialized) return;
+      gameInitialized = true;
+
       initCustomizerUI();
       world.init();
       updateCanvasResolution();
@@ -2407,4 +2510,13 @@
       );
 
       requestAnimationFrame(gameLoop);
-    };
+    }
+
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      setTimeout(initGame, 1);
+    } else {
+      window.addEventListener('DOMContentLoaded', initGame);
+      window.addEventListener('load', initGame);
+    }
+
+    window.onload = initGame;
