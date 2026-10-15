@@ -571,7 +571,7 @@ canvas#garden-canvas:active {
   background: linear-gradient(180deg, #68b82e 0%, #3d7a14 100%);
 }
 
-/* ==================== WIDGET MODE (?widget=1) ==================== */
+/* ==================== WIDGET (?widget=1) & WALLPAPER (?wallpaper=1) MODES ==================== */
 body.widget-mode #intro-overlay,
 body.widget-mode #cozy-dock,
 body.widget-mode #whisperBlooms,
@@ -588,17 +588,71 @@ body.widget-mode #whisper-pill {
   top: 6px;
 }
 
-body.widget-mode .whisper-container {
-  padding: 5px 10px !important;
-  transform: scale(0.9);
+/* Pure Live Wallpaper Mode: Hides all UI chrome so only the garden & cats render */
+body.wallpaper-mode #intro-overlay,
+body.wallpaper-mode #whisper-pill,
+body.wallpaper-mode #cozy-dock,
+body.wallpaper-mode #toastBox {
+  display: none !important;
 }
 
-/* ==================== MOBILE OPTIMIZATIONS ==================== */
+/* ==================== MOBILE OVERLAP & CONTAINMENT FIXES ==================== */
 @media (max-width: 640px) {
-  .whisper-mood {
-    max-width: 105px;
+  /* 1. Fix Top Whisper Plaque: Wrap cleanly into 2 compact rows so "L..." is never squished */
+  #whisper-pill {
+    width: calc(100vw - 16px);
+    max-width: 420px;
   }
 
+  .whisper-container {
+    flex-wrap: wrap !important;
+    justify-content: space-between !important;
+    padding: 10px 12px !important;
+    gap: 6px !important;
+    white-space: normal !important;
+  }
+
+  .whisper-btn {
+    font-size: 10.5px !important;
+    padding: 4px 8px !important;
+  }
+
+  /* Move Lilo's live mood onto its own full-width second row inside the wooden plaque */
+  .whisper-mood {
+    order: 4;
+    width: 100% !important;
+    max-width: 100% !important;
+    text-align: center;
+    font-size: 11px !important;
+    padding: 3px 8px !important;
+  }
+
+  /* 2. Fix Bottom Dock: Keep all 3 buttons strictly inside the wooden box */
+  #cozy-dock {
+    width: calc(100vw - 16px) !important;
+    max-width: 420px !important;
+    padding: 10px 10px !important;
+    gap: 6px !important;
+    justify-content: space-between !important;
+  }
+
+  #cozy-dock > button {
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
+    padding: 8px 6px !important;
+    font-size: 11px !important;
+    justify-content: center !important;
+    gap: 4px !important;
+  }
+
+  /* Make the "Empty/Full" and "2" badges compact on small phones */
+  #bowlBadge,
+  #catCountBadge {
+    padding: 1px 5px !important;
+    font-size: 9px !important;
+  }
+
+  /* 3. Fix Modal Top/Bottom Wooden Border Overlap when Scrolling */
   .modal-overlay {
     align-items: flex-end;
     padding: 0;
@@ -606,8 +660,26 @@ body.widget-mode .whisper-container {
 
   .cozy-card {
     max-width: 100%;
-    max-height: 90dvh;
-    border-radius: 8px 8px 0 0 !important;
-    padding: 20px 16px calc(20px + var(--safe-bottom)) !important;
+    max-height: 88dvh;
+    border-radius: 10px 10px 0 0 !important;
+    /* Extra padding + border clip so scrolling content never overlaps the wooden frame */
+    padding: 22px 18px calc(22px + var(--safe-bottom)) !important;
+    border-top: 6px solid var(--sv-border-dark) !important;
+  }
+
+  .remote-save-box {
+    margin-top: 4px !important;
+    padding: 10px !important;
+  }
+
+  .remote-save-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .remote-save-actions .copy-link-btn {
+    flex: 1 1 0%;
+    text-align: center;
+    justify-content: center;
   }
 }

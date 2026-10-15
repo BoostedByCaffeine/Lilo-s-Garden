@@ -2205,3 +2205,16 @@ if (document.readyState === 'loading') {
 } else {
   initGame();
 }
+
+/********************************************************************
+ * 12. HOME SCREEN WIDGET MODE (?widget=1)
+ ********************************************************************/
+(function checkWidgetMode() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('widget') === '1' || params.get('widget') === 'true') {
+    document.body.classList.add('widget-mode');
+    camera.followCatId = 'lilo';
+    camera.userZoom = 1.65;
+    clampCamera();
+  }
+})();
