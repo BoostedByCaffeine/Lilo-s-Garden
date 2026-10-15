@@ -11,6 +11,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
+import android.os.Build
 import android.widget.RemoteViews
 import org.json.JSONObject
 import java.util.Calendar
@@ -143,10 +144,55 @@ class LiloWidgetProvider : AppWidgetProvider() {
 
                 for (frameIdx in 0..3) {
                     val raw = drawStardewGardenFrame(frameIdx, mode, activeWeather, blooms, stepTick, cats)
-                    val scaled = Bitmap.createScaledBitmap(raw, raw.width * 2, raw.height * 2, false)
-                    // Convert to RGB_565 (~175 KB/frame) so RemoteViews never hits TransactionTooLargeException
-                    val safeBmp = scaled.copy(Bitmap.Config.RGB_565, false)
+                    val scaled = Bitmap.createScaledBitmap(raw, 440, 246, false).copy(Bitmap.Config.ARGB_8888, true)
                     raw.recycle()
+
+                    // Pass 2: Native High-Res Text Rendering (440x246)
+                    val scaledCanvas = Canvas(scaled)
+                    val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                        typeface = Typeface.DEFAULT_BOLD
+                        textAlign = Paint.Align.CENTER
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                            letterSpacing = 0.02f
+                        }
+                    }
+
+                    // 1. Top Banner Status Text
+                    val bannerText = when {
+                        activeWeather == "RAIN" -> "Cozy Rain • ${cats.size} Cats in Gazebo"
+                        mode == "PET" -> "Purring Happily • $blooms/24 Blooms"
+                        mode == "EAT" -> "Munching Crunchy Kibble • ${cats.size} Cats"
+                        mode == "SLEEP" -> "Napping in Garden (zZz) • ${cats.size} Cats"
+                        mode == "YARN" -> "Playing with Blue Yarn • ${cats.size} Cats"
+                        else -> "${cats.size} Cats Wandering • $activeWeather Sky"
+                    }
+                    textPaint.textSize = 15.5f
+                    textPaint.color = Color.parseColor("#3b1d0a")
+                    scaledCanvas.drawText(bannerText, 220f, 30.5f, textPaint)
+
+                    // 2. Bottom 4 Button Labels
+                    val btnTextY = 225.5f
+                    textPaint.textSize = 15f
+
+                    // Pet
+                    textPaint.color = Color.parseColor("#3b1d0a")
+                    scaledCanvas.drawText("Pet", 73f, btnTextY, textPaint)
+
+                    // Feed
+                    textPaint.color = Color.parseColor("#ffffff")
+                    scaledCanvas.drawText("Feed", 181f, btnTextY, textPaint)
+
+                    // Sky
+                    textPaint.color = Color.parseColor("#0c4a6e")
+                    scaledCanvas.drawText("Sky", 281f, btnTextY, textPaint)
+
+                    // Cat
+                    textPaint.color = Color.parseColor("#3b1d0a")
+                    textPaint.textSize = 14.5f
+                    scaledCanvas.drawText("Cat (${cats.size})", 386f, btnTextY, textPaint)
+
+                    // Convert to RGB_565 (~216 KB per frame, ~865 KB total for 4 frames)
+                    val safeBmp = scaled.copy(Bitmap.Config.RGB_565, false)
                     scaled.recycle()
                     views.setImageViewBitmap(frameIds[frameIdx], safeBmp)
                 }
@@ -508,22 +554,6 @@ class LiloWidgetProvider : AppWidgetProvider() {
             }
             drawPixelSparkleIcon(c, p, w - 22, 9, "#0284c7")
 
-            p.color = Color.parseColor("#3b1d0a")
-            p.isAntiAlias = true
-            p.textSize = 6.8f
-            p.typeface = Typeface.DEFAULT_BOLD
-            p.textAlign = Paint.Align.CENTER
-            val bannerText = when {
-                weather == "RAIN" -> "Cozy Rain • ${cats.size} Cats in Gazebo"
-                mode == "PET" -> "Purring Happily • $blooms/24 Blooms"
-                mode == "EAT" -> "Munching Crunchy Kibble • ${cats.size} Cats"
-                mode == "SLEEP" -> "Napping in Garden (zZz) • ${cats.size} Cats"
-                mode == "YARN" -> "Playing with Blue Yarn • ${cats.size} Cats"
-                else -> "${cats.size} Cats Wandering • $weather Sky"
-            }
-            c.drawText(bannerText, (w / 2).toFloat(), 14f, p)
-            p.isAntiAlias = false
-
             // 12. Bottom 4-Button Stardew Toolbar (Pet | Feed | Sky | +Cat)
             val btnY = h - 19
             // Button 1: Pet (Gold)
@@ -545,18 +575,6 @@ class LiloWidgetProvider : AppWidgetProvider() {
             px(147, btnY, 47, 14, "#3b1d0a")
             px(148, btnY + 1, 45, 12, "#fbbf24")
             drawPixelPlusIcon(c, p, 153, btnY + 4, "#3b1d0a")
-
-            p.isAntiAlias = true
-            p.textSize = 6.5f
-            p.color = Color.parseColor("#3b1d0a")
-            c.drawText("Pet", 31f, (btnY + 9.5f), p)
-            p.color = Color.parseColor("#ffffff")
-            c.drawText("Feed", 81f, (btnY + 9.5f), p)
-            p.color = Color.parseColor("#0c4a6e")
-            c.drawText("Sky", 127f, (btnY + 9.5f), p)
-            p.color = Color.parseColor("#3b1d0a")
-            c.drawText("Cat (${cats.size})", 174f, (btnY + 9.5f), p)
-            p.isAntiAlias = false
 
             // 13. Outer Stardew Wooden Frame
             px(0, 0, w, 3, "#3b1d0a")

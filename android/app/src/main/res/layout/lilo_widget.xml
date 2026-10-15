@@ -12,7 +12,7 @@
         android:layout_height="match_parent"
         android:layout_centerInParent="true"
         android:autoStart="true"
-        android:flipInterval="450">
+        android:flipInterval="280">
 
         <ImageView
             android:id="@+id/widget_frame_0"
