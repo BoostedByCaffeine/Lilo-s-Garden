@@ -3,14 +3,13 @@ package com.valois.lilosgarden
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.Rect
-import android.graphics.RectF
 import android.graphics.Typeface
 import android.widget.RemoteViews
 import java.util.Calendar
@@ -27,249 +26,425 @@ class LiloWidgetProvider : AppWidgetProvider() {
         }
     }
 
+    override fun onReceive(context: Context, intent: Intent) {
+        super.onReceive(context, intent)
+        val prefs = context.getSharedPreferences("lilo_widget_prefs", Context.MODE_PRIVATE)
+        when (intent.action) {
+            ACTION_PET -> {
+                val pets = prefs.getInt("pets", 8) + 1
+                prefs.edit()
+                    .putString("mode", "PET")
+                    .putInt("pets", pets)
+                    .apply()
+                refreshAllWidgets(context)
+            }
+            ACTION_FEED -> {
+                prefs.edit()
+                    .putString("mode", "EAT")
+                    .putInt("bowl", 3)
+                    .apply()
+                refreshAllWidgets(context)
+            }
+        }
+    }
+
+    private fun refreshAllWidgets(context: Context) {
+        val manager = AppWidgetManager.getInstance(context)
+        val ids = manager.getAppWidgetIds(ComponentName(context, LiloWidgetProvider::class.java))
+        for (id in ids) {
+            updateAppWidget(context, manager, id)
+        }
+    }
+
     companion object {
+        const val ACTION_PET = "com.valois.lilosgarden.ACTION_WIDGET_PET"
+        const val ACTION_FEED = "com.valois.lilosgarden.ACTION_WIDGET_FEED"
+
         fun updateAppWidget(
             context: Context,
             appWidgetManager: AppWidgetManager,
             appWidgetId: Int
         ) {
             val views = RemoteViews(context.packageName, R.layout.lilo_widget)
-            val bitmap = createWidgetPixelArt(context)
-            views.setImageViewBitmap(R.id.widget_canvas_img, bitmap)
+            val prefs = context.getSharedPreferences("lilo_widget_prefs", Context.MODE_PRIVATE)
+            val mode = prefs.getString("mode", "IDLE") ?: "IDLE"
+            val pets = prefs.getInt("pets", 8)
 
-            // Open Sanctuary MainActivity on click
-            val intent = Intent(context, MainActivity::class.java).apply {
+            // Generate 4 animated frames and scale 3x with nearest-neighbor (filter = false)
+            val frameIds = intArrayOf(
+                R.id.widget_frame_0,
+                R.id.widget_frame_1,
+                R.id.widget_frame_2,
+                R.id.widget_frame_3
+            )
+            for (frameIdx in 0..3) {
+                val raw = drawStardewGardenFrame(frameIdx, mode, pets)
+                val crispScaled = Bitmap.createScaledBitmap(raw, raw.width * 3, raw.height * 3, false)
+                views.setImageViewBitmap(frameIds[frameIdx], crispScaled)
+            }
+
+            // Tap main garden -> Launch Full App
+            val openAppIntent = Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
-            val pendingIntent = PendingIntent.getActivity(
+            val openPending = PendingIntent.getActivity(
                 context,
                 appWidgetId,
-                intent,
+                openAppIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            views.setOnClickPendingIntent(R.id.widget_container, pendingIntent)
-            views.setOnClickPendingIntent(R.id.widget_canvas_img, pendingIntent)
+            views.setOnClickPendingIntent(R.id.widget_flipper, openPending)
+
+            // Tap Bottom-Left -> Pet Lilo & Cheeto directly in Widget
+            val petIntent = Intent(context, LiloWidgetProvider::class.java).apply {
+                action = ACTION_PET
+            }
+            val petPending = PendingIntent.getBroadcast(
+                context,
+                appWidgetId + 100,
+                petIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.widget_btn_pet, petPending)
+
+            // Tap Bottom-Right -> Fill Bowl & Feed Brothers in Widget
+            val feedIntent = Intent(context, LiloWidgetProvider::class.java).apply {
+                action = ACTION_FEED
+            }
+            val feedPending = PendingIntent.getBroadcast(
+                context,
+                appWidgetId + 200,
+                feedIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.widget_btn_feed, feedPending)
 
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
 
-        private fun createWidgetPixelArt(context: Context): Bitmap {
-            val width = 320
-            val height = 160
-            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-            val canvas = Canvas(bitmap)
-            val paint = Paint(0).apply {
+        private fun drawStardewGardenFrame(frame: Int, mode: String, petsCount: Int): Bitmap {
+            val w = 200
+            val h = 108
+            val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+            val c = Canvas(bmp)
+            val p = Paint(0).apply {
                 isAntiAlias = false
                 isDither = false
+                isFilterBitmap = false
+            }
+
+            fun px(x: Int, y: Int, pw: Int, ph: Int, hex: String) {
+                p.color = Color.parseColor(hex)
+                c.drawRect(x.toFloat(), y.toFloat(), (x + pw).toFloat(), (y + ph).toFloat(), p)
             }
 
             val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
             val isNight = hour < 6 || hour >= 19
-            val isSunset = hour in 17..18
 
-            // 1. Sky Background
-            paint.color = when {
-                isNight -> Color.parseColor("#0f172a")
-                isSunset -> Color.parseColor("#ea580c")
-                else -> Color.parseColor("#60a5fa")
+            // 1. Forest Canopy & Hedge Background
+            px(0, 0, w, 34, if (isNight) "#0f172a" else "#172d1a")
+            px(0, 20, w, 14, "#2d5c2b")
+            for (hx in 6 until w step 12) {
+                px(hx, 22 + (if (hx % 24 == 0) 2 else 0), 9, 12, "#386e35")
             }
-            canvas.drawRect(0f, 0f, width.toFloat(), 64f, paint)
 
-            // Stars & Fireflies at Night
+            // 2. Checkerboard Pixel Lawn (Stardew Palette)
+            for (gy in 34 until h step 10) {
+                for (gx in 0 until w step 10) {
+                    val grassCol = if (((gx / 10) + (gy / 10)) % 2 == 0) {
+                        if (isNight) "#28522c" else "#4c9146"
+                    } else {
+                        if (isNight) "#224426" else "#478942"
+                    }
+                    px(gx, gy, 10, 10, grassCol)
+                }
+            }
+
+            // 3. Wooden Fence Along Horizon
+            px(6, 29, w - 12, 2, "#8c5832")
+            px(6, 33, w - 12, 2, "#8c5832")
+            for (fx in 10 until w - 10 step 16) {
+                if (fx in 90..110) continue
+                px(fx, 25, 4, 11, "#6e4223")
+                px(fx + 1, 26, 2, 9, "#a86e42")
+                px(fx + 1, 25, 2, 2, "#c98d5c")
+            }
+
+            // 4. Stepping Stones Path
+            val stones = arrayOf(
+                Pair(96, 35), Pair(94, 43), Pair(97, 51), Pair(95, 59), Pair(82, 47), Pair(68, 49)
+            )
+            for ((sx, sy) in stones) {
+                px(sx, sy + 1, 8, 4, "#64748b")
+                px(sx, sy, 7, 3, "#94a3b8")
+            }
+
+            // 5. Memorial Stone (Left) + Blooming Blue Forget-Me-Nots
+            val msX = 28
+            val msY = 48
+            px(msX - 9, msY + 2, 18, 4, "#223824")
+            px(msX - 8, msY - 2, 16, 6, "#64748b")
+            px(msX - 6, msY - 14, 12, 13, "#94a3b8")
+            px(msX - 5, msY - 15, 10, 2, "#cbd5e1")
+            px(msX - 4, msY - 10, 2, 2, if (frame % 2 == 0) "#38bdf8" else "#7dd3fc")
+            px(msX + 2, msY - 10, 2, 2, if (frame % 2 == 1) "#ffb300" else "#fde047")
+
+            val flowerOffsets = arrayOf(
+                Pair(-12, 2), Pair(-10, 7), Pair(10, 3), Pair(12, 7),
+                Pair(-8, -5), Pair(9, -4), Pair(-4, 9), Pair(5, 9)
+            )
+            for (i in flowerOffsets.indices) {
+                val (ox, oy) = flowerOffsets[i]
+                val bob = if ((frame + i) % 2 == 0) 0 else -1
+                px(msX + ox, msY + oy + 1, 1, 2, "#256d27")
+                px(msX + ox - 1, msY + oy + bob, 3, 2, "#38bdf8")
+                px(msX + ox, msY + oy + bob, 1, 1, "#fef08a")
+            }
+
+            // 6. Covered Wooden Gazebo Shelter (Right)
+            val gzX = 162
+            val gzY = 50
+            px(gzX - 18, gzY - 4, 36, 18, "#532e16")
+            px(gzX - 17, gzY - 5, 34, 17, "#78431e")
+            px(gzX - 11, gzY - 2, 22, 10, "#9f1239")
+            px(gzX - 9, gzY - 1, 18, 2, "#be123c")
+            px(gzX - 16, gzY - 20, 3, 28, "#532e16")
+            px(gzX + 13, gzY - 20, 3, 28, "#532e16")
+            val lanternShift = if (frame % 2 == 0) 0 else 1
+            px(gzX - 2 + lanternShift, gzY - 15, 4, 5, "#fef08a")
+            px(gzX - 20, gzY - 24, 40, 8, "#6e3818")
+            px(gzX - 16, gzY - 28, 32, 6, "#8c4820")
+            px(gzX - 10, gzY - 31, 20, 4, "#c86f34")
+
+            // 7. Ceramic Food Bowl (Center-Bottom)
+            val bwX = 100
+            val bwY = 74
+            px(bwX - 7, bwY, 14, 5, "#0284c7")
+            px(bwX - 6, bwY - 1, 12, 4, "#38bdf8")
+            px(bwX - 4, bwY - 2, 8, 3, "#d97706")
+
+            // 8. Side-Profile Lilo & Cheeto (Animated by frame 0..3 & mode)
+            val liloX = if (mode == "EAT") 84 else 76 + (if (frame == 1 || frame == 2) 2 else 0)
+            val liloY = if (mode == "EAT") 74 else 68
+            val cheetoX = if (mode == "EAT") 116 else 118 - (if (frame == 1 || frame == 2) 2 else 0)
+            val cheetoY = if (mode == "EAT") 74 else 68
+
+            drawSideProfileCat(
+                c, p,
+                x = liloX, y = liloY,
+                facingRight = true,
+                frame = frame,
+                mode = mode,
+                eyeLeft = "#29b6f6",
+                eyeRight = "#29b6f6",
+                collar = "#1e88e5"
+            )
+
+            drawSideProfileCat(
+                c, p,
+                x = cheetoX, y = cheetoY,
+                facingRight = false,
+                frame = (frame + 2) % 4,
+                mode = mode,
+                eyeLeft = "#ffb300",
+                eyeRight = "#29b6f6",
+                collar = null
+            )
+
+            // 9. Animated Floating Pixel Hearts & Critters
+            val heartY = 50 - (frame * 2)
+            drawPixelHeart(c, p, 97, heartY, "#fb7185")
+            if (mode == "PET") {
+                drawPixelHeart(c, p, liloX + 2, liloY - 18 - (frame * 2), "#38bdf8")
+                drawPixelHeart(c, p, cheetoX - 2, cheetoY - 18 - (frame * 2), "#fbbf24")
+            }
+
+            val bfX = 52 + (frame * 3)
+            val bfY = 40 + (if (frame % 2 == 0) -2 else 1)
             if (isNight) {
-                paint.color = Color.parseColor("#ffffff")
-                val starCoords = arrayOf(
-                    Pair(24, 16), Pair(56, 28), Pair(92, 18), Pair(130, 24),
-                    Pair(186, 14), Pair(220, 26), Pair(264, 18), Pair(295, 25),
-                    Pair(42, 42), Pair(278, 40)
-                )
-                for ((sx, sy) in starCoords) {
-                    canvas.drawRect(sx.toFloat(), sy.toFloat(), (sx + 2).toFloat(), (sy + 2).toFloat(), paint)
-                }
-
-                paint.color = Color.parseColor("#facc15")
-                val fireflyCoords = arrayOf(Pair(72, 52), Pair(110, 46), Pair(210, 50), Pair(245, 44))
-                for ((fx, fy) in fireflyCoords) {
-                    canvas.drawRect(fx.toFloat(), fy.toFloat(), (fx + 2).toFloat(), (fy + 2).toFloat(), paint)
-                }
-            } else if (!isSunset) {
-                // Cheerful Pixel Sun
-                paint.color = Color.parseColor("#fde047")
-                canvas.drawRect(276f, 16f, 296f, 36f, paint)
-                paint.color = Color.parseColor("#fef08a")
-                canvas.drawRect(280f, 20f, 292f, 32f, paint)
+                px(bfX, bfY, 2, 2, "#fde047")
+                px(138, 42 - (frame % 2) * 2, 2, 2, "#fde047")
+            } else {
+                px(bfX, bfY, if (frame % 2 == 0) 3 else 1, if (frame % 2 == 0) 2 else 3, "#f472b6")
             }
 
-            // 2. Lush Lawn with Checkerboard Pixel Grass
-            val lawnDark = Color.parseColor("#387332")
-            val lawnLight = Color.parseColor("#478942")
-            val lawnHighlight = Color.parseColor("#5ba854")
+            // 10. Top Stardew Banner Plaque + Pixel Sun/Moon & Sparkle Icons
+            px(14, 5, w - 28, 16, "#3b1d0a")
+            px(16, 7, w - 32, 12, "#f7dba7")
 
-            for (y in 60 until height step 8) {
-                for (x in 0 until width step 8) {
-                    paint.color = if (((x / 8) + (y / 8)) % 2 == 0) lawnLight else lawnDark
-                    canvas.drawRect(x.toFloat(), y.toFloat(), (x + 8).toFloat(), (y + 8).toFloat(), paint)
-                }
+            // Left Banner Icon: Pixel Sun or Moon
+            if (isNight) {
+                drawPixelMoonIcon(c, p, 22, 10, "#7c3aed")
+            } else {
+                drawPixelSunIcon(c, p, 22, 10, "#d97706")
+            }
+            // Right Banner Icon: Pixel Sparkle (#pi-sparkle)
+            drawPixelSparkleIcon(c, p, w - 27, 10, "#0284c7")
+
+            p.color = Color.parseColor("#3b1d0a")
+            p.isAntiAlias = true
+            p.textSize = 7.2f
+            p.typeface = Typeface.DEFAULT_BOLD
+            p.textAlign = Paint.Align.CENTER
+            val statusLabel = when (mode) {
+                "PET" -> "Lilo & Cheeto: Purring ($petsCount Pets)"
+                "EAT" -> "Lilo & Cheeto: Munching Kibble"
+                else -> "Lilo & Cheeto's Sanctuary"
+            }
+            c.drawText(statusLabel, (w / 2).toFloat(), 15.5f, p)
+            p.isAntiAlias = false
+
+            // 11. Bottom Interactive Stardew Button Bar (With Pixel Heart & Pixel Fish Icons)
+            // Left Button: Pet Brothers
+            px(12, h - 20, 84, 14, "#3b1d0a")
+            px(13, h - 19, 82, 12, "#f6d397")
+            drawPixelHeart(c, p, 22, h - 13, "#29b6f6")
+            drawPixelHeart(c, p, 30, h - 13, "#ffb300")
+
+            // Right Button: Fill Bowl
+            px(w - 96, h - 20, 84, 14, "#3b1d0a")
+            px(w - 95, h - 19, 82, 12, "#68b82e")
+            drawPixelFishIcon(c, p, w - 86, h - 16, "#fde047")
+
+            p.isAntiAlias = true
+            p.textSize = 7.2f
+            p.color = Color.parseColor("#3b1d0a")
+            c.drawText("Pet Brothers", 61f, (h - 10.5f), p)
+            p.color = Color.parseColor("#ffffff")
+            c.drawText("Fill Bowl", (w - 47).toFloat(), (h - 10.5f), p)
+            p.isAntiAlias = false
+
+            // 12. Outer Carved Stardew Wooden Border
+            px(0, 0, w, 3, "#3b1d0a")
+            px(0, h - 3, w, 3, "#3b1d0a")
+            px(0, 0, 3, h, "#3b1d0a")
+            px(w - 3, 0, 3, h, "#3b1d0a")
+
+            px(3, 3, w - 6, 2, "#8f4d22")
+            px(3, h - 5, w - 6, 2, "#8f4d22")
+            px(3, 3, 2, h - 6, "#8f4d22")
+            px(w - 5, 3, 2, h - 6, "#8f4d22")
+
+            return bmp
+        }
+
+        private fun drawSideProfileCat(
+            c: Canvas,
+            p: Paint,
+            x: Int,
+            y: Int,
+            facingRight: Boolean,
+            frame: Int,
+            mode: String,
+            eyeLeft: String,
+            eyeRight: String,
+            collar: String?
+        ) {
+            c.save()
+            c.translate(x.toFloat(), y.toFloat())
+
+            p.color = Color.parseColor("#223824")
+            c.drawRect(-7f, -1f, 7f, 2f, p)
+
+            if (!facingRight) {
+                c.scale(-1f, 1f)
             }
 
-            // Lawn Highlights & flower blades
-            paint.color = lawnHighlight
-            val bladeCoords = arrayOf(
-                Pair(18, 75), Pair(52, 90), Pair(88, 120), Pair(112, 140),
-                Pair(205, 138), Pair(242, 110), Pair(285, 78), Pair(290, 130)
-            )
-            for ((bx, by) in bladeCoords) {
-                canvas.drawRect(bx.toFloat(), by.toFloat(), (bx + 3).toFloat(), (by + 2).toFloat(), paint)
+            fun r(rx: Int, ry: Int, rw: Int, rh: Int, hex: String) {
+                p.color = Color.parseColor(hex)
+                c.drawRect(rx.toFloat(), ry.toFloat(), (rx + rw).toFloat(), (ry + rh).toFloat(), p)
             }
 
-            // 3. Blue Forget-Me-Not Blooms
-            paint.color = Color.parseColor("#38bdf8")
-            val bloomCoords = arrayOf(
-                Pair(32, 102), Pair(46, 124), Pair(82, 85), Pair(98, 110),
-                Pair(226, 114), Pair(248, 88), Pair(272, 126), Pair(286, 105)
-            )
-            for ((fx, fy) in bloomCoords) {
-                // Petals
-                paint.color = Color.parseColor("#38bdf8")
-                canvas.drawRect((fx - 2).toFloat(), (fy - 2).toFloat(), (fx + 4).toFloat(), (fy + 4).toFloat(), paint)
-                // Center
-                paint.color = Color.parseColor("#fef08a")
-                canvas.drawRect(fx.toFloat(), fy.toFloat(), (fx + 2).toFloat(), (fy + 2).toFloat(), paint)
+            val bounceY = if (frame % 2 == 1) -1 else 0
+            val tailWagY = if (frame == 0) -1 else if (frame == 2) 1 else 0
+            val headDip = if (mode == "EAT" && frame % 2 == 1) 2 else 0
+
+            r(-8, -8 + bounceY, 2, 3, "#ffffff")
+            r(-9, -11 + bounceY + tailWagY, 2, 4, "#ffffff")
+
+            r(-6, -8 + bounceY, 11, 6, "#ffffff")
+            r(-6, -4 + bounceY, 11, 2, "#dbe7f5")
+
+            if (collar != null) {
+                r(2, -5 + bounceY, 3, 1, collar)
+                r(4, -4 + bounceY, 1, 1, "#fde047")
             }
 
-            // 4. Memorial Stone Sanctuary (Left Side)
-            paint.color = Color.parseColor("#64748b")
-            canvas.drawRect(34f, 54f, 62f, 78f, paint)
-            paint.color = Color.parseColor("#94a3b8")
-            canvas.drawRect(36f, 52f, 60f, 54f, paint)
-            paint.color = Color.parseColor("#475569")
-            canvas.drawRect(36f, 78f, 60f, 82f, paint)
-            // Memorial Stone forget-me-nots
-            paint.color = Color.parseColor("#38bdf8")
-            canvas.drawRect(42f, 62f, 46f, 66f, paint)
-            canvas.drawRect(50f, 62f, 54f, 66f, paint)
-            paint.color = Color.parseColor("#fef08a")
-            canvas.drawRect(47f, 63f, 49f, 65f, paint)
+            val legA = if (frame % 2 == 0) 0 else -1
+            val legB = if (frame % 2 == 1) 0 else -1
+            r(-5, -2 + legA, 2, 2, "#dbe7f5")
+            r(-2, -2 + legB, 2, 2, "#ffffff")
+            r(1, -2 + legB, 2, 2, "#dbe7f5")
+            r(3, -2 + legA, 2, 2, "#ffffff")
 
-            // 5. Ceramic Food Bowl (Right Side)
-            paint.color = Color.parseColor("#0284c7")
-            canvas.drawRect(252f, 70f, 276f, 80f, paint)
-            paint.color = Color.parseColor("#38bdf8")
-            canvas.drawRect(254f, 68f, 274f, 71f, paint)
-            paint.color = Color.parseColor("#d97706") // Golden Kibble
-            canvas.drawRect(256f, 70f, 272f, 74f, paint)
+            val hy = -13 + bounceY + headDip
+            r(0, hy, 8, 6, "#ffffff")
+            r(1, hy - 1, 6, 1, "#ffffff")
+            r(0, hy + 5, 8, 1, "#dbe7f5")
+            r(1, hy - 3, 2, 2, "#ffffff")
+            r(5, hy - 3, 2, 2, "#ffffff")
+            r(1, hy - 2, 1, 1, "#ff9ebb")
+            r(6, hy - 2, 1, 1, "#ff9ebb")
 
-            // 6. Draw Pixel-Art Cats: Lilo (Left) & Cheeto (Right)
-            // Cat Palette
-            val catWhite = Color.parseColor("#ffffff")
-            val catShade = Color.parseColor("#cbd5e1")
-            val catPink = Color.parseColor("#ffb6c1")
-            val liloBlue = Color.parseColor("#29b6f6")
-            val cheetoAmber = Color.parseColor("#ffb300")
-            val collarBlue = Color.parseColor("#1e88e5")
-            val collarGold = Color.parseColor("#fde047")
+            if (frame == 3 || mode == "PET") {
+                r(2, hy + 2, 2, 1, "#334155")
+                r(5, hy + 2, 2, 1, "#334155")
+            } else {
+                r(2, hy + 1, 2, 2, eyeLeft)
+                r(5, hy + 1, 2, 2, eyeRight)
+                r(2, hy + 1, 1, 1, "#ffffff")
+                r(5, hy + 1, 1, 1, "#ffffff")
+            }
 
-            // --- LILO (x = 118, y = 84) ---
-            val lx = 118f
-            val ly = 84f
-            // Body
-            paint.color = catWhite
-            canvas.drawRect(lx, ly + 14f, lx + 26f, ly + 36f, paint)
-            paint.color = catShade
-            canvas.drawRect(lx + 2f, ly + 34f, lx + 24f, ly + 37f, paint)
-            // Head
-            paint.color = catWhite
-            canvas.drawRect(lx + 4f, ly + 2f, lx + 24f, ly + 16f, paint)
-            // Ears
-            canvas.drawRect(lx + 4f, ly - 4f, lx + 10f, ly + 2f, paint)
-            canvas.drawRect(lx + 18f, ly - 4f, lx + 24f, ly + 2f, paint)
-            paint.color = catPink
-            canvas.drawRect(lx + 6f, ly - 2f, lx + 8f, ly + 1f, paint)
-            canvas.drawRect(lx + 20f, ly - 2f, lx + 22f, ly + 1f, paint)
-            // Blue Collar & Gold Bell
-            paint.color = collarBlue
-            canvas.drawRect(lx + 6f, ly + 14f, lx + 22f, ly + 17f, paint)
-            paint.color = collarGold
-            canvas.drawRect(lx + 12f, ly + 16f, lx + 16f, ly + 19f, paint)
-            // Twin Blue Eyes
-            paint.color = liloBlue
-            canvas.drawRect(lx + 8f, ly + 7f, lx + 11f, ly + 11f, paint)
-            canvas.drawRect(lx + 17f, ly + 7f, lx + 20f, ly + 11f, paint)
-            // Cute Nose
-            paint.color = catPink
-            canvas.drawRect(lx + 13f, ly + 11f, lx + 15f, ly + 13f, paint)
+            r(4, hy + 3, 1, 1, "#ff9ebb")
+            c.restore()
+        }
 
-            // --- CHEETO (x = 176, y = 84) ---
-            val cx = 176f
-            val cy = 84f
-            // Body
-            paint.color = catWhite
-            canvas.drawRect(cx, cy + 14f, cx + 26f, cy + 36f, paint)
-            paint.color = catShade
-            canvas.drawRect(cx + 2f, cy + 34f, cx + 24f, cy + 37f, paint)
-            // Head
-            paint.color = catWhite
-            canvas.drawRect(cx + 2f, cy + 2f, cx + 22f, cy + 16f, paint)
-            // Ears
-            canvas.drawRect(cx + 2f, cy - 4f, cx + 8f, cy + 2f, paint)
-            canvas.drawRect(cx + 16f, cy - 4f, cx + 22f, cy + 2f, paint)
-            paint.color = catPink
-            canvas.drawRect(cx + 4f, cy - 2f, cx + 6f, cy + 1f, paint)
-            canvas.drawRect(cx + 18f, cy - 2f, cx + 20f, cy + 1f, paint)
-            // Amber (Left) & Blue (Right) Eyes
-            paint.color = cheetoAmber
-            canvas.drawRect(cx + 6f, cy + 7f, cx + 9f, cy + 11f, paint)
-            paint.color = liloBlue
-            canvas.drawRect(cx + 15f, cy + 7f, cx + 18f, cy + 11f, paint)
-            // Cute Nose
-            paint.color = catPink
-            canvas.drawRect(cx + 11f, cy + 11f, cx + 13f, cy + 13f, paint)
+        // Pixel Icon 1: Solid Heart (#pi-heart-solid)
+        private fun drawPixelHeart(c: Canvas, p: Paint, x: Int, y: Int, hex: String) {
+            p.color = Color.parseColor(hex)
+            c.drawRect((x - 2).toFloat(), (y - 2).toFloat(), x.toFloat(), y.toFloat(), p)
+            c.drawRect((x + 1).toFloat(), (y - 2).toFloat(), (x + 3).toFloat(), y.toFloat(), p)
+            c.drawRect((x - 3).toFloat(), (y - 1).toFloat(), (x + 4).toFloat(), (y + 1).toFloat(), p)
+            c.drawRect((x - 2).toFloat(), (y + 1).toFloat(), (x + 3).toFloat(), (y + 2).toFloat(), p)
+            c.drawRect((x - 1).toFloat(), (y + 2).toFloat(), (x + 2).toFloat(), (y + 3).toFloat(), p)
+        }
 
-            // Floating Pink Pixel Heart between brothers
-            paint.color = Color.parseColor("#fb7185")
-            val hx = 156f
-            val hy = 76f
-            canvas.drawRect(hx, hy - 4f, hx + 3f, hy - 1f, paint)
-            canvas.drawRect(hx + 5f, hy - 4f, hx + 8f, hy - 1f, paint)
-            canvas.drawRect(hx - 1f, hy - 1f, hx + 9f, hy + 2f, paint)
-            canvas.drawRect(hx + 1f, hy + 2f, hx + 7f, hy + 4f, paint)
-            canvas.drawRect(hx + 3f, hy + 4f, hx + 5f, hy + 6f, paint)
+        // Pixel Icon 2: Fish (#pi-fish) for Fill Bowl Button
+        private fun drawPixelFishIcon(c: Canvas, p: Paint, x: Int, y: Int, hex: String) {
+            p.color = Color.parseColor(hex)
+            // Tail fin
+            c.drawRect(x.toFloat(), (y + 1).toFloat(), (x + 2).toFloat(), (y + 5).toFloat(), p)
+            // Fish body
+            c.drawRect((x + 2).toFloat(), (y + 2).toFloat(), (x + 4).toFloat(), (y + 4).toFloat(), p)
+            c.drawRect((x + 4).toFloat(), (y + 1).toFloat(), (x + 9).toFloat(), (y + 5).toFloat(), p)
+            c.drawRect((x + 9).toFloat(), (y + 2).toFloat(), (x + 11).toFloat(), (y + 4).toFloat(), p)
+            // Eye pixel
+            p.color = Color.parseColor("#3b1d0a")
+            c.drawRect((x + 8).toFloat(), (y + 2).toFloat(), (x + 9).toFloat(), (y + 3).toFloat(), p)
+        }
 
-            // 7. Top Stardew Valley Wooden Plaque Banner
-            paint.color = Color.parseColor("#3b1d0a") // Dark frame
-            canvas.drawRect(24f, 8f, 296f, 32f, paint)
-            paint.color = Color.parseColor("#8f4d22") // Mid wood
-            canvas.drawRect(26f, 10f, 294f, 30f, paint)
-            paint.color = Color.parseColor("#fdf6e2") // Parchment fill
-            canvas.drawRect(28f, 12f, 292f, 28f, paint)
+        // Pixel Icon 3: Sparkle (#pi-sparkle)
+        private fun drawPixelSparkleIcon(c: Canvas, p: Paint, x: Int, y: Int, hex: String) {
+            p.color = Color.parseColor(hex)
+            c.drawRect((x + 2).toFloat(), y.toFloat(), (x + 3).toFloat(), (y + 5).toFloat(), p)
+            c.drawRect(x.toFloat(), (y + 2).toFloat(), (x + 5).toFloat(), (y + 3).toFloat(), p)
+        }
 
-            // Banner Text
-            paint.color = Color.parseColor("#3b1d0a")
-            paint.isAntiAlias = true
-            paint.textSize = 10.5f
-            paint.typeface = Typeface.DEFAULT_BOLD
-            paint.textAlign = Paint.Align.CENTER
-            canvas.drawText("Lilo & Cheeto's Sanctuary • Tap to Visit", 160f, 23.5f, paint)
-            paint.isAntiAlias = false
+        // Pixel Icon 4: Sun (#pi-sun)
+        private fun drawPixelSunIcon(c: Canvas, p: Paint, x: Int, y: Int, hex: String) {
+            p.color = Color.parseColor(hex)
+            c.drawRect((x + 1).toFloat(), (y + 1).toFloat(), (x + 4).toFloat(), (y + 4).toFloat(), p)
+            c.drawRect((x + 2).toFloat(), y.toFloat(), (x + 3).toFloat(), (y + 5).toFloat(), p)
+            c.drawRect(x.toFloat(), (y + 2).toFloat(), (x + 5).toFloat(), (y + 3).toFloat(), p)
+        }
 
-            // 8. Stardew Valley Widget Outer Wooden Box Border
-            paint.color = Color.parseColor("#3b1d0a") // Outer dark border
-            canvas.drawRect(0f, 0f, width.toFloat(), 4f, paint)
-            canvas.drawRect(0f, (height - 4).toFloat(), width.toFloat(), height.toFloat(), paint)
-            canvas.drawRect(0f, 0f, 4f, height.toFloat(), paint)
-            canvas.drawRect((width - 4).toFloat(), 0f, width.toFloat(), height.toFloat(), paint)
-
-            paint.color = Color.parseColor("#8f4d22") // Mid wood border
-            canvas.drawRect(4f, 4f, (width - 4).toFloat(), 7f, paint)
-            canvas.drawRect(4f, (height - 7).toFloat(), (width - 4).toFloat(), (height - 4).toFloat(), paint)
-            canvas.drawRect(4f, 4f, 7f, (height - 4).toFloat(), paint)
-            canvas.drawRect((width - 7).toFloat(), 4f, (width - 4).toFloat(), (height - 4).toFloat(), paint)
-
-            paint.color = Color.parseColor("#f7dba7") // Inner honey bevel
-            canvas.drawRect(7f, 7f, (width - 7).toFloat(), 8f, paint)
-            canvas.drawRect(7f, 7f, 8f, (height - 7).toFloat(), paint)
-
-            return bitmap
+        // Pixel Icon 5: Crescent Moon (#pi-moon)
+        private fun drawPixelMoonIcon(c: Canvas, p: Paint, x: Int, y: Int, hex: String) {
+            p.color = Color.parseColor(hex)
+            c.drawRect((x + 1).toFloat(), y.toFloat(), (x + 4).toFloat(), (y + 1).toFloat(), p)
+            c.drawRect(x.toFloat(), (y + 1).toFloat(), (x + 2).toFloat(), (y + 4).toFloat(), p)
+            c.drawRect((x + 1).toFloat(), (y + 4).toFloat(), (x + 4).toFloat(), (y + 5).toFloat(), p)
         }
     }
 }

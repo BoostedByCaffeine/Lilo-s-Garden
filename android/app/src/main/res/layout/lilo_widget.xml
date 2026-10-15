@@ -5,12 +5,65 @@
     android:layout_height="match_parent"
     android:background="@android:color/transparent">
 
-    <ImageView
-        android:id="@+id/widget_canvas_img"
+    <!-- Auto-cycling 4-frame Pixel Art Animator (500ms per frame) -->
+    <ViewFlipper
+        android:id="@+id/widget_flipper"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_centerInParent="true"
-        android:contentDescription="@string/widget_name"
-        android:scaleType="fitCenter" />
+        android:autoStart="true"
+        android:flipInterval="500">
+
+        <ImageView
+            android:id="@+id/widget_frame_0"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/widget_name"
+            android:scaleType="fitCenter" />
+
+        <ImageView
+            android:id="@+id/widget_frame_1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/widget_name"
+            android:scaleType="fitCenter" />
+
+        <ImageView
+            android:id="@+id/widget_frame_2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/widget_name"
+            android:scaleType="fitCenter" />
+
+        <ImageView
+            android:id="@+id/widget_frame_3"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/widget_name"
+            android:scaleType="fitCenter" />
+    </ViewFlipper>
+
+    <!-- Bottom Interactive Hotspots (Pet Brothers / Fill Bowl directly on Widget) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal"
+        android:weightSum="2">
+
+        <FrameLayout
+            android:id="@+id/widget_btn_pet"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@android:color/transparent" />
+
+        <FrameLayout
+            android:id="@+id/widget_btn_feed"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@android:color/transparent" />
+    </LinearLayout>
 
 </RelativeLayout>

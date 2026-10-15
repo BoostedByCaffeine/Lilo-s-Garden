@@ -33,6 +33,8 @@
             android:label="@string/widget_name">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.valois.lilosgarden.ACTION_WIDGET_PET" />
+                <action android:name="com.valois.lilosgarden.ACTION_WIDGET_FEED" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
