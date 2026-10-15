@@ -1,16 +1,20 @@
 :root {
-  --parchment: rgba(255, 250, 240, 0.94);
-  --parchment-solid: #fffaf0;
-  --wood-border: rgba(139, 94, 60, 0.35);
-  --wood-dark: #4a3525;
-  --wood-muted: #7c624c;
-  --sage-accent: #529471;
-  --sage-hover: #427d5d;
-  --lilo-blue: #29b6f6;
-  --collar-blue: #1e88e5;
-  --cheeto-amber: #ffb300;
-  --heart-pink: #ff6b8b;
-  --shadow-cozy: 0 12px 32px rgba(58, 40, 24, 0.22);
+  /* Authentic Stardew Valley Wooden & Golden Parchment Palette */
+  --sv-border-dark: #3b1d0a;
+  --sv-wood-Shadow: #5e2c11;
+  --sv-wood-main: #8f4d22;
+  --sv-wood-light: #c87d3b;
+  --sv-wood-highlight: #e6a968;
+  --sv-parchment: #f7dba7;
+  --sv-parchment-light: #ffefc7;
+  --sv-parchment-dark: #dfb573;
+  --sv-ink: #3b1d0a;
+  --sv-ink-muted: #6e3f1d;
+  --sv-green-top: #68b82e;
+  --sv-green-bot: #3d7a14;
+  --sv-green-border: #1e4206;
+  --sv-gold-top: #ffd866;
+  --sv-gold-bot: #e09624;
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
@@ -33,18 +37,19 @@ html {
   height: 100%;
   height: 100dvh;
   overflow: hidden;
-  background-color: #1f2e23;
-  font-family: 'Quicksand', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  color: var(--wood-dark);
+  background-color: #172d1a;
+  font-family: 'Quicksand', sans-serif;
+  color: var(--sv-ink);
   overscroll-behavior: none;
 }
 
 .font-pixel {
-  font-family: 'Press Start 2P', monospace, sans-serif;
-  letter-spacing: 0.04em;
+  font-family: 'Press Start 2P', monospace;
+  letter-spacing: 0.03em;
+  line-height: 1.4;
 }
 
-/* Full-Screen Garden Stage & Canvas */
+/* ==================== GARDEN STAGE & PIXEL CANVAS ==================== */
 #garden-stage {
   position: relative;
   width: 100vw;
@@ -69,19 +74,40 @@ canvas#garden-canvas:active {
   cursor: grabbing;
 }
 
-/* Cozy Frosted Intro Overlay */
+/* ==================== STARDEW WOODEN BOX MIXIN STYLE ==================== */
+.intro-card,
+.whisper-container,
+#cozy-dock,
+.cozy-card,
+#toastBox>div {
+  background-color: var(--sv-parchment) !important;
+  background-image:
+    radial-gradient(rgba(200, 125, 59, 0.08) 1px, transparent 0) !important;
+  background-size: 8px 8px !important;
+  border: 4px solid var(--sv-border-dark) !important;
+  border-radius: 6px !important;
+  box-shadow:
+    inset 0 0 0 3px var(--sv-wood-light),
+    inset 0 0 0 6px var(--sv-wood-main),
+    inset 0 0 0 8px var(--sv-border-dark),
+    0 6px 0 rgba(20, 10, 4, 0.75),
+    0 12px 24px rgba(0, 0, 0, 0.55) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  color: var(--sv-ink) !important;
+}
+
+/* ==================== INTRO OVERLAY (STARDEW TITLE DIALOGUE) ==================== */
 #intro-overlay {
   position: fixed;
   inset: 0;
   z-index: 60;
-  background: rgba(22, 34, 25, 0.62);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: rgba(14, 24, 16, 0.72);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
-  transition: opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1), visibility 0.65s;
+  transition: opacity 0.55s ease, visibility 0.55s ease;
 }
 
 #intro-overlay.hidden-intro {
@@ -93,27 +119,26 @@ canvas#garden-canvas:active {
 .intro-card {
   width: 100%;
   max-width: 430px;
-  background: var(--parchment-solid);
-  border: 3px solid rgba(139, 94, 60, 0.38);
-  border-radius: 28px;
-  padding: 24px 22px 20px;
+  padding: 26px 22px 22px !important;
   text-align: center;
-  box-shadow: 0 24px 60px rgba(15, 23, 17, 0.5);
+  position: relative;
 }
 
 .intro-portrait-wrap {
   position: relative;
   width: 220px;
   height: 124px;
-  margin: 0 auto 14px;
+  margin: 8px auto 16px;
   background: #1e3a24;
-  border-radius: 20px;
-  border: 2px solid rgba(82, 148, 113, 0.45);
+  border: 4px solid var(--sv-border-dark);
+  border-radius: 4px;
+  box-shadow:
+    inset 0 0 0 2px #0f1f12,
+    0 3px 0 var(--sv-wood-light);
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 #intro-canvas {
@@ -126,26 +151,31 @@ canvas#garden-canvas:active {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 12px;
-  border-radius: 999px;
-  background: rgba(41, 182, 246, 0.14);
-  color: #0284c7;
-  font-size: 0.76rem;
-  font-weight: 700;
+  padding: 5px 10px;
+  background: var(--sv-parchment-light);
+  border: 2px solid var(--sv-border-dark);
+  border-radius: 4px;
+  box-shadow: inset 0 -2px 0 var(--sv-parchment-dark);
+  color: var(--sv-ink);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
   margin-bottom: 8px;
 }
 
 .intro-title {
-  font-size: 1.65rem;
-  font-weight: 700;
-  color: var(--wood-dark);
-  margin: 0 0 6px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1.2rem;
+  color: var(--sv-ink);
+  text-shadow: 2px 2px 0 var(--sv-parchment-light), 3px 3px 0 rgba(59, 29, 10, 0.25);
+  margin: 4px 0 10px;
+  letter-spacing: 0.02em;
 }
 
 .intro-subtitle {
   font-size: 0.88rem;
+  font-weight: 700;
   line-height: 1.45;
-  color: var(--wood-muted);
+  color: var(--sv-ink-muted);
   margin: 0 0 14px;
 }
 
@@ -161,74 +191,75 @@ canvas#garden-canvas:active {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 5px 10px;
-  border-radius: 12px;
-  background: rgba(139, 94, 60, 0.08);
-  font-size: 0.76rem;
+  padding: 5px 9px;
+  border-radius: 4px;
+  background: var(--sv-parchment-light);
+  border: 2px solid var(--sv-wood-main);
+  box-shadow: inset 0 -2px 0 var(--sv-parchment-dark);
+  font-size: 0.75rem;
   font-weight: 700;
-  color: var(--wood-dark);
+  color: var(--sv-ink);
 }
 
 .eye-dot {
   width: 8px;
   height: 8px;
-  border-radius: 50%;
+  border: 1px solid #000;
   display: inline-block;
 }
 
 .enter-garden-btn {
   width: 100%;
-  padding: 14px 20px;
-  border: none;
-  border-radius: 999px;
-  background: var(--sage-accent);
+  padding: 14px 18px;
+  border: 3px solid var(--sv-border-dark);
+  border-radius: 4px;
+  background: linear-gradient(180deg, var(--sv-green-top) 0%, var(--sv-green-bot) 100%);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.25),
+    0 4px 0 var(--sv-border-dark);
   color: #fff;
-  font-family: 'Quicksand', sans-serif;
-  font-size: 1rem;
-  font-weight: 700;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.72rem;
+  text-shadow: 1px 1px 0 #1b3b07;
   cursor: pointer;
-  box-shadow: 0 8px 20px rgba(82, 148, 113, 0.35);
-  transition: transform 0.18s ease, background 0.18s ease;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
 }
 
-.enter-garden-btn:hover,
+.enter-garden-btn:hover {
+  filter: brightness(1.06);
+}
+
 .enter-garden-btn:active {
-  background: var(--sage-hover);
-  transform: translateY(-1px);
+  transform: translateY(3px);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.3),
+    0 1px 0 var(--sv-border-dark);
 }
 
 .intro-stats-note {
-  margin-top: 10px;
-  font-size: 0.76rem;
-  font-weight: 600;
-  color: var(--wood-muted);
+  margin-top: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--sv-ink-muted);
 }
 
-/* Top Floating Whisper Pill */
+/* ==================== TOP STARDEW WEATHER & MOOD PLAQUE ==================== */
 #whisper-pill {
   position: fixed;
-  top: calc(12px + var(--safe-top));
+  top: calc(10px + var(--safe-top));
   left: 50%;
   transform: translateX(-50%);
   z-index: 30;
-  max-width: calc(100vw - 20px);
+  max-width: calc(100vw - 16px);
   pointer-events: none;
 }
 
 .whisper-container {
-  background: var(--parchment);
-  border: 2px solid var(--wood-border);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    0 8px 24px rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-radius: 9999px;
-  padding: 6px 12px;
+  padding: 9px 14px !important;
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--wood-dark);
   font-size: 11px;
   font-weight: 700;
   pointer-events: auto;
@@ -242,29 +273,35 @@ canvas#garden-canvas:active {
 }
 
 .whisper-btn {
-  background: rgba(235, 214, 184, 0.65);
-  border: 1px solid rgba(139, 94, 60, 0.35);
-  padding: 4px 10px;
-  border-radius: 9999px;
+  background: var(--sv-parchment-light);
+  border: 2px solid var(--sv-border-dark);
+  box-shadow: inset 0 -2px 0 var(--sv-parchment-dark), 0 2px 0 rgba(59, 29, 10, 0.35);
+  padding: 4px 9px;
+  border-radius: 4px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  color: var(--wood-dark);
+  color: var(--sv-ink);
   font-weight: 700;
   font-size: 11px;
   flex-shrink: 0;
-  transition: background 0.15s ease, transform 0.08s ease;
 }
 
-.whisper-btn:hover {
-  background: rgba(235, 214, 184, 0.95);
+.whisper-btn:active {
+  transform: translateY(2px);
+  box-shadow: none;
 }
 
 .whisper-mood {
-  color: var(--wood-muted);
+  background: rgba(255, 239, 199, 0.75);
+  border: 2px solid var(--sv-wood-main);
+  padding: 3px 8px;
+  border-radius: 4px;
+  color: var(--sv-ink);
+  font-weight: 700;
   white-space: nowrap;
-  max-width: 175px;
+  max-width: 185px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -273,29 +310,32 @@ canvas#garden-canvas:active {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: rgba(41, 182, 246, 0.15);
-  border: 1px solid rgba(41, 182, 246, 0.35);
+  background: #dbeafe;
+  border: 2px solid #1e3a8a;
+  box-shadow: inset 0 -2px 0 #93c5fd;
   padding: 3px 8px;
-  border-radius: 9999px;
-  color: #0369a1;
+  border-radius: 4px;
+  color: #1e3a8a;
   font-weight: 700;
   flex-shrink: 0;
 }
 
 .whisper-icon-btn {
-  background: none;
-  border: none;
+  background: var(--sv-parchment-light);
+  border: 2px solid var(--sv-border-dark);
+  box-shadow: inset 0 -2px 0 var(--sv-parchment-dark);
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
-  padding: 2px 4px;
+  font-size: 13px;
+  padding: 3px 6px;
   line-height: 1;
   flex-shrink: 0;
 }
 
-/* Bottom Floating Cozy Dock & Stardew Buttons */
+/* ==================== BOTTOM STARDEW RPG HOTBAR DOCK ==================== */
 #cozy-dock {
   position: fixed;
-  bottom: calc(16px + var(--safe-bottom));
+  bottom: calc(14px + var(--safe-bottom));
   left: 50%;
   transform: translateX(-50%);
   z-index: 30;
@@ -303,73 +343,74 @@ canvas#garden-canvas:active {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 6px 8px;
+  padding: 10px 12px !important;
   width: fit-content;
-  max-width: calc(100vw - 16px);
-  background: rgba(255, 250, 240, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 2px solid var(--wood-border);
-  border-radius: 999px;
-  box-shadow: var(--shadow-cozy);
+  max-width: calc(100vw - 14px);
+}
+
+.stardew-btn-green,
+.stardew-btn,
+.stardew-btn-sky {
+  border-radius: 4px !important;
+  border: 3px solid var(--sv-border-dark) !important;
+  font-family: 'Quicksand', sans-serif;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.08s ease, box-shadow 0.08s ease !important;
 }
 
 .stardew-btn-green {
-  background: linear-gradient(180deg, #84cc16 0%, #4d7c0f 100%);
-  border: 2px solid #2e4d07;
-  color: #ffffff;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 10px rgba(0, 0, 0, 0.25);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: transform 0.15s ease;
-}
-
-.stardew-btn-green:active,
-.stardew-btn-green:hover {
-  transform: translateY(-1px);
+  background: linear-gradient(180deg, #76c932 0%, #448514 100%) !important;
+  color: #ffffff !important;
+  text-shadow: 1px 1px 0 #1e4206;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.25),
+    0 3px 0 var(--sv-border-dark) !important;
 }
 
 .stardew-btn {
-  background: linear-gradient(180deg, #f6d397 0%, #d99f59 100%);
-  border: 2px solid #6c411c;
-  color: #3e2213;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 4px 10px rgba(0, 0, 0, 0.25);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: transform 0.15s ease;
-}
-
-.stardew-btn:active,
-.stardew-btn:hover {
-  transform: translateY(-1px);
+  background: linear-gradient(180deg, #ffe08a 0%, #dca03a 100%) !important;
+  color: var(--sv-ink) !important;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.5);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.65),
+    inset 0 -2px 0 rgba(139, 69, 19, 0.3),
+    0 3px 0 var(--sv-border-dark) !important;
 }
 
 .stardew-btn-sky {
-  background: linear-gradient(180deg, #e0f2fe 0%, #bae6fd 100%);
-  border: 2px solid #0284c7;
-  color: #0c4a6e;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 4px 10px rgba(0, 0, 0, 0.2);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: transform 0.15s ease;
+  background: linear-gradient(180deg, #bae6fd 0%, #38bdf8 100%) !important;
+  color: #0c4a6e !important;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.5);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.65),
+    inset 0 -2px 0 rgba(2, 132, 199, 0.35),
+    0 3px 0 var(--sv-border-dark) !important;
 }
 
-/* Modals (Supports both .modal-overlay.active and responsive bottom sheets) */
+.stardew-btn-green:active,
+.stardew-btn:active,
+.stardew-btn-sky:active {
+  transform: translateY(3px) !important;
+  box-shadow: 0 0 0 var(--sv-border-dark) !important;
+}
+
+/* ==================== STARDEW DIALOGUE MODALS ==================== */
 .modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: rgba(15, 23, 18, 0.55);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: rgba(12, 20, 14, 0.68);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: 14px;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.25s ease, visibility 0.25s ease;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
 }
 
 .modal-overlay.active {
@@ -380,58 +421,55 @@ canvas#garden-canvas:active {
 
 .cozy-card {
   width: 100%;
-  max-width: 490px;
+  max-width: 500px;
   max-height: 88dvh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  background: var(--parchment-solid);
-  border: 3px solid #b88b5a;
-  border-radius: 24px;
-  padding: 20px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.42);
-  transform: translateY(14px) scale(0.97);
-  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  padding: 22px 20px !important;
+  transform: translateY(10px) scale(0.98);
+  transition: transform 0.2s ease;
 }
 
 .modal-overlay.active .cozy-card {
   transform: translateY(0) scale(1);
 }
 
-/* Twin Polaroid Frames */
+/* ==================== TWIN POLAROID FRAMES (STARDEW WOODEN PORTRAITS) ==================== */
 .polaroid-card {
-  width: 145px;
-  background: #ffffff;
+  width: 146px;
+  background: #fffdf7;
   padding: 8px 8px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(139, 94, 60, 0.28);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+  border-radius: 4px;
+  border: 3px solid var(--sv-border-dark);
+  box-shadow:
+    inset 0 0 0 2px #e5cca8,
+    0 5px 0 rgba(59, 29, 10, 0.45);
   cursor: pointer;
   text-align: center;
-  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  transition: transform 0.18s ease;
 }
 
 .polaroid-card:hover {
   transform: scale(1.04) rotate(0deg) !important;
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28);
   z-index: 5;
 }
 
 .polaroid-lilo {
-  transform: rotate(-2.5deg);
+  transform: rotate(-2deg);
 }
 
 .polaroid-cheeto {
-  transform: rotate(2.5deg);
+  transform: rotate(2deg);
 }
 
 .polaroid-img-wrap {
   width: 100%;
   aspect-ratio: 1 / 1;
   background: #0f172a;
-  border-radius: 6px;
+  border-radius: 2px;
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  border: 2px solid var(--sv-border-dark);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -453,19 +491,19 @@ canvas#garden-canvas:active {
 
 .polaroid-badge {
   position: absolute;
-  bottom: 5px;
-  right: 5px;
-  background: rgba(255, 250, 240, 0.92);
+  bottom: 4px;
+  right: 4px;
+  background: var(--sv-parchment-light);
+  border: 1.5px solid var(--sv-border-dark);
   font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 999px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  padding: 1px 5px;
+  border-radius: 3px;
 }
 
 .polaroid-title {
   font-family: 'Press Start 2P', monospace;
   font-size: 9px;
-  color: #2b1d14;
+  color: var(--sv-ink);
   margin-top: 9px;
   margin-bottom: 3px;
 }
@@ -473,16 +511,17 @@ canvas#garden-canvas:active {
 .polaroid-caption {
   font-size: 11px;
   font-weight: 700;
-  color: var(--wood-muted);
+  color: var(--sv-ink-muted);
 }
 
-/* Cross-Device Save & Offline App Box inside Cat Friends */
+/* ==================== SAVE & OFFLINE APP BOX ==================== */
 .remote-save-box {
   margin: 0 0 14px 0;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: rgba(82, 148, 113, 0.12);
-  border: 1.5px dashed rgba(82, 148, 113, 0.55);
+  padding: 11px 13px;
+  border-radius: 4px;
+  background: var(--sv-parchment-light);
+  border: 2px solid var(--sv-wood-main);
+  box-shadow: inset 0 -2px 0 var(--sv-parchment-dark);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -493,14 +532,14 @@ canvas#garden-canvas:active {
 .remote-save-text {
   font-size: 11px;
   line-height: 1.4;
-  color: #5c3820;
+  color: var(--sv-ink-muted);
   flex: 1;
   min-width: 150px;
 }
 
 .remote-save-text strong {
-  font-size: 12px;
-  color: #3d2516;
+  font-size: 11.5px;
+  color: var(--sv-ink);
 }
 
 .remote-save-actions {
@@ -510,33 +549,54 @@ canvas#garden-canvas:active {
 }
 
 .copy-link-btn {
-  border: none;
-  background: var(--wood-dark);
+  border: 2px solid var(--sv-border-dark);
+  background: linear-gradient(180deg, #9c5a2d 0%, #6e3b17 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 2px 0 var(--sv-border-dark);
   color: #fffaf0;
-  padding: 8px 13px;
-  border-radius: 999px;
+  padding: 7px 11px;
+  border-radius: 4px;
   font-family: 'Quicksand', sans-serif;
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
-  transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
-.copy-link-btn:active,
-.copy-link-btn:hover {
-  transform: translateY(-1px);
-  opacity: 0.92;
+.copy-link-btn:active {
+  transform: translateY(2px);
+  box-shadow: none;
 }
 
 .install-pwa-btn {
-  background: var(--sage-accent);
+  background: linear-gradient(180deg, #68b82e 0%, #3d7a14 100%);
 }
 
-/* Mobile Responsive Adjustments */
+/* ==================== WIDGET MODE (?widget=1) ==================== */
+body.widget-mode #intro-overlay,
+body.widget-mode #cozy-dock,
+body.widget-mode #whisperBlooms,
+body.widget-mode #btnAudio {
+  display: none !important;
+}
+
+body.widget-mode #garden-stage {
+  border: 6px solid var(--sv-border-dark);
+  box-shadow: inset 0 0 0 3px var(--sv-wood-light);
+}
+
+body.widget-mode #whisper-pill {
+  top: 6px;
+}
+
+body.widget-mode .whisper-container {
+  padding: 5px 10px !important;
+  transform: scale(0.9);
+}
+
+/* ==================== MOBILE OPTIMIZATIONS ==================== */
 @media (max-width: 640px) {
   .whisper-mood {
-    max-width: 110px;
+    max-width: 105px;
   }
 
   .modal-overlay {
@@ -547,7 +607,7 @@ canvas#garden-canvas:active {
   .cozy-card {
     max-width: 100%;
     max-height: 90dvh;
-    border-radius: 24px 24px 0 0;
-    padding: 18px 16px calc(20px + var(--safe-bottom));
+    border-radius: 8px 8px 0 0 !important;
+    padding: 20px 16px calc(20px + var(--safe-bottom)) !important;
   }
 }
