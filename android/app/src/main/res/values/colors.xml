@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="garden_dark_green">#1e3a24</color>
+    <color name="garden_lawn_green">#224426</color>
+    <color name="stardew_wood_dark">#3b1d0a</color>
+    <color name="stardew_wood_light">#8f4d22</color>
+    <color name="lilo_blue">#29b6f6</color>
+    <color name="cheeto_amber">#ffb300</color>
+    <color name="heart_pink">#fb7185</color>
+</resources>

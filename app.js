@@ -2125,6 +2125,23 @@ safeOn('install-pwa-btn', 'click', async () => {
   }
 });
 
+// Native Android Bridge Handlers (Live Wallpaper & Home Screen Widget)
+safeOn('btnAndroidWallpaper', 'click', () => {
+  if (window.AndroidBridge && typeof window.AndroidBridge.openWallpaperPicker === 'function') {
+    window.AndroidBridge.openWallpaperPicker();
+  } else {
+    showToast('Available in Lilo Garden Android APK!', '🖼️');
+  }
+});
+
+safeOn('btnAndroidWidget', 'click', () => {
+  if (window.AndroidBridge && typeof window.AndroidBridge.pinWidget === 'function') {
+    window.AndroidBridge.pinWidget();
+  } else {
+    showToast('Available in Lilo Garden Android APK!', '📌');
+  }
+});
+
 safeOn('btnSaveTributeNote', 'click', () => {
   const input = document.getElementById('inputTributeNote');
   const note = input ? input.value.trim() : '';

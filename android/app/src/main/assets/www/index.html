@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Lilo's Garden — Reunited with Cheeto</title>
+
+  <meta name="title" content="Lilo's Garden — Reunited with Cheeto" />
+  <meta name="description" content="A cozy pixel-art virtual pet garden sandbox tribute honoring Lilo and Cheeto." />
+  <meta name="theme-color" content="#2e4736" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Lilo's Garden" />
+
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/png" href="./favicon.png" />
+  <link rel="apple-touch-icon" href="./assets/icon-192.png" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Quicksand:wght@500;600;700&display=swap"
+    rel="stylesheet" />
+
+  <!-- External Stylesheet -->
+  <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+
+  <!-- ==================== COZY FROSTED INTRO OVERLAY ==================== -->
+  <div id="intro-overlay">
+    <div class="intro-card">
+      <div class="intro-badge">💙💛 Eternal Brothers Sanctuary</div>
+      <div class="intro-portrait-wrap">
+        <canvas id="intro-canvas" width="110" height="62"></canvas>
+      </div>
+      <h1 class="intro-title">Lilo's Garden</h1>
+      <p class="intro-subtitle">
+        A peaceful pixel sanctuary where <strong>Lilo</strong> and his brother <strong>Cheeto</strong> wander together
+        under the open sky.
+      </p>
+      <div class="intro-brothers-legend">
+        <span class="brother-chip">
+          🐾 Lilo • <span class="eye-dot" style="background:#29b6f6;"></span><span class="eye-dot"
+            style="background:#29b6f6;"></span> + Blue Collar
+        </span>
+        <span class="brother-chip">
+          🐾 Cheeto • <span class="eye-dot" style="background:#ffb300;"></span><span class="eye-dot"
+            style="background:#29b6f6;"></span> Amber & Blue Eyes
+        </span>
+      </div>
+      <button type="button" class="enter-garden-btn" id="enter-garden-btn">🌿 Step into the Garden</button>
+      <div class="intro-stats-note" id="intro-stats-note">Drag to pan • Pinch to zoom • Tap cats to pet</div>
+    </div>
+  </div>
+
+  <!-- ==================== TOP FLOATING WHISPER PILL ==================== -->
+  <aside id="whisper-pill">
+    <div class="whisper-container">
+      <button type="button" id="btnWeather" class="whisper-btn"
+        title="Tap to cycle: Live GPS / Sunny / Cloudy / Rain / Night">
+        <span id="weatherIcon">☀️</span>
+        <span id="weatherText">24°C • Sunny Sky</span>
+      </button>
+
+      <span id="whisperMood" class="whisper-mood">Lilo & Cheeto: Reunited</span>
+
+      <span id="whisperBlooms" class="whisper-stat" title="Forget-Me-Not blooms honoring Lilo & Cheeto">
+        ✿ <b id="statBlooms">8</b>/24
+      </span>
+
+      <button type="button" id="btnAudio" class="whisper-icon-btn" title="Toggle Cozy Audio">
+        <span id="audioIcon">🔊</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ==================== FLOATING TOAST NOTIFICATION ==================== -->
+  <div id="toastBox"
+    class="fixed top-16 left-1/2 -translate-x-1/2 z-40 pointer-events-none transition-all duration-300 opacity-0 -translate-y-2">
+    <div
+      class="bg-[#fff9ea] border-2 border-[#8c5832] text-[#3d2516] px-4 py-1.5 rounded-full shadow-lg flex items-center gap-2 text-xs font-bold whitespace-nowrap">
+      <span id="toastIcon">💙</span>
+      <span id="toastText">Lilo purred happily!</span>
+    </div>
+  </div>
+
+  <!-- ==================== MAIN GARDEN STAGE ==================== -->
+  <div id="garden-stage">
+    <canvas id="garden-canvas"></canvas>
+  </div>
+
+  <!-- ==================== BOTTOM COZY DOCK ==================== -->
+  <nav id="cozy-dock">
+    <button type="button" id="btnFeed"
+      class="stardew-btn-green rounded-full px-4 py-2.5 text-xs sm:text-sm font-bold flex items-center gap-1.5">
+      <span>🥣</span>
+      <span>Fill Bowl</span>
+      <span id="bowlBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-black/25 text-white">Full</span>
+    </button>
+
+    <button type="button" id="btnCameraMode"
+      class="stardew-btn-sky rounded-full px-3.5 py-2.5 text-xs sm:text-sm font-bold flex items-center gap-1.5"
+      title="Center on Lilo or toggle zoom">
+      <span id="cameraBtnIcon">🎯</span>
+      <span id="cameraBtnText">Follow Lilo</span>
+    </button>
+
+    <button type="button" id="btnOpenFriends"
+      class="stardew-btn rounded-full px-4 py-2.5 text-xs sm:text-sm font-bold flex items-center gap-1.5">
+      <span>🐾</span>
+      <span>Cat Friends</span>
+      <span id="catCountBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-black/20 text-[#3e2213]">2</span>
+    </button>
+  </nav>
+
+  <!-- ==================== MODAL 1: TWIN POLAROID TRIBUTE MODAL ==================== -->
+  <div id="tribute-modal" class="modal-overlay">
+    <div class="cozy-card">
+      <div class="flex items-center justify-between border-b-2 border-[#d8bfa3] pb-3 mb-3">
+        <div class="flex items-center gap-2.5">
+          <span class="text-2xl">💙</span>
+          <div>
+            <h2 class="font-pixel text-xs sm:text-sm text-[#4a3525]">REUNITED FOREVER</h2>
+            <p class="text-xs text-[#7c624c] font-semibold">In loving memory of Lilo and Cheeto</p>
+          </div>
+        </div>
+        <button type="button" data-close-modal="tribute-modal"
+          class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center cursor-pointer">✕</button>
+      </div>
+
+      <!-- Twin Polaroid Frames -->
+      <div class="flex items-center justify-center gap-4 sm:gap-6 my-2 px-1">
+        <!-- Lilo's Polaroid -->
+        <div id="polaroidLilo" class="polaroid-card polaroid-lilo" title="Tap to upload custom photo of Lilo">
+          <div class="polaroid-img-wrap">
+            <img id="lilo-polaroid-img" class="polaroid-img" src="./assets/lilo.jpg" alt="Lilo" />
+            <canvas id="lilo-polaroid-canvas" width="64" height="64" class="polaroid-pixel-canvas"></canvas>
+            <span class="polaroid-badge">📷</span>
+          </div>
+          <div class="polaroid-title">Lilo 💙</div>
+          <div class="polaroid-caption">Blue Eyes & Blue Collar</div>
+          <input type="file" id="lilo-photo-input" accept="image/*" class="hidden" />
+        </div>
+
+        <!-- Cheeto's Polaroid -->
+        <div id="polaroidCheeto" class="polaroid-card polaroid-cheeto" title="Tap to upload custom photo of Cheeto">
+          <div class="polaroid-img-wrap">
+            <img id="cheeto-polaroid-img" class="polaroid-img" src="./assets/cheeto.jpg" alt="Cheeto" />
+            <canvas id="cheeto-polaroid-canvas" width="64" height="64" class="polaroid-pixel-canvas"></canvas>
+            <span class="polaroid-badge">📷</span>
+          </div>
+          <div class="polaroid-title">Cheeto 💛</div>
+          <div class="polaroid-caption">Amber & Blue Eyes</div>
+          <input type="file" id="cheeto-photo-input" accept="image/*" class="hidden" />
+        </div>
+      </div>
+      <p class="text-center text-[11px] text-[#7c624c] mb-3 italic">
+        Tip: Tap either Polaroid above to upload a custom picture!
+      </p>
+
+      <!-- Forget-Me-Not Bloom Progress -->
+      <div
+        class="mb-3.5 bg-[#f5e6c8] p-2.5 rounded-xl border border-[#b88b5a]/60 text-xs flex items-center justify-between">
+        <div class="flex items-center gap-1.5 font-bold text-[#4a3525]">
+          <span>✿ Memorial Blooms:</span>
+          <span id="modalBloomCount" class="text-sky-700">8 / 24</span>
+        </div>
+        <span class="text-[11px] text-[#7c624c]">Every 3 pets grows a blue flower</span>
+      </div>
+
+      <!-- Editable Memory Dedication Note -->
+      <div class="mb-4">
+        <label for="inputTributeNote" class="block text-xs font-bold text-[#4a3525] mb-1">Personal Dedication /
+          Memory:</label>
+        <textarea id="inputTributeNote" rows="3"
+          class="w-full rounded-lg border-2 border-[#b88b5a] bg-[#fffdf7] px-3 py-2 text-xs text-[#3d2516] focus:outline-none focus:border-[#5c3820]"
+          placeholder="Write a special memory of Lilo & Cheeto..."></textarea>
+      </div>
+
+      <div class="flex gap-2">
+        <button type="button" id="btnSaveTributeNote"
+          class="flex-1 stardew-btn-green rounded-xl py-2.5 text-xs font-bold">
+          🌿 Save Note
+        </button>
+        <button type="button" id="btnPetLiloNow" class="flex-1 stardew-btn rounded-xl py-2.5 text-xs font-bold">
+          💙💛 Pet Brothers
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 2: CAT FRIENDS & COMPANIONS ==================== -->
+  <div id="modalFriends" class="modal-overlay">
+    <div class="cozy-card">
+      <div class="flex items-center justify-between border-b-2 border-[#d8bfa3] pb-3 mb-3">
+        <div>
+          <h2 class="font-pixel text-xs sm:text-sm text-[#4a3525]">CAT FRIENDS & COMPANIONS</h2>
+          <p class="text-xs text-[#7c624c] font-semibold">Pet existing cats or invite a friend to the garden</p>
+        </div>
+        <button type="button" data-close-modal="modalFriends"
+          class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center cursor-pointer">✕</button>
+      </div>
+
+      <!-- Cross-Device Save Link & Offline App Install Box -->
+      <div class="remote-save-box">
+        <div class="remote-save-text">
+          <strong>☁️ Save Progress & Offline App</strong><br />
+          Copy your garden link for other devices, install to home screen, or set live wallpaper.
+        </div>
+        <div class="remote-save-actions">
+          <button type="button" class="copy-link-btn" id="copy-garden-link-btn">🔗 Copy Save</button>
+          <button type="button" class="copy-link-btn install-pwa-btn" id="install-pwa-btn">📲 Install App</button>
+          <button type="button" class="copy-link-btn" id="btnAndroidWallpaper" style="background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);">🖼️ Wallpaper</button>
+          <button type="button" class="copy-link-btn" id="btnAndroidWidget" style="background: linear-gradient(180deg, #8b5cf6 0%, #6d28d9 100%);">📌 Widget</button>
+        </div>
+      </div>
+
+      <!-- Current Garden Residents -->
+      <div class="mb-4">
+        <span class="text-xs font-bold text-[#4a3525] block mb-2">Garden Residents (Tap to Pet):</span>
+        <div id="residentList" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <!-- Companion Customizer -->
+      <div class="border-t-2 border-[#d8bfa3] pt-3 mb-3">
+        <h3 class="font-pixel text-[11px] text-[#4a3525] mb-1">INVITE A NEW COMPANION</h3>
+        <p class="text-[11px] text-[#7c624c] mb-3">Customize fur pattern, coat color, and eyes:</p>
+
+        <div class="flex items-center gap-3 bg-[#f5e6c8] p-2.5 rounded-xl border border-[#b88b5a]/60 mb-3">
+          <canvas id="previewCatCanvas" width="64" height="48"
+            class="rounded-lg border border-[#b88b5a] bg-[#3f7d3b] shrink-0"
+            style="image-rendering: pixelated; width: 64px; height: 48px;"></canvas>
+          <div class="flex-1">
+            <label for="inputCatName" class="block text-[11px] font-bold text-[#4a3525] mb-1">Companion Name (<span
+                id="previewCatTitle">Mochi</span>):</label>
+            <input type="text" id="inputCatName" maxlength="16" placeholder="e.g., Mochi, Luna..."
+              class="w-full rounded-lg border-2 border-[#b88b5a] bg-[#fffdf7] px-2.5 py-1.5 text-xs font-bold text-[#3d2516] focus:outline-none" />
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <span class="block text-[11px] font-bold text-[#4a3525] mb-1.5">Coat Pattern:</span>
+          <div class="grid grid-cols-4 gap-1.5 text-xs">
+            <button type="button" data-pattern="solid"
+              class="pattern-opt rounded-lg border-2 border-[#5c3820] bg-[#f3dfc1] py-1.5 px-2 font-bold text-[#3d2516] text-center cursor-pointer">Solid</button>
+            <button type="button" data-pattern="tuxedo"
+              class="pattern-opt rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] py-1.5 px-2 font-semibold text-[#5c3820] text-center cursor-pointer">Tuxedo</button>
+            <button type="button" data-pattern="tabby"
+              class="pattern-opt rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] py-1.5 px-2 font-semibold text-[#5c3820] text-center cursor-pointer">Tabby</button>
+            <button type="button" data-pattern="patches"
+              class="pattern-opt rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] py-1.5 px-2 font-semibold text-[#5c3820] text-center cursor-pointer">Patches</button>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <span class="block text-[11px] font-bold text-[#4a3525] mb-1.5">Coat Color:</span>
+          <div id="coatColorSelector" class="flex flex-wrap gap-2"></div>
+        </div>
+
+        <div class="mb-4">
+          <span class="block text-[11px] font-bold text-[#4a3525] mb-1.5">Eye Color:</span>
+          <div id="eyeColorSelector" class="flex flex-wrap gap-1.5"></div>
+        </div>
+
+        <button type="button" id="btnConfirmAddCat"
+          class="w-full stardew-btn-green rounded-xl py-3 text-xs sm:text-sm font-bold">
+          🐾 Welcome Companion to Garden
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- External Application Script -->
+  <script src="./app.js" defer></script>
+</body>
+
+</html>
