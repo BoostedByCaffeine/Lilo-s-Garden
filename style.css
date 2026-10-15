@@ -55,11 +55,17 @@
     }
 
     canvas#garden-canvas {
+<<<<<<< HEAD
+=======
+      width: 100vw;
+      height: 100dvh;
+>>>>>>> fbd8c8e (fix: restore authentic Stardew UI, canvas environment, and twin polaroids across multi-file PWA)
       display: block;
       image-rendering: -moz-crisp-edges;
       image-rendering: -webkit-crisp-edges;
       image-rendering: pixelated;
       image-rendering: crisp-edges;
+<<<<<<< HEAD
       cursor: pointer;
       touch-action: none;
       transition: border-radius 0.2s ease, box-shadow 0.2s ease;
@@ -67,6 +73,23 @@
 
     @media (min-width: 820px) {
       canvas#garden-canvas {
+=======
+      touch-action: none;
+      cursor: grab;
+      transition: border-radius 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    canvas#garden-canvas:active {
+      cursor: grabbing;
+    }
+
+    @media (min-width: 820px) {
+      canvas#garden-canvas {
+        width: 100%;
+        height: 100%;
+        max-width: 1060px;
+        max-height: 660px;
+>>>>>>> fbd8c8e (fix: restore authentic Stardew UI, canvas environment, and twin polaroids across multi-file PWA)
         border-radius: 22px;
         box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 0 4px rgba(255, 250, 240, 0.15);
       }
@@ -234,6 +257,25 @@
       pointer-events: auto;
     }
 
+<<<<<<< HEAD
+=======
+    @media (max-width: 520px) {
+      #cozy-dock {
+        gap: 6px;
+        width: calc(100% - 16px);
+        max-width: 390px;
+        justify-content: center;
+        bottom: calc(10px + var(--safe-bottom));
+      }
+      #cozy-dock button {
+        padding-left: 9px !important;
+        padding-right: 9px !important;
+        font-size: 11px !important;
+        white-space: nowrap;
+      }
+    }
+
+>>>>>>> fbd8c8e (fix: restore authentic Stardew UI, canvas environment, and twin polaroids across multi-file PWA)
     /* Tactile Buttons */
     .stardew-btn {
       background: linear-gradient(180deg, #f7d486 0%, #e0a64b 100%);
@@ -461,3 +503,66 @@
       background: #9c6639;
       border-radius: 6px;
     }
+<<<<<<< HEAD
+=======
+
+    /* Remote Save & Offline App Card */
+    .remote-save-box {
+      background: #f5e6c8;
+      border: 2px solid #b88b5a;
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .remote-save-text {
+      font-size: 11px;
+      line-height: 1.45;
+      color: #5c3820;
+    }
+
+    .remote-save-text strong {
+      font-size: 12px;
+      color: #3d2516;
+    }
+
+    .remote-save-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .copy-link-btn {
+      background: linear-gradient(180deg, #f7d486 0%, #e0a64b 100%);
+      color: #3d2310;
+      border: 2px solid #5c3618;
+      border-radius: 10px;
+      padding: 7px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.1s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    }
+
+    .copy-link-btn:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+
+    .copy-link-btn:active {
+      transform: translateY(1px);
+    }
+
+    .copy-link-btn.install-pwa-btn {
+      background: linear-gradient(180deg, #a3e68c 0%, #5cb847 100%);
+      color: #16360f;
+      border-color: #235418;
+    }
+
+>>>>>>> fbd8c8e (fix: restore authentic Stardew UI, canvas environment, and twin polaroids across multi-file PWA)

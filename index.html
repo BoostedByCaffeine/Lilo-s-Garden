@@ -98,6 +98,15 @@
       <span>Cat Friends</span>
       <span id="catCountBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-black/20 text-[#3e2213]">2</span>
     </button>
+<<<<<<< HEAD
+=======
+
+    <!-- Button 3: Floating Camera / Follow Button -->
+    <button id="btnCameraMode" class="stardew-btn-blue rounded-full px-4 py-2.5 text-xs sm:text-sm font-bold flex items-center gap-1.5" title="Follow Lilo or Toggle 2x Zoom">
+      <span id="cameraBtnIcon">🎯</span>
+      <span id="cameraBtnText">Follow Lilo</span>
+    </button>
+>>>>>>> fbd8c8e (fix: restore authentic Stardew UI, canvas environment, and twin polaroids across multi-file PWA)
   </nav>
 
   <!-- ==================== TOAST NOTIFICATION ==================== -->
@@ -175,10 +184,108 @@
         <button id="btnSaveTributeNote" class="stardew-btn rounded-xl px-4 py-2 text-xs font-bold">
           Save Note
         </button>
+<<<<<<< HEAD
+=======
       </div>
     </div>
   </div>
 
+  <!-- ==================== MODAL 2: CAT FRIENDS & COMPANIONS ==================== -->
+  <div id="modalFriends" class="modal-overlay">
+    <div class="cozy-card w-full max-w-lg p-5 sm:p-6 relative max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b-2 border-[#d8bfa3] pb-3 mb-4 card-header">
+        <div>
+          <h2 class="font-pixel text-xs sm:text-sm text-[#4a3525]">CAT FRIENDS & COMPANIONS</h2>
+          <p class="text-xs text-[#7c624c]">Pet existing cats or invite a new friend to wander the garden</p>
+        </div>
+        <button data-close-modal="modalFriends" class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center cursor-pointer">✕</button>
+      </div>
+
+      <!-- Put this right inside #friends-modal, right below .card-header -->
+      <div class="remote-save-box" style="margin: 0 0 14px 0;">
+        <div class="remote-save-text">
+          <strong>☁️ Save Progress & Offline App</strong><br />
+          Copy your garden link for other devices or install to your home screen.
+        </div>
+        <div class="remote-save-actions">
+          <button type="button" class="copy-link-btn" id="copy-garden-link-btn">🔗 Copy Save URL</button>
+          <button type="button" class="copy-link-btn install-pwa-btn" id="install-pwa-btn">📲 Install Offline</button>
+        </div>
+>>>>>>> fbd8c8e (fix: restore authentic Stardew UI, canvas environment, and twin polaroids across multi-file PWA)
+      </div>
+
+      <!-- Current Garden Residents -->
+      <div class="mb-5">
+        <span class="text-xs font-bold text-[#4a3525] block mb-2">Garden Residents (Tap to Pet):</span>
+        <div id="residentList" class="flex flex-wrap gap-2">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="border-t-2 border-[#d8bfa3] pt-4 mb-3">
+        <h3 class="font-pixel text-[11px] text-[#4a3525] mb-1">INVITE A NEW COMPANION</h3>
+        <p class="text-[11px] text-[#7c624c]">Customize fur pattern and colors:</p>
+      </div>
+
+      <!-- Live Pixel Preview -->
+      <div class="flex flex-col sm:flex-row items-center gap-4 bg-[#243d27] rounded-xl p-3 border-2 border-[#5c3820] mb-4 text-amber-100">
+        <div class="bg-[#1b2e1e] rounded-lg p-2 border border-emerald-700/50 flex items-center justify-center shadow-inner">
+          <canvas id="previewCatCanvas" width="64" height="48" class="pixel-canvas w-24 h-18"></canvas>
+        </div>
+        <div class="flex-1 text-center sm:text-left">
+          <div class="text-[10px] uppercase tracking-wider text-emerald-300 font-bold">Live Pixel Preview</div>
+          <div id="previewCatTitle" class="font-pixel text-xs text-amber-200 mt-0.5">Mochi</div>
+          <p class="text-[11px] text-amber-100/80 mt-1">
+            Wanders alongside Lilo and Cheeto, seeks shelter in rain, and touches noses.
+          </p>
+        </div>
+      </div>
+
+      <!-- Form Controls -->
+      <div class="space-y-3 text-xs">
+        <div>
+          <label for="inputCatName" class="block font-bold text-[#4a3525] mb-1">Cat Friend's Name</label>
+          <input id="inputCatName" type="text" maxlength="16" value="Mochi" class="w-full rounded-lg border-2 border-[#b88b5a] bg-[#fffdf7] px-3 py-1.5 text-xs font-semibold text-[#3d2516] focus:outline-none focus:border-[#5c3820]" placeholder="e.g., Mochi, Oliver, Luna..." />
+        </div>
+
+        <div>
+          <label class="block font-bold text-[#4a3525] mb-1">Coat Pattern</label>
+          <div id="patternSelector" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <button type="button" data-pattern="solid" class="pattern-opt rounded-lg border-2 border-[#5c3820] bg-[#f3dfc1] py-1.5 px-2 font-bold text-[#3d2516] text-center cursor-pointer">Solid</button>
+            <button type="button" data-pattern="tuxedo" class="pattern-opt rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] py-1.5 px-2 font-semibold text-[#5c3820] text-center cursor-pointer">Tuxedo</button>
+            <button type="button" data-pattern="tabby" class="pattern-opt rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] py-1.5 px-2 font-semibold text-[#5c3820] text-center cursor-pointer">Tabby</button>
+            <button type="button" data-pattern="patches" class="pattern-opt rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] py-1.5 px-2 font-semibold text-[#5c3820] text-center cursor-pointer">Patches</button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-[#4a3525] mb-1">Primary Fur Color</label>
+          <div id="coatColorSelector" class="flex flex-wrap gap-1.5">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-[#4a3525] mb-1">Eye Color</label>
+          <div id="eyeColorSelector" class="flex flex-wrap gap-1.5">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-5 flex items-center justify-end gap-2">
+        <button data-close-modal="modalFriends" class="px-4 py-2 rounded-xl border-2 border-[#9c6639] text-xs font-bold text-[#5c3820] hover:bg-[#edd6b4] cursor-pointer">
+          Cancel
+        </button>
+        <button id="btnConfirmAddCat" class="stardew-btn-green rounded-xl px-5 py-2.5 text-xs font-bold">
+          🐾 Welcome to Garden
+        </button>
+      </div>
+    </div>
+  </div>
+
+<<<<<<< HEAD
   <!-- ==================== MODAL 2: CAT FRIENDS & COMPANIONS ==================== -->
   <div id="modalFriends" class="modal-overlay">
     <div class="cozy-card w-full max-w-lg p-5 sm:p-6 relative max-h-[90vh] overflow-y-auto">
@@ -261,6 +368,8 @@
     </div>
   </div>
 
+=======
+>>>>>>> fbd8c8e (fix: restore authentic Stardew UI, canvas environment, and twin polaroids across multi-file PWA)
   <!-- ==================== APPLICATION SCRIPT ==================== -->
   <!-- External Application Script -->
   <script src="./app.js" defer></script>

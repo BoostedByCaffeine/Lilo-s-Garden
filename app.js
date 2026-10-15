@@ -93,8 +93,159 @@
         this.enabled = true;
         this.rainGain = null;
         this.rainSource = null;
+<<<<<<< HEAD
+=======
       }
 
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) this.ctx = new AudioCtx();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playPurr() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+        try {
+          const now = this.ctx.currentTime;
+          const carrier = this.ctx.createOscillator();
+          const lfo = this.ctx.createOscillator();
+          const lfoGain = this.ctx.createGain();
+          const masterGain = this.ctx.createGain();
+
+          carrier.type = 'triangle';
+          carrier.frequency.setValueAtTime(28, now);
+          carrier.frequency.linearRampToValueAtTime(24, now + 1.2);
+
+          lfo.type = 'sine';
+          lfo.frequency.setValueAtTime(23, now);
+          lfoGain.gain.setValueAtTime(0.06, now);
+
+          masterGain.gain.setValueAtTime(0.001, now);
+          masterGain.gain.linearRampToValueAtTime(0.09, now + 0.15);
+          masterGain.gain.exponentialRampToValueAtTime(0.0001, now + 1.25);
+
+          lfo.connect(lfoGain);
+          lfoGain.connect(masterGain.gain);
+          carrier.connect(masterGain);
+          masterGain.connect(this.ctx.destination);
+
+          carrier.start(now);
+          lfo.start(now);
+          carrier.stop(now + 1.3);
+          lfo.stop(now + 1.3);
+
+          const chime = this.ctx.createOscillator();
+          const chimeGain = this.ctx.createGain();
+          chime.type = 'sine';
+          chime.frequency.setValueAtTime(587.33, now);
+          chimeGain.gain.setValueAtTime(0.03, now);
+          chimeGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+          chime.connect(chimeGain);
+          chimeGain.connect(this.ctx.destination);
+          chime.start(now);
+          chime.stop(now + 0.36);
+        } catch (e) {}
+      }
+
+      startRain() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx || this.rainSource) return;
+        try {
+          const bufferSize = this.ctx.sampleRate * 2;
+          const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          let lastOut = 0.0;
+          for (let i = 0; i < bufferSize; i++) {
+            const white = Math.random() * 2 - 1;
+            data[i] = (lastOut + (0.04 * white)) / 1.04;
+            lastOut = data[i];
+            data[i] *= 1.6;
+          }
+
+          this.rainSource = this.ctx.createBufferSource();
+          this.rainSource.buffer = buffer;
+          this.rainSource.loop = true;
+
+          const filter = this.ctx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(750, this.ctx.currentTime);
+
+          this.rainGain = this.ctx.createGain();
+          this.rainGain.gain.setValueAtTime(0.001, this.ctx.currentTime);
+          this.rainGain.gain.linearRampToValueAtTime(0.045, this.ctx.currentTime + 1.5);
+
+          this.rainSource.connect(filter);
+          filter.connect(this.rainGain);
+          this.rainGain.connect(this.ctx.destination);
+          this.rainSource.start();
+        } catch (e) {}
+      }
+
+      stopRain() {
+        if (!this.rainGain || !this.ctx) return;
+        try {
+          this.rainGain.gain.linearRampToValueAtTime(0.0001, this.ctx.currentTime + 1.0);
+          setTimeout(() => {
+            if (this.rainSource) {
+              try { this.rainSource.stop(); this.rainSource.disconnect(); } catch (e) {}
+              this.rainSource = null;
+            }
+          }, 1100);
+        } catch (e) {}
+      }
+
+      playFeedSound() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+        try {
+          const now = this.ctx.currentTime;
+          const notes = [392.00, 440.00, 523.25, 659.25];
+          notes.forEach((freq, i) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + i * 0.05);
+            gain.gain.setValueAtTime(0.001, now + i * 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.08, now + i * 0.05 + 0.015);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.05 + 0.22);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now + i * 0.05);
+            osc.stop(now + i * 0.05 + 0.24);
+          });
+        } catch (e) {}
+      }
+
+      playMunchPop() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+        try {
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(320, now);
+          osc.frequency.exponentialRampToValueAtTime(560, now + 0.08);
+          gain.gain.setValueAtTime(0.05, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.11);
+        } catch (e) {}
+>>>>>>> fbd8c8e (fix: restore authentic Stardew UI, canvas environment, and twin polaroids across multi-file PWA)
+      }
+
+<<<<<<< HEAD
       init() {
         if (!this.ctx) {
           const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -481,6 +632,267 @@
         this.syncUI();
       },
 
+=======
+    const sound = new CozyAudio();
+
+    /********************************************************************
+     * OPEN-METEO WEATHER INTEGRATION
+     ********************************************************************/
+    async function syncLiveWeather(world) {
+      if (world.weatherMode !== 'AUTO') return;
+      if (!navigator.geolocation) {
+        world.applyClockFallback();
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          try {
+            const { latitude, longitude } = pos.coords;
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code,is_day`;
+            const res = await fetch(url);
+            const data = await res.json();
+            const cur = data.current;
+            world.tempC = Math.round(cur.temperature_2m);
+            const code = cur.weather_code;
+            if ([51, 53, 55, 61, 63, 65, 80, 81, 82, 95].includes(code)) {
+              world.weather = 'RAIN';
+              world.skyDesc = 'Rain Shower';
+            } else if (cur.is_day === 0) {
+              world.weather = 'NIGHT';
+              world.skyDesc = 'Starry Night';
+            } else if ([2, 3, 45, 48].includes(code)) {
+              world.weather = 'CLOUDY';
+              world.skyDesc = 'Cloudy Sky';
+            } else {
+              world.weather = 'SUNNY';
+              world.skyDesc = 'Sunny Sky';
+            }
+            world.onWeatherUpdated();
+          } catch (e) {
+            world.applyClockFallback();
+          }
+        },
+        () => world.applyClockFallback(),
+        { timeout: 6000 }
+      );
+    }
+
+    /********************************************************************
+     * 24 FORGET-ME-NOT BLOOMS AROUND MEMORIAL STONE
+     ********************************************************************/
+    const MEMORIAL_BLOOM_COORDS = [
+      [-18, 4], [-15, 11], [15, 6], [18, 11], [-13, -7], [14, -6], [-7, 15], [8, 15],
+      [-23, 7], [-21, 17], [21, 8], [23, 17], [-18, -14], [17, -13], [-14, 19], [15, 19],
+      [-28, 12], [-25, 22], [26, 12], [28, 22], [-23, -18], [22, -18], [-5, 22], [6, 22]
+    ];
+
+    /********************************************************************
+     * WORLD ENGINE & FINITE STATE MACHINE
+     ********************************************************************/
+    const world = {
+      stats: { pets: 0, meals: 0 },
+      petProgress: 0,
+      blooms: 8,
+      bowlLevel: 3,
+      weatherMode: 'AUTO',
+      weather: 'SUNNY',
+      skyDesc: 'Sunny Sky',
+      tempC: 24,
+      tributeNote: "Forever loved, forever missed. Enjoy the endless sunshine, crunchy kibble, and cozy gazebo naps, sweet Lilo and Cheeto.",
+      cats: [],
+      particles: [],
+      critters: [],
+      rainDrops: [],
+      pointer: { x: -100, y: -100, hoveredEntity: null },
+
+      init() {
+        this.load();
+        this.initCritters();
+        this.initRain();
+        syncLiveWeather(this);
+        this.syncUI();
+      },
+
+      applyClockFallback() {
+        const hour = new Date().getHours();
+        if (hour < 6 || hour >= 19) {
+          this.weather = 'NIGHT';
+          this.skyDesc = 'Firefly Night';
+          this.tempC = 16;
+        } else if (hour >= 11 && hour <= 14) {
+          this.weather = 'SUNNY';
+          this.skyDesc = 'Bright Sun';
+          this.tempC = 26;
+        } else {
+          this.weather = 'SUNNY';
+          this.skyDesc = 'Sunny Sky';
+          this.tempC = 22;
+        }
+        this.onWeatherUpdated();
+      },
+
+      onWeatherUpdated() {
+        if (this.weather === 'RAIN') {
+          sound.startRain();
+          this.cats.forEach((c, idx) => {
+            if (c.state !== 'SHELTERED') {
+              c.state = 'SEEK_SHELTER';
+              c.targetX = 612 + (idx * 16);
+              c.targetY = 238 + (idx % 2 === 0 ? 0 : 6);
+            }
+          });
+        } else {
+          sound.stopRain();
+          this.cats.forEach(c => {
+            if (c.state === 'SHELTERED') {
+              c.state = 'IDLE';
+              c.stateTimer = 2.5;
+            }
+          });
+        }
+        this.syncUI();
+      },
+
+      cycleWeather() {
+        const modes = ['AUTO', 'SUNNY', 'CLOUDY', 'RAIN', 'NIGHT'];
+        const nextIdx = (modes.indexOf(this.weatherMode) + 1) % modes.length;
+        this.weatherMode = modes[nextIdx];
+        if (this.weatherMode === 'AUTO') {
+          syncLiveWeather(this);
+          showToast('Live Weather: Open-Meteo GPS', '📡');
+        } else {
+          this.weather = this.weatherMode;
+          const map = {
+            SUNNY:  { desc: 'Sunny Sky', temp: 25 },
+            CLOUDY: { desc: 'Cloudy Sky', temp: 21 },
+            RAIN:   { desc: 'Rain Shower', temp: 18 },
+            NIGHT:  { desc: 'Firefly Night', temp: 16 }
+          };
+          this.skyDesc = map[this.weather].desc;
+          this.tempC = map[this.weather].temp;
+          this.onWeatherUpdated();
+          showToast(`Weather Override: ${this.skyDesc}`, '🌤️');
+        }
+        this.save();
+      },
+
+      createCatRuntime(spec, index = 0) {
+        let startX = 460 + ((index * 42) % 120);
+        let startY = 320 + ((index * 28) % 60);
+        if (spec.id === 'lilo') { startX = 430; startY = 315; }
+        if (spec.id === 'cheeto') { startX = 520; startY = 325; }
+
+        return {
+          ...spec,
+          x: startX,
+          y: startY,
+          targetX: startX,
+          targetY: startY,
+          facing: index % 2 === 0 ? 1 : -1,
+          state: 'IDLE',
+          pose: 'sit',
+          stateTimer: 3 + Math.random() * 4,
+          animTime: Math.random() * 10,
+          playTimer: 0,
+          seed: Math.random() * 100,
+          labelAlpha: 0,
+          socialCooldown: 0
+        };
+      },
+
+      load() {
+        let saved = null;
+        try {
+          if (window.location.hash && window.location.hash.includes('garden=')) {
+            const rawHash = window.location.hash.split('garden=')[1];
+            if (rawHash) {
+              const decodedStr = decodeURIComponent(rawHash);
+              try {
+                saved = JSON.parse(decodeURIComponent(escape(atob(decodedStr))));
+              } catch (e1) {
+                try {
+                  saved = JSON.parse(decodedStr);
+                } catch (e2) {}
+              }
+              if (saved) {
+                setTimeout(() => showToast('Garden loaded from shared link! 🐾', '🔗'), 600);
+              }
+            }
+          }
+        } catch (e) {}
+
+        if (!saved) {
+          try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) saved = JSON.parse(raw);
+          } catch (e) {
+            saved = null;
+          }
+        }
+
+        if (saved && typeof saved === 'object') {
+          this.stats.pets = Number(saved.stats?.pets) || 0;
+          this.stats.meals = Number(saved.stats?.meals) || 0;
+          this.petProgress = Number(saved.petProgress) || 0;
+          this.blooms = typeof saved.blooms === 'number' ? Math.max(1, Math.min(24, saved.blooms)) : 8;
+          this.bowlLevel = typeof saved.bowlLevel === 'number' ? Math.max(0, Math.min(3, saved.bowlLevel)) : 3;
+          if (saved.tributeNote) this.tributeNote = String(saved.tributeNote);
+          if (saved.weatherMode) this.weatherMode = saved.weatherMode;
+
+          const companions = Array.isArray(saved.companions)
+            ? saved.companions.filter(c => c && c.id !== 'lilo' && c.id !== 'cheeto')
+            : [];
+
+          this.cats = [
+            this.createCatRuntime(DEFAULT_LILO, 0),
+            this.createCatRuntime(DEFAULT_CHEETO, 1),
+            ...companions.map((c, idx) => this.createCatRuntime(c, idx + 2))
+          ];
+        } else {
+          // Initial garden: Lilo & Cheeto reunited
+          this.cats = [
+            this.createCatRuntime(DEFAULT_LILO, 0),
+            this.createCatRuntime(DEFAULT_CHEETO, 1)
+          ];
+          this.save();
+        }
+      },
+
+      serialize() {
+        const companions = this.cats
+          .filter(c => !c.isDefault && c.id !== 'lilo' && c.id !== 'cheeto')
+          .map(c => ({
+            id: c.id,
+            name: c.name,
+            coatColor: c.coatColor,
+            shadeColor: c.shadeColor,
+            eyeColor: c.eyeColor,
+            eyeColorRight: c.eyeColorRight || c.eyeColor,
+            noseColor: c.noseColor || '#ff9ebb',
+            pattern: c.pattern || 'solid'
+          }));
+
+        return {
+          version: 3,
+          updatedAt: new Date().toISOString(),
+          stats: this.stats,
+          petProgress: this.petProgress,
+          blooms: this.blooms,
+          bowlLevel: this.bowlLevel,
+          weatherMode: this.weatherMode,
+          tributeNote: this.tributeNote,
+          companions
+        };
+      },
+
+      save() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(this.serialize()));
+        } catch (e) {}
+        this.syncUI();
+      },
+
+>>>>>>> fbd8c8e (fix: restore authentic Stardew UI, canvas environment, and twin polaroids across multi-file PWA)
       initCritters() {
         this.critters = [];
         for (let i = 0; i < 4; i++) {
@@ -1059,10 +1471,21 @@
 
     function drawGardenScenery(ctx, time) {
       // Seamless Background Expanse for Any Mobile Aspect Ratio / Device Viewport
+<<<<<<< HEAD
       const viewLeft = -camera.x - 30;
       const viewTop = -camera.y - 30;
       const viewW = canvas.width + 60;
       const viewH = canvas.height + 60;
+=======
+      const halfViewW = (canvas.width / 2) / camera.zoom;
+      const halfViewH = (canvas.height / 2) / camera.zoom;
+      const viewLeft = Math.min(-120, camera.x - halfViewW - 120);
+      const viewTop = Math.min(-120, camera.y - halfViewH - 120);
+      const viewRight = Math.max(WORLD_W + 120, camera.x + halfViewW + 120);
+      const viewBottom = Math.max(WORLD_H + 120, camera.y + halfViewH + 120);
+      const viewW = viewRight - viewLeft;
+      const viewH = viewBottom - viewTop;
+>>>>>>> fbd8c8e (fix: restore authentic Stardew UI, canvas environment, and twin polaroids across multi-file PWA)
 
       // Base lush deep-forest surround
       ctx.fillStyle = '#224426';
@@ -1073,15 +1496,25 @@
         ctx.fillStyle = '#172d1a';
         ctx.fillRect(viewLeft, viewTop, viewW, 140 - viewTop);
         ctx.fillStyle = '#1e3a22';
+<<<<<<< HEAD
         for (let fx = Math.floor(viewLeft / 28) * 28; fx < viewLeft + viewW; fx += 28) {
+=======
+        for (let fx = Math.floor(viewLeft / 28) * 28; fx < viewRight; fx += 28) {
+>>>>>>> fbd8c8e (fix: restore authentic Stardew UI, canvas environment, and twin polaroids across multi-file PWA)
           ctx.fillRect(fx, 114 + (Math.abs(fx % 56) === 0 ? 5 : 0), 22, 26);
         }
       }
 
       // South Meadow (below garden)
+<<<<<<< HEAD
       if (viewTop + viewH > 500) {
         ctx.fillStyle = '#3c7536';
         ctx.fillRect(viewLeft, 500, viewW, viewTop + viewH - 500);
+=======
+      if (viewBottom > 500) {
+        ctx.fillStyle = '#3c7536';
+        ctx.fillRect(viewLeft, 500, viewW, viewBottom - 500);
+>>>>>>> fbd8c8e (fix: restore authentic Stardew UI, canvas environment, and twin polaroids across multi-file PWA)
       }
 
       // Grass Field
