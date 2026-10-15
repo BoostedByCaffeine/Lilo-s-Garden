@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.app.WallpaperManager
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -24,6 +25,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
 
@@ -38,17 +40,16 @@ class MainActivity : AppCompatActivity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        hideSystemUI()
-
+        // CRITICAL FIX: Always call setContentView BEFORE accessing window.insetsController
         setContentView(R.layout.activity_main)
-        webView = findViewById(R.id.webView)
+        window.decorView.post { hideSystemUI() }
 
+        webView = findViewById(R.id.webView)
         configureWebView()
 
-        // Handle physical or gesture back button
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (webView.canGoBack()) {
+                if (::webView.isInitialized && webView.canGoBack()) {
                     webView.goBack()
                 } else {
                     finish()
@@ -62,28 +63,30 @@ class MainActivity : AppCompatActivity() {
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) {
-            hideSystemUI()
+            window.decorView.post { hideSystemUI() }
         }
     }
 
     private fun hideSystemUI() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            window.insetsController?.let { controller ->
-                controller.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
-                controller.systemBarsBehavior =
-                    WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                window.insetsController?.let { controller ->
+                    controller.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
+                    controller.systemBarsBehavior =
+                        WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                }
+            } else {
+                @Suppress("DEPRECATION")
+                window.decorView.systemUiVisibility = (
+                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                        or View.SYSTEM_UI_FLAG_FULLSCREEN
+                        or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                )
             }
-        } else {
-            @Suppress("DEPRECATION")
-            window.decorView.systemUiVisibility = (
-                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                    or View.SYSTEM_UI_FLAG_FULLSCREEN
-                    or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-            )
-        }
+        } catch (_: Exception) {}
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -102,7 +105,6 @@ class MainActivity : AppCompatActivity() {
         settings.builtInZoomControls = false
         settings.displayZoomControls = false
 
-        // Expose JavaScript Bridge for in-app widget and wallpaper controls
         webView.addJavascriptInterface(AndroidBridge(this), "AndroidBridge")
 
         webView.webViewClient = object : WebViewClient() {
@@ -111,13 +113,11 @@ class MainActivity : AppCompatActivity() {
                 request: WebResourceRequest?
             ): Boolean {
                 val url = request?.url?.toString() ?: return false
-                // Keep local asset files inside WebView
                 return if (url.startsWith("file:///android_asset/")) {
                     false
                 } else {
                     try {
-                        val browserIntent = Intent(Intent.ACTION_VIEW, request.url)
-                        startActivity(browserIntent)
+                        startActivity(Intent(Intent.ACTION_VIEW, request.url))
                     } catch (_: Exception) {}
                     true
                 }
@@ -136,7 +136,6 @@ class MainActivity : AppCompatActivity() {
                     this@MainActivity,
                     Manifest.permission.ACCESS_FINE_LOCATION
                 ) == PackageManager.PERMISSION_GRANTED
-
                 val hasCoarse = ContextCompat.checkSelfPermission(
                     this@MainActivity,
                     Manifest.permission.ACCESS_COARSE_LOCATION
@@ -173,23 +172,39 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        webView.onResume()
+        if (::webView.isInitialized) webView.onResume()
     }
 
     override fun onPause() {
+        if (::webView.isInitialized) webView.onPause()
         super.onPause()
-        webView.onPause()
     }
 
     override fun onDestroy() {
-        webView.destroy()
+        if (::webView.isInitialized) webView.destroy()
         super.onDestroy()
     }
 
-    /**
-     * JavaScript Bridge providing access to native Android wallpaper and widget pinning APIs.
-     */
     class AndroidBridge(private val activity: MainActivity) {
+
+        @JavascriptInterface
+        fun syncGardenToWidget(jsonState: String) {
+            try {
+                val obj = JSONObject(jsonState)
+                val prefs = activity.getSharedPreferences("lilo_widget_prefs", Context.MODE_PRIVATE)
+                val editor = prefs.edit()
+                editor.putString("garden_json", jsonState)
+                if (obj.has("blooms")) editor.putInt("blooms", obj.optInt("blooms", 8))
+                if (obj.has("weather")) editor.putString("weather", obj.optString("weather", "SUNNY"))
+                if (obj.has("tempC")) editor.putInt("tempC", obj.optInt("tempC", 24))
+                val stats = obj.optJSONObject("stats")
+                if (stats != null) {
+                    editor.putInt("pets", stats.optInt("pets", 8))
+                }
+                editor.apply()
+                LiloWidgetProvider.refreshAllWidgets(activity)
+            } catch (_: Exception) {}
+        }
 
         @JavascriptInterface
         fun openWallpaperPicker() {
@@ -202,15 +217,13 @@ class MainActivity : AppCompatActivity() {
                         )
                     }
                     activity.startActivity(intent)
-                    Toast.makeText(activity, "Set Lilo's Garden as your Live Wallpaper 🌿", Toast.LENGTH_SHORT).show()
                 } catch (_: Exception) {
                     try {
-                        val fallback = Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER)
-                        activity.startActivity(fallback)
+                        activity.startActivity(Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER))
                     } catch (_: Exception) {
                         Toast.makeText(
                             activity,
-                            "Please choose 'Lilo\\'s Garden' from your phone's Live Wallpaper settings",
+                            "Choose Lilo's Garden in your phone's Live Wallpaper settings",
                             Toast.LENGTH_LONG
                         ).show()
                     }
@@ -221,26 +234,21 @@ class MainActivity : AppCompatActivity() {
         @JavascriptInterface
         fun pinWidget() {
             activity.runOnUiThread {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    val appWidgetManager = AppWidgetManager.getInstance(activity)
-                    val widgetProvider = ComponentName(activity, LiloWidgetProvider::class.java)
-                    if (appWidgetManager.isRequestPinAppWidgetSupported) {
-                        appWidgetManager.requestPinAppWidget(widgetProvider, null, null)
-                        Toast.makeText(activity, "Pinning Lilo & Cheeto Widget to Home Screen... 🐾", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(
-                            activity,
-                            "Touch and hold your Home Screen -> Widgets -> Lilo\\'s Garden to place the widget",
-                            Toast.LENGTH_LONG
-                        ).show()
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        val appWidgetManager = AppWidgetManager.getInstance(activity)
+                        val widgetProvider = ComponentName(activity, LiloWidgetProvider::class.java)
+                        if (appWidgetManager.isRequestPinAppWidgetSupported) {
+                            appWidgetManager.requestPinAppWidget(widgetProvider, null, null)
+                            return@runOnUiThread
+                        }
                     }
-                } else {
-                    Toast.makeText(
-                        activity,
-                        "Touch and hold your Home Screen -> Widgets -> Lilo\\'s Garden to place the widget",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
+                } catch (_: Exception) {}
+                Toast.makeText(
+                    activity,
+                    "Long-press Home Screen -> Widgets -> Lilo's Garden",
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
 

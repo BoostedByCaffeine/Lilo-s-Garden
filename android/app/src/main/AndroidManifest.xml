@@ -35,6 +35,8 @@
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="com.valois.lilosgarden.ACTION_WIDGET_PET" />
                 <action android:name="com.valois.lilosgarden.ACTION_WIDGET_FEED" />
+                <action android:name="com.valois.lilosgarden.ACTION_WIDGET_WEATHER" />
+                <action android:name="com.valois.lilosgarden.ACTION_WIDGET_ADD_CAT" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"

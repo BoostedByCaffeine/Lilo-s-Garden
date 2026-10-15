@@ -487,6 +487,11 @@ const world = {
         }
       });
     }
+    if (window.AndroidBridge && typeof window.AndroidBridge.syncGardenToWidget === 'function') {
+      try {
+        window.AndroidBridge.syncGardenToWidget(JSON.stringify(this.serialize()));
+      } catch (e) {}
+    }
     this.syncUI();
   },
 
@@ -618,9 +623,15 @@ const world = {
   },
 
   save() {
+    const payload = JSON.stringify(this.serialize());
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.serialize()));
-    } catch (e) { }
+      localStorage.setItem(STORAGE_KEY, payload);
+    } catch (e) {}
+    if (window.AndroidBridge && typeof window.AndroidBridge.syncGardenToWidget === 'function') {
+      try {
+        window.AndroidBridge.syncGardenToWidget(payload);
+      } catch (e) {}
+    }
     this.syncUI();
   },
 

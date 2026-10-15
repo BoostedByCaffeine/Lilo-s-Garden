@@ -5,14 +5,14 @@
     android:layout_height="match_parent"
     android:background="@android:color/transparent">
 
-    <!-- Auto-cycling 4-frame Pixel Art Animator (500ms per frame) -->
+    <!-- Auto-cycling 4-frame VSCode-Pets Style Animator (450ms per frame) -->
     <ViewFlipper
         android:id="@+id/widget_flipper"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_centerInParent="true"
         android:autoStart="true"
-        android:flipInterval="500">
+        android:flipInterval="450">
 
         <ImageView
             android:id="@+id/widget_frame_0"
@@ -43,13 +43,13 @@
             android:scaleType="fitCenter" />
     </ViewFlipper>
 
-    <!-- Bottom Interactive Hotspots (Pet Brothers / Fill Bowl directly on Widget) -->
+    <!-- Bottom 4-Button Stardew Hotbar (Pet | Feed | Sky/Act | +Cat) -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="36dp"
+        android:layout_height="38dp"
         android:layout_alignParentBottom="true"
         android:orientation="horizontal"
-        android:weightSum="2">
+        android:weightSum="4">
 
         <FrameLayout
             android:id="@+id/widget_btn_pet"
@@ -60,6 +60,20 @@
 
         <FrameLayout
             android:id="@+id/widget_btn_feed"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@android:color/transparent" />
+
+        <FrameLayout
+            android:id="@+id/widget_btn_weather"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@android:color/transparent" />
+
+        <FrameLayout
+            android:id="@+id/widget_btn_add_cat"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
