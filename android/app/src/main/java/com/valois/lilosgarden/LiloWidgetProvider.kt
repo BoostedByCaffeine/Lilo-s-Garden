@@ -190,10 +190,14 @@ class LiloWidgetProvider : AppWidgetProvider() {
                 )
 
                 val pixelTypeface = try {
-                    ResourcesCompat.getFont(context, R.font.press_start_2p)
-                        ?: Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+                    Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew Valley Regular.ttf")
                 } catch (e: Exception) {
-                    Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+                    try {
+                        ResourcesCompat.getFont(context, R.font.press_start_2p)
+                            ?: Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+                    } catch (e: Exception) {
+                        Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+                    }
                 }
 
                 val frameIds = intArrayOf(
@@ -214,7 +218,7 @@ class LiloWidgetProvider : AppWidgetProvider() {
                     val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                         typeface = pixelTypeface
                         textAlign = Paint.Align.CENTER
-                        textSize = 9.5f
+                        textSize = 16.5f
                     }
 
                     val bannerText = when {
@@ -228,7 +232,7 @@ class LiloWidgetProvider : AppWidgetProvider() {
                     textPaint.color = Color.parseColor("#3b1d0a")
                     hiCanvas.drawText(bannerText, 220f, 30f, textPaint)
 
-                    textPaint.textSize = 9.5f
+                    textPaint.textSize = 16f
                     val btnTextY = 225f
                     textPaint.color = Color.parseColor("#3b1d0a")
                     hiCanvas.drawText("Pet", 69f, btnTextY, textPaint)
@@ -507,14 +511,14 @@ class LiloWidgetProvider : AppWidgetProvider() {
                 px(rx + 3, 65, 2, 2, "#f59e0b")
             }
 
-            // 8. Western Garden Shade Tree (Tree1.png) & Memorial Stone + Shrine Lamp
+            // 8. Western Garden Shade Tree (Moved Left) & Memorial Stone + Shrine Lamp (Separated Cleanly)
             if (sprites.tree1 != null) {
-                c.drawBitmap(sprites.tree1, null, Rect(6, 30, 32, 64), p)
+                c.drawBitmap(sprites.tree1, null, Rect(2, 26, 25, 58), p)
             }
             if (sprites.lamp1 != null) {
-                c.drawBitmap(sprites.lamp1, null, Rect(26, 37, 35, 53), p)
+                c.drawBitmap(sprites.lamp1, null, Rect(33, 36, 41, 52), p)
             }
-            val msX = 40
+            val msX = 48
             val msY = 51
             px(msX - 7, msY - 2, 14, 5, "#64748b")
             px(msX - 5, msY - 12, 10, 11, "#94a3b8")

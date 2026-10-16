@@ -1,5 +1,6 @@
 package com.valois.lilosgarden
 
+import android.app.AlarmManager
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
@@ -16,10 +17,14 @@ import android.graphics.Rect
 import android.graphics.Shader
 import android.graphics.Typeface
 import android.os.Bundle
+import android.text.format.DateFormat
 import android.widget.RemoteViews
 import androidx.core.content.res.ResourcesCompat
 import org.json.JSONObject
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class LiloCompanionWidgetProvider : AppWidgetProvider() {
 
@@ -31,6 +36,7 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
         for (appWidgetId in appWidgetIds) {
             updateCompanionWidget(context, appWidgetManager, appWidgetId)
         }
+        scheduleNextMinuteTick(context)
     }
 
     override fun onAppWidgetOptionsChanged(
@@ -41,6 +47,11 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
     ) {
         super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
         updateCompanionWidget(context, appWidgetManager, appWidgetId)
+    }
+
+    override fun onDisabled(context: Context) {
+        super.onDisabled(context)
+        cancelMinuteTick(context)
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -70,12 +81,19 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                     .apply()
                 refreshAllCompanionWidgets(context)
             }
+            ACTION_COMP_TICK,
+            Intent.ACTION_TIME_CHANGED,
+            Intent.ACTION_TIMEZONE_CHANGED -> {
+                refreshAllCompanionWidgets(context)
+                scheduleNextMinuteTick(context)
+            }
         }
     }
 
     companion object {
         const val ACTION_COMP_POSE = "com.valois.lilosgarden.ACTION_COMP_POSE"
         const val ACTION_COMP_SWITCH_CAT = "com.valois.lilosgarden.ACTION_COMP_SWITCH_CAT"
+        const val ACTION_COMP_TICK = "com.valois.lilosgarden.ACTION_COMP_TICK"
 
         data class CatSpec(
             val id: String,
@@ -87,6 +105,40 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
             val collar: String?,
             val pattern: String
         )
+
+        fun scheduleNextMinuteTick(context: Context) {
+            try {
+                val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                val intent = Intent(context, LiloCompanionWidgetProvider::class.java).apply {
+                    action = ACTION_COMP_TICK
+                }
+                val pi = PendingIntent.getBroadcast(
+                    context,
+                    9701,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                val now = System.currentTimeMillis()
+                val nextMinute = ((now / 60000L) + 1L) * 60000L + 500L
+                am.set(AlarmManager.RTC, nextMinute, pi)
+            } catch (e: Exception) {}
+        }
+
+        fun cancelMinuteTick(context: Context) {
+            try {
+                val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                val intent = Intent(context, LiloCompanionWidgetProvider::class.java).apply {
+                    action = ACTION_COMP_TICK
+                }
+                val pi = PendingIntent.getBroadcast(
+                    context,
+                    9701,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                am.cancel(pi)
+            } catch (e: Exception) {}
+        }
 
         fun refreshAllCompanionWidgets(context: Context) {
             try {
@@ -142,6 +194,21 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
             }
         }
 
+        private fun loadPixelTypeface(context: Context, allCaps: Boolean = false): Typeface {
+            val fontFile = if (allCaps) {
+                "www/assets/fonts/Stardew Valley ALL CAPS.ttf"
+            } else {
+                "www/assets/fonts/Stardew Valley Regular.ttf"
+            }
+            try {
+                return Typeface.createFromAsset(context.assets, fontFile)
+            } catch (e: Exception) {}
+            try {
+                ResourcesCompat.getFont(context, R.font.press_start_2p)?.let { return it }
+            } catch (e: Exception) {}
+            return Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+        }
+
         fun updateCompanionWidget(
             context: Context,
             appWidgetManager: AppWidgetManager,
@@ -166,18 +233,19 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                 val weather = prefs.getString("weather", if (isNight) "NIGHT" else "SUNNY") ?: "SUNNY"
                 val tempC = prefs.getInt("tempC", if (isNight) 19 else 25)
 
+                val nowDate = Date()
+                val is24Hour = DateFormat.is24HourFormat(context)
+                val timePattern = if (is24Hour) "HH:mm" else "hh:mm a"
+                val timeStr = SimpleDateFormat(timePattern, Locale.getDefault()).format(nowDate).uppercase(Locale.getDefault())
+                val dateStr = SimpleDateFormat("EEE, MMM d", Locale.getDefault()).format(nowDate)
+
                 val grassTileBmp = loadAssetBitmap(context, "assets/sprites/tileSprite/1 Tiles/FieldsTile_38.png")
                 val bushBmp = loadAssetBitmap(context, "assets/sprites/tileSprite/2 Objects/9 Bush/1.png")
-                val lampBmp = loadAssetBitmap(context, "assets/sprites/tileSprite/2 Objects/7 Decor/Lamp1.png")
                 val flowerBmp = loadAssetBitmap(context, "assets/sprites/tileSprite/2 Objects/6 Flower/3.png")
                 val stoneBmp = loadAssetBitmap(context, "assets/sprites/tileSprite/2 Objects/4 Stone/7.png")
 
-                val pixelTypeface = try {
-                    ResourcesCompat.getFont(context, R.font.press_start_2p)
-                        ?: Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
-                } catch (e: Exception) {
-                    Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
-                }
+                val pixelCapsFont = loadPixelTypeface(context, allCaps = true)
+                val pixelRegFont = loadPixelTypeface(context, allCaps = false)
 
                 val frameIds = intArrayOf(
                     R.id.comp_frame_0,
@@ -189,9 +257,8 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                 for (f in 0..3) {
                     val raw = drawStardewCompanionHudPixelPass(
                         f, cat, pose, weather,
-                        grassTileBmp, bushBmp, lampBmp, flowerBmp, stoneBmp
+                        grassTileBmp, bushBmp, flowerBmp, stoneBmp
                     )
-                    // 440x224 matches 220x112 at 2x nearest-neighbor scale
                     val scaledRaw = Bitmap.createScaledBitmap(raw, 440, 224, false)
                     val scaled = (if (scaledRaw.isMutable) scaledRaw else scaledRaw.copy(Bitmap.Config.ARGB_8888, true)) ?: scaledRaw
                     raw.recycle()
@@ -199,7 +266,7 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
 
                     val hiCanvas = Canvas(scaled)
                     val tp = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                        typeface = pixelTypeface
+                        isFakeBoldText = true
                     }
 
                     val poseLabel = when (pose) {
@@ -208,23 +275,39 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                         else -> "Lounging"
                     }
 
-                    // 1. Top Scroll Banner Title (Pixel Font)
-                    tp.textSize = 9.5f
+                    // 1. Top Scroll Banner Title
+                    tp.typeface = pixelRegFont
+                    tp.textSize = 18f
                     tp.color = Color.parseColor("#3b1d0a")
                     tp.textAlign = Paint.Align.LEFT
-                    hiCanvas.drawText("${cat.name} • $poseLabel", 232f, 39f, tp)
+                    hiCanvas.drawText("${cat.name} • $poseLabel", 232f, 40f, tp)
 
-                    // 2. Weather Badge inside Bottom-Left of Clock Plaque
+                    // 2. Bold Pixel Clock Time & Date inside Parchment Plaque
+                    tp.typeface = pixelCapsFont
+                    tp.textSize = 31f
+                    tp.color = Color.parseColor("#ffefc7")
+                    hiCanvas.drawText(timeStr, 230f, 102f, tp)
+                    tp.color = Color.parseColor("#3b1d0a")
+                    hiCanvas.drawText(timeStr, 228f, 100f, tp)
+
+                    tp.typeface = pixelRegFont
+                    tp.textSize = 17f
+                    tp.color = Color.parseColor("#ffefc7")
+                    hiCanvas.drawText(dateStr, 230f, 128f, tp)
+                    tp.color = Color.parseColor("#6e3f1d")
+                    hiCanvas.drawText(dateStr, 228f, 126f, tp)
+
+                    // 3. Weather Badge inside Bottom-Left of Clock Plaque
                     val weatherShort = when (weather) {
                         "RAIN" -> "Rain"
                         "NIGHT" -> "Night"
                         "CLOUDY" -> "Cloudy"
                         else -> "Sunny"
                     }
-                    tp.textSize = 8.5f
+                    tp.textSize = 16.5f
                     tp.color = Color.parseColor("#0369a1")
                     tp.textAlign = Paint.Align.LEFT
-                    hiCanvas.drawText("${tempC}°C $weatherShort", 242f, 176f, tp)
+                    hiCanvas.drawText("${tempC}°C $weatherShort", 240f, 178f, tp)
 
                     val safeBmp = scaled.copy(Bitmap.Config.RGB_565, false) ?: scaled
                     if (safeBmp != scaled) scaled.recycle()
@@ -233,7 +316,6 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
 
                 grassTileBmp?.recycle()
                 bushBmp?.recycle()
-                lampBmp?.recycle()
                 flowerBmp?.recycle()
                 stoneBmp?.recycle()
 
@@ -247,31 +329,36 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
                 views.setOnClickPendingIntent(R.id.comp_left_frame, openPending)
+                views.setOnClickPendingIntent(R.id.comp_clock_hotspot, openPending)
                 views.setOnClickPendingIntent(R.id.comp_weather_hotspot, openPending)
 
                 val poseIntent = Intent(context, LiloCompanionWidgetProvider::class.java).apply {
                     action = ACTION_COMP_POSE
                     putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
                 }
-                val posePending = PendingIntent.getBroadcast(
-                    context,
-                    appWidgetId + 600,
-                    poseIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                views.setOnClickPendingIntent(
+                    R.id.comp_btn_action,
+                    PendingIntent.getBroadcast(
+                        context,
+                        appWidgetId + 600,
+                        poseIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
                 )
-                views.setOnClickPendingIntent(R.id.comp_btn_action, posePending)
 
                 val switchIntent = Intent(context, LiloCompanionWidgetProvider::class.java).apply {
                     action = ACTION_COMP_SWITCH_CAT
                     putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
                 }
-                val switchPending = PendingIntent.getBroadcast(
-                    context,
-                    appWidgetId + 700,
-                    switchIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                views.setOnClickPendingIntent(
+                    R.id.comp_btn_switch_cat,
+                    PendingIntent.getBroadcast(
+                        context,
+                        appWidgetId + 700,
+                        switchIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
                 )
-                views.setOnClickPendingIntent(R.id.comp_btn_switch_cat, switchPending)
 
                 appWidgetManager.updateAppWidget(appWidgetId, views)
             } catch (e: Exception) {}
@@ -284,7 +371,6 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
             weather: String,
             grassTileBmp: Bitmap?,
             bushBmp: Bitmap?,
-            lampBmp: Bitmap?,
             flowerBmp: Bitmap?,
             stoneBmp: Bitmap?
         ): Bitmap {
@@ -323,7 +409,6 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
             val nookW = 88
             val nookH = 96
 
-            // Sky & Distant Forest Hedge at Top of Nook
             val skyCol = when {
                 isNight -> "#0f172a"
                 isRain -> "#1e293b"
@@ -339,7 +424,6 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                 px(nookX + 16 + frame, nookY + 6, 10, 3, "#e0f2fe")
             }
 
-            // Lush Forest Hedge & Wooden Garden Fence
             px(nookX, nookY + 16, nookW, 10, "#2d5c2b")
             for (hx in nookX until (nookX + nookW) step 10) {
                 px(hx, nookY + 18 + (if (hx % 20 == 0) 1 else 0), 8, 8, "#386e35")
@@ -351,7 +435,6 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                 px(fx + 1, nookY + 20, 2, 9, "#a86e42")
             }
 
-            // Tiled Meadow Lawn using FieldsTile_38.png
             c.save()
             c.clipRect(nookX, nookY + 28, nookX + nookW, nookY + 68)
             if (grassTileBmp != null) {
@@ -365,7 +448,6 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
             }
             c.restore()
 
-            // Bushes & Stepping Stones on the Lawn
             if (bushBmp != null) {
                 c.drawBitmap(bushBmp, null, Rect(nookX + 4, nookY + 22, nookX + 24, nookY + 38), p)
                 c.drawBitmap(bushBmp, null, Rect(nookX + 66, nookY + 22, nookX + 86, nookY + 38), p)
@@ -379,30 +461,35 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                 c.drawBitmap(stoneBmp, null, Rect(nookX + 68, nookY + 50, nookX + 80, nookY + 60), p)
             }
 
-            // Cozy Gazebo Cedar Deck in Foreground (y = 72..104)
+            // Cozy Gazebo Cedar Deck in Foreground
             px(nookX, nookY + 64, nookW, 3, "#3b1d0a")
             px(nookX, nookY + 67, nookW, 29, "#78431e")
             for (fy in (nookY + 72) until (nookY + nookH) step 6) {
                 px(nookX, fy, nookW, 1, "#532e16")
             }
 
-            // Shrine Lantern with Warm Glow
-            if (lampBmp != null) {
-                c.drawBitmap(lampBmp, null, Rect(nookX + 5, nookY + 38, nookX + 21, nookY + 68), p)
-                val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-                glowPaint.shader = RadialGradient(
-                    (nookX + 15).toFloat(), (nookY + 48).toFloat(), 18f,
-                    Color.argb(95, 253, 224, 71), Color.argb(0, 253, 224, 71),
-                    Shader.TileMode.CLAMP
-                )
-                c.drawCircle((nookX + 15).toFloat(), (nookY + 48).toFloat(), 18f, glowPaint)
-            }
+            // Post-Free Pixel Lantern Sitting on the Cedar Deck Beside the Cat Bed
+            val lanX = nookX + 10
+            val lanY = nookY + 68
+            px(lanX + 2, lanY - 2, 4, 2, "#3b1d0a") // Lantern top handle ring
+            px(lanX, lanY, 8, 2, "#1e1e24")         // Lantern iron roof cap
+            px(lanX + 1, lanY + 2, 6, 7, "#1e1e24") // Lantern frame
+            px(lanX + 2, lanY + 3, 4, 5, if (frame % 2 == 0) "#fef08a" else "#fde047") // Warm glowing core
+            px(lanX, lanY + 9, 8, 2, "#1e1e24")     // Lantern iron base
+
+            val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+            glowPaint.shader = RadialGradient(
+                (lanX + 4).toFloat(), (lanY + 5).toFloat(), 18f,
+                Color.argb(95, 253, 224, 71), Color.argb(0, 253, 224, 71),
+                Shader.TileMode.CLAMP
+            )
+            c.drawCircle((lanX + 4).toFloat(), (lanY + 5).toFloat(), 18f, glowPaint)
+
             if (flowerBmp != null) {
                 c.drawBitmap(flowerBmp, null, Rect(nookX + 72, nookY + 38, nookX + 82, nookY + 48), p)
-                c.drawBitmap(flowerBmp, null, Rect(nookX + 24, nookY + 52, nookX + 32, nookY + 60), p)
+                c.drawBitmap(flowerBmp, null, Rect(nookX + 20, nookY + 48, nookX + 28, nookY + 56), p)
             }
 
-            // Rain Drops or Night Atmosphere inside Nook
             if (isRain) {
                 for (rx in (nookX + 8) until (nookX + nookW - 6) step 14) {
                     val ry = nookY + 8 + ((frame * 7 + rx) % 45)
@@ -415,7 +502,7 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
             }
 
             // Plush Stardew Berry-Velvet Cat Bed on the Cedar Deck
-            val bedX = 52
+            val bedX = 55
             val bedY = 84
             px(bedX - 26, bedY + 2, 52, 11, "#2a1208")
             px(bedX - 24, bedY - 4, 48, 14, "#4c0519")
@@ -447,23 +534,19 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                 }
             }
 
-            // A. Top Recessed Scroll Banner
             px(105, 11, 103, 15, "#5e2c11")
             px(106, 12, 101, 13, "#ffefc7")
             px(106, 24, 101, 1, "#dfb573")
             drawPixelPawIcon(c, p, 108, 15, "#8f4d22")
             drawPixelSparkleIcon(c, p, 200, 16, "#0284c7")
 
-            // B. Expanded Recessed Clock, Date, Weather & Compact Icon Buttons Plaque
             px(105, 29, 103, 71, "#5e2c11")
             px(106, 30, 101, 69, "#3b1d0a")
             px(107, 31, 99, 67, "#e9c78b")
             px(108, 32, 97, 65, "#f5deb3")
 
-            // Subtle Horizontal Divider above Weather & Icon Buttons Row
             px(112, 74, 89, 1, "#dfb573")
 
-            // Weather Pixel Icon on Bottom-Left of Plaque
             when (weather) {
                 "NIGHT" -> drawPixelMoonIcon(c, p, 112, 83, "#7c3aed")
                 "RAIN" -> drawPixelRainIcon(c, p, 112, 83, "#0284c7")
@@ -471,15 +554,12 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                 else -> drawPixelSunIcon(c, p, 112, 83, "#d97706")
             }
 
-            // C. Two Compact 3D Beveled Pixel-Icon Buttons (Bottom-Right of Plaque)
-            // Button 1: Pose / Pet Icon Button (x = 162..181, y = 77..94)
             px(162, 77, 19, 17, "#1e4206")
             px(163, 78, 17, 15, "#448514")
             px(163, 78, 17, 2, "#76c932")
             px(163, 91, 17, 2, "#2e5c0d")
             drawPixelHeart(c, p, 171, 86, "#ffffff")
 
-            // Button 2: Switch Cat Icon Button (x = 184..203, y = 77..94)
             px(184, 77, 19, 17, "#3b1d0a")
             px(185, 78, 17, 15, "#dca03a")
             px(185, 78, 17, 2, "#ffe08a")
@@ -491,10 +571,8 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
 
         private fun drawPixelSwitchIcon(c: Canvas, p: Paint, x: Int, y: Int, hex: String) {
             p.color = Color.parseColor(hex)
-            // Top right-pointing pixel arrow
             c.drawRect((x + 1).toFloat(), (y + 1).toFloat(), (x + 8).toFloat(), (y + 2).toFloat(), p)
             c.drawRect((x + 6).toFloat(), y.toFloat(), (x + 7).toFloat(), (y + 3).toFloat(), p)
-            // Bottom left-pointing pixel arrow
             c.drawRect((x + 1).toFloat(), (y + 5).toFloat(), (x + 8).toFloat(), (y + 6).toFloat(), p)
             c.drawRect((x + 2).toFloat(), (y + 4).toFloat(), (x + 3).toFloat(), (y + 7).toFloat(), p)
         }
@@ -659,4 +737,4 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
             c.drawRect((x + 4).toFloat(), (y + 3).toFloat(), (x + 5).toFloat(), (y + 5).toFloat(), p)
         }
     }
-}
+}

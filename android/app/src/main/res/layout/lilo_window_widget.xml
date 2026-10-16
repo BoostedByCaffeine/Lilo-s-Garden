@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout android:background="@android:color/transparent" android:id="@+id/win_widget_root" android:layout_height="match_parent" android:layout_width="match_parent" xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Aspect-Locked Container to Prevent Stretching Across Launchers -->
     <RelativeLayout android:layout_gravity="center" android:layout_height="154dp" android:layout_width="match_parent">
 
-        <!-- 4-Frame Pixel Window Animator (280ms per frame) -->
+        <!-- Hidden TextClock triggers launcher time-tick updates while Canvas renders 100% pixel font -->
+        <TextClock android:alpha="0" android:id="@+id/win_clock" android:layout_height="1dp" android:layout_width="1dp"/>
+
         <ViewFlipper android:autoStart="true" android:flipInterval="280" android:id="@+id/win_flipper" android:layout_centerInParent="true" android:layout_height="match_parent" android:layout_width="match_parent">
 
             <ImageView android:id="@+id/win_frame_0" android:layout_height="match_parent" android:layout_width="match_parent" android:scaleType="fitCenter"/>
@@ -16,31 +17,21 @@
             <ImageView android:id="@+id/win_frame_3" android:layout_height="match_parent" android:layout_width="match_parent" android:scaleType="fitCenter"/>
         </ViewFlipper>
 
-        <!-- Interactive Overlay Grid Matching the Window Interior -->
         <LinearLayout android:layout_height="match_parent" android:layout_width="match_parent" android:orientation="vertical" android:paddingBottom="10dp" android:paddingLeft="18dp" android:paddingRight="18dp" android:paddingTop="14dp" android:weightSum="100">
 
-            <!-- Top Sky Row (38%): Bold Pixel Time on Left + Weather/Temp Hotspot on Right -->
             <LinearLayout android:gravity="center_vertical" android:layout_height="0dp" android:layout_weight="38" android:layout_width="match_parent" android:orientation="horizontal" android:weightSum="100">
 
-                <LinearLayout android:gravity="center_vertical" android:id="@+id/win_clock_box" android:layout_height="match_parent" android:layout_weight="65" android:layout_width="0dp" android:orientation="vertical" android:paddingLeft="8dp">
+                <FrameLayout android:background="@android:color/transparent" android:id="@+id/win_clock_box" android:layout_height="match_parent" android:layout_weight="65" android:layout_width="0dp"/>
 
-                    <TextClock android:autoSizeMaxTextSize="18sp" android:autoSizeMinTextSize="11sp" android:autoSizeStepGranularity="1sp" android:autoSizeTextType="uniform" android:fontFamily="@font/press_start_2p" android:format12Hour="hh:mm a" android:format24Hour="HH:mm" android:id="@+id/win_clock" android:includeFontPadding="false" android:layout_height="wrap_content" android:layout_width="match_parent" android:maxLines="1" android:shadowColor="#1e1b4b" android:shadowDx="2" android:shadowDy="2" android:shadowRadius="0.1" android:textColor="#fffbeb" android:textSize="16sp" android:textStyle="bold"/>
-                </LinearLayout>
-
-                <!-- Tap Top-Right Temp + Weather Icon to Cycle Sky / Weather Mode -->
                 <FrameLayout android:background="@android:color/transparent" android:id="@+id/win_btn_weather" android:layout_height="match_parent" android:layout_weight="35" android:layout_width="0dp"/>
             </LinearLayout>
 
-            <!-- Middle Sky Area (22%): Tap Open Sky to Launch Full App -->
             <FrameLayout android:background="@android:color/transparent" android:id="@+id/win_open_app_area" android:layout_height="0dp" android:layout_weight="22" android:layout_width="match_parent"/>
 
-            <!-- Bottom Sill Row (40%): Peeking Cats (Pet Hotspot) + Compact Switch Cat Icon Button -->
             <LinearLayout android:layout_height="0dp" android:layout_weight="40" android:layout_width="match_parent" android:orientation="horizontal" android:weightSum="100">
 
-                <!-- Tap Peeking Lilo, Cheeto, or Companion to Pet Them -->
                 <FrameLayout android:background="@android:color/transparent" android:id="@+id/win_btn_pet_cats" android:layout_height="match_parent" android:layout_weight="80" android:layout_width="0dp"/>
 
-                <!-- Bottom-Right Compact Switch Icon Button -->
                 <FrameLayout android:background="@android:color/transparent" android:id="@+id/win_btn_switch_cat" android:layout_height="match_parent" android:layout_weight="20" android:layout_width="0dp"/>
             </LinearLayout>
         </LinearLayout>

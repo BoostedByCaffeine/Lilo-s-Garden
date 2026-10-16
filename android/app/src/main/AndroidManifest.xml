@@ -64,8 +64,11 @@
             android:label="@string/companion_widget_name">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
                 <action android:name="com.valois.lilosgarden.ACTION_COMP_POSE" />
                 <action android:name="com.valois.lilosgarden.ACTION_COMP_SWITCH_CAT" />
+                <action android:name="com.valois.lilosgarden.ACTION_COMP_TICK" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
@@ -79,9 +82,12 @@
             android:label="@string/window_widget_name">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
                 <action android:name="com.valois.lilosgarden.ACTION_WIN_PET" />
                 <action android:name="com.valois.lilosgarden.ACTION_WIN_SWITCH_CAT" />
                 <action android:name="com.valois.lilosgarden.ACTION_WIN_WEATHER" />
+                <action android:name="com.valois.lilosgarden.ACTION_WIN_TICK" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"

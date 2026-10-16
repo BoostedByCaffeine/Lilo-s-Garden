@@ -206,9 +206,9 @@ class LiloWallpaperService : WallpaperService() {
                 seed = (seed * 16807L) % 2147483647L
                 return (seed - 1).toFloat() / 2147483646f
             }
-            for (i in 0 until 75) {
-                val gx = (240 + rand() * 480).toInt()
-                val gy = (180 + rand() * 280).toInt()
+            for (i in 0 until 130) {
+                val gx = (220 + rand() * 520).toInt()
+                val gy = (175 + rand() * 580).toInt()
                 if (hypot((gx - 330).toFloat(), (gy - 380).toFloat()) < 32f) continue
                 if (hypot((gx - 620).toFloat(), (gy - 240).toFloat()) < 40f) continue
                 if (hypot((gx - 640).toFloat(), (gy - 380).toFloat()) < 35f) continue
@@ -222,9 +222,9 @@ class LiloWallpaperService : WallpaperService() {
                 )
             }
             val colors = arrayOf("#fde047", "#f472b6", "#ffffff", "#bae6fd")
-            for (i in 0 until 32) {
-                val fx = (245 + rand() * 460).toInt()
-                val fy = (185 + rand() * 270).toInt()
+            for (i in 0 until 55) {
+                val fx = (225 + rand() * 500).toInt()
+                val fy = (180 + rand() * 570).toInt()
                 if (hypot((fx - 330).toFloat(), (fy - 380).toFloat()) < 34f) continue
                 if (hypot((fx - 620).toFloat(), (fy - 240).toFloat()) < 42f) continue
                 if (hypot((fx - 340).toFloat(), (fy - 240).toFloat()) < 36f) continue
@@ -579,32 +579,45 @@ class LiloWallpaperService : WallpaperService() {
             c.save()
             c.translate((virtWidth / 2f) - camX.roundToInt(), (virtHeight / 2f) - camY.roundToInt())
 
-            // 1. Deep Forest Surround
-            px(0, -100, 960, 800, "#224426")
-            px(0, -100, 960, 220, "#172d1a")
-            px(0, 500, 960, 300, "#1a3520")
+            // 1. Dynamic Sky Horizon at Very Top (y = -200..135)
+            val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+            val isNightSky = weather == "NIGHT" || hour < 6 || hour >= 19
+            val isSunsetSky = !isNightSky && hour in 17..18
+            val skyHex = when {
+                weather == "RAIN" -> "#1e293b"
+                isNightSky -> "#0f172a"
+                isSunsetSky -> "#9a3412"
+                else -> "#38bdf8"
+            }
+            px(0, -200, 960, 340, skyHex)
+            if (isNightSky && weather != "RAIN") {
+                val starCol = if (((time * 2f).toInt() % 2) == 0) "#fde047" else "#ffffff"
+                for (sx in 340..620 step 38) {
+                    px(sx, 40 + (sx % 50), 2, 2, starCol)
+                }
+            }
 
-            // 2. Tiled Garden Lawn using FieldsTile_38.png
+            // 2. Full-Viewport Seamless Tiled Garden Lawn using FieldsTile_38.png (Covers All Phone Aspect Ratios)
             val grassTile = spriteBank["grassTile"]
             if (grassTile != null) {
-                for (ty in 120 until 504 step 32) {
-                    for (tx in 176 until 784 step 32) {
+                for (ty in 120 until 920 step 32) {
+                    for (tx in 64 until 896 step 32) {
                         c.drawBitmap(grassTile, null, Rect(tx, ty, tx + 32, ty + 32), p)
                     }
                 }
             } else {
-                px(180, 120, 600, 380, "#a6b04f")
+                px(0, 120, 960, 800, "#a6b04f")
             }
 
-            // 3. Top Hedge & Wooden Fence
-            px(180, 120, 600, 36, "#2d5c2b")
-            for (hx in 180 until 780 step 14) {
+            // 3. Full-Width Top Hedge & Wooden Fence
+            px(64, 120, 832, 36, "#2d5c2b")
+            for (hx in 64 until 896 step 14) {
                 px(hx, 134 + (if (hx % 28 == 0) 3 else 0), 12, 18, "#386e35")
             }
-            px(190, 162, 580, 5, "#0f1c11", 72)
-            px(190, 146, 580, 4, "#8c5832")
-            px(190, 155, 580, 4, "#8c5832")
-            for (fx in 195 until 770 step 26) {
+            px(64, 162, 832, 5, "#0f1c11", 72)
+            px(64, 146, 832, 4, "#8c5832")
+            px(64, 155, 832, 4, "#8c5832")
+            for (fx in 75 until 885 step 26) {
                 if (fx in 456..504) continue
                 px(fx, 139, 7, 23, "#6e4223")
                 px(fx + 1, 140, 5, 20, "#a86e42")

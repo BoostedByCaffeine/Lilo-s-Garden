@@ -1,5 +1,6 @@
 package com.valois.lilosgarden
 
+import android.app.AlarmManager
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
@@ -14,10 +15,14 @@ import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.Typeface
 import android.os.Bundle
+import android.text.format.DateFormat
 import android.widget.RemoteViews
 import androidx.core.content.res.ResourcesCompat
 import org.json.JSONObject
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class LiloWindowWidgetProvider : AppWidgetProvider() {
 
@@ -29,6 +34,7 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
         for (appWidgetId in appWidgetIds) {
             updateWindowWidget(context, appWidgetManager, appWidgetId)
         }
+        scheduleNextMinuteTick(context)
     }
 
     override fun onAppWidgetOptionsChanged(
@@ -39,6 +45,11 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
     ) {
         super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
         updateWindowWidget(context, appWidgetManager, appWidgetId)
+    }
+
+    override fun onDisabled(context: Context) {
+        super.onDisabled(context)
+        cancelMinuteTick(context)
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -57,9 +68,9 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
                 refreshAllWindowWidgets(context)
             }
             ACTION_WIN_SWITCH_CAT -> {
-                val companions = getSwitchableCompanions(prefs)
-                val key = "win_comp_idx_$appWidgetId"
-                val nextIdx = (prefs.getInt(key, 0) + 1) % companions.size
+                val roster = getWindowCatRoster(prefs)
+                val key = "win_cat_idx_$appWidgetId"
+                val nextIdx = (prefs.getInt(key, 0) + 1) % roster.size
                 prefs.edit().putInt(key, nextIdx).apply()
                 refreshAllWindowWidgets(context)
             }
@@ -71,6 +82,12 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
                 prefs.edit().putString(key, next).apply()
                 refreshAllWindowWidgets(context)
             }
+            ACTION_WIN_TICK,
+            Intent.ACTION_TIME_CHANGED,
+            Intent.ACTION_TIMEZONE_CHANGED -> {
+                refreshAllWindowWidgets(context)
+                scheduleNextMinuteTick(context)
+            }
         }
     }
 
@@ -78,6 +95,7 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
         const val ACTION_WIN_PET = "com.valois.lilosgarden.ACTION_WIN_PET"
         const val ACTION_WIN_SWITCH_CAT = "com.valois.lilosgarden.ACTION_WIN_SWITCH_CAT"
         const val ACTION_WIN_WEATHER = "com.valois.lilosgarden.ACTION_WIN_WEATHER"
+        const val ACTION_WIN_TICK = "com.valois.lilosgarden.ACTION_WIN_TICK"
 
         data class PeekCatSpec(
             val id: String,
@@ -90,19 +108,39 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
             val pattern: String
         )
 
-        private val LILO_SPEC = PeekCatSpec(
-            "lilo", "Lilo", "#ffffff", "#dbe7f5", "#29b6f6", "#29b6f6", "#1e88e5", "solid"
-        )
-        private val CHEETO_SPEC = PeekCatSpec(
-            "cheeto", "Cheeto", "#ffffff", "#eee8dc", "#ffb300", "#29b6f6", null, "solid"
-        )
+        fun scheduleNextMinuteTick(context: Context) {
+            try {
+                val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                val intent = Intent(context, LiloWindowWidgetProvider::class.java).apply {
+                    action = ACTION_WIN_TICK
+                }
+                val pi = PendingIntent.getBroadcast(
+                    context,
+                    9801,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                val now = System.currentTimeMillis()
+                val nextMinute = ((now / 60000L) + 1L) * 60000L + 500L
+                am.set(AlarmManager.RTC, nextMinute, pi)
+            } catch (e: Exception) {}
+        }
 
-        private val FALLBACK_COMPANIONS = listOf(
-            PeekCatSpec("mochi", "Mochi", "#f59e42", "#c96f18", "#4ade80", "#4ade80", null, "tabby"),
-            PeekCatSpec("luna", "Luna", "#374151", "#1f2937", "#fde047", "#fde047", null, "tuxedo"),
-            PeekCatSpec("cleo", "Cleo", "#f5deb3", "#d4b47c", "#29b6f6", "#29b6f6", null, "patches"),
-            PeekCatSpec("bambi", "Bambi", "#7c98b3", "#536b82", "#c084fc", "#c084fc", null, "solid")
-        )
+        fun cancelMinuteTick(context: Context) {
+            try {
+                val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                val intent = Intent(context, LiloWindowWidgetProvider::class.java).apply {
+                    action = ACTION_WIN_TICK
+                }
+                val pi = PendingIntent.getBroadcast(
+                    context,
+                    9801,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                am.cancel(pi)
+            } catch (e: Exception) {}
+        }
 
         fun refreshAllWindowWidgets(context: Context) {
             try {
@@ -116,8 +154,12 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
             } catch (e: Exception) {}
         }
 
-        private fun getSwitchableCompanions(prefs: android.content.SharedPreferences): List<PeekCatSpec> {
-            val customList = mutableListOf<PeekCatSpec>()
+        // Default roster is strictly Lilo & Cheeto; appends user-created cats from garden_json
+        private fun getWindowCatRoster(prefs: android.content.SharedPreferences): List<PeekCatSpec> {
+            val list = mutableListOf(
+                PeekCatSpec("lilo", "Lilo", "#ffffff", "#dbe7f5", "#29b6f6", "#29b6f6", "#1e88e5", "solid"),
+                PeekCatSpec("cheeto", "Cheeto", "#ffffff", "#eee8dc", "#ffb300", "#29b6f6", null, "solid")
+            )
             val jsonStr = prefs.getString("garden_json", null)
             if (!jsonStr.isNullOrEmpty()) {
                 try {
@@ -126,7 +168,7 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
                     if (arr != null) {
                         for (i in 0 until arr.length()) {
                             val c = arr.getJSONObject(i)
-                            customList.add(
+                            list.add(
                                 PeekCatSpec(
                                     c.optString("id", "cat_$i"),
                                     c.optString("name", "Mochi"),
@@ -142,7 +184,7 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
                     }
                 } catch (e: Exception) {}
             }
-            return if (customList.isNotEmpty()) customList + FALLBACK_COMPANIONS else FALLBACK_COMPANIONS
+            return list
         }
 
         private fun loadAssetBitmap(context: Context, relPath: String): Bitmap? {
@@ -155,6 +197,21 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
             }
         }
 
+        private fun loadPixelTypeface(context: Context, allCaps: Boolean = false): Typeface {
+            val fontFile = if (allCaps) {
+                "www/assets/fonts/Stardew Valley ALL CAPS.ttf"
+            } else {
+                "www/assets/fonts/Stardew Valley Regular.ttf"
+            }
+            try {
+                return Typeface.createFromAsset(context.assets, fontFile)
+            } catch (e: Exception) {}
+            try {
+                ResourcesCompat.getFont(context, R.font.press_start_2p)?.let { return it }
+            } catch (e: Exception) {}
+            return Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+        }
+
         fun updateWindowWidget(
             context: Context,
             appWidgetManager: AppWidgetManager,
@@ -164,12 +221,13 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
                 val views = RemoteViews(context.packageName, R.layout.lilo_window_widget)
                 val prefs = context.getSharedPreferences("lilo_widget_prefs", Context.MODE_PRIVATE)
 
-                val companions = getSwitchableCompanions(prefs)
-                val compIdx = prefs.getInt("win_comp_idx_$appWidgetId", 0) % companions.size
-                val thirdCat = companions[compIdx]
+                val roster = getWindowCatRoster(prefs)
+                val catIdx = prefs.getInt("win_cat_idx_$appWidgetId", 0) % roster.size
+                val activeCat = roster[catIdx]
                 val isPetted = prefs.getBoolean("win_pet_active_$appWidgetId", false)
 
-                val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+                val cal = Calendar.getInstance()
+                val hour = cal.get(Calendar.HOUR_OF_DAY)
                 val timePhase = when {
                     hour in 17..18 -> "SUNSET"
                     hour < 6 || hour >= 19 -> "NIGHT"
@@ -199,15 +257,15 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
                 }
                 val tempC = prefs.getInt("tempC", defaultTemp)
 
+                val is24Hour = DateFormat.is24HourFormat(context)
+                val timePattern = if (is24Hour) "HH:mm" else "hh:mm a"
+                val timeStr = SimpleDateFormat(timePattern, Locale.getDefault()).format(Date()).uppercase(Locale.getDefault())
+
                 val bush1 = loadAssetBitmap(context, "assets/sprites/tileSprite/2 Objects/9 Bush/1.png")
                 val bush2 = loadAssetBitmap(context, "assets/sprites/tileSprite/2 Objects/9 Bush/2.png")
 
-                val pixelTypeface = try {
-                    ResourcesCompat.getFont(context, R.font.press_start_2p)
-                        ?: Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
-                } catch (e: Exception) {
-                    Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
-                }
+                val pixelCapsFont = loadPixelTypeface(context, allCaps = true)
+                val pixelRegFont = loadPixelTypeface(context, allCaps = false)
 
                 val frameIds = intArrayOf(
                     R.id.win_frame_0,
@@ -221,7 +279,7 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
                         f,
                         effectiveWeather,
                         effectiveTimePhase,
-                        thirdCat,
+                        activeCat,
                         isPetted,
                         bush1,
                         bush2
@@ -231,25 +289,36 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
                     raw.recycle()
                     if (scaledRaw != scaled) scaledRaw.recycle()
 
-                    // PASS 2: Bold Pixel Temperature next to the Weather Icon (NO weather text)
                     val hiCanvas = Canvas(scaled)
                     val tp = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                        typeface = pixelTypeface
-                        textSize = 13f
-                        textAlign = Paint.Align.RIGHT
+                        isFakeBoldText = true
                     }
 
-                    // Pixel Drop Shadow for Temperature
+                    // 1. Bold Pixel Time on Top-Left (Guaranteed Custom Pixel Font!)
+                    tp.typeface = pixelCapsFont
+                    tp.textSize = 26f
+                    tp.textAlign = Paint.Align.LEFT
+                    tp.color = Color.parseColor("#1e1b4b")
+                    hiCanvas.drawText(timeStr, 36f, 55f, tp)
+                    tp.color = Color.parseColor("#fffbeb")
+                    hiCanvas.drawText(timeStr, 34f, 53f, tp)
+
+                    // 2. Bold Pixel Temperature next to Weather Icon on Top-Right
+                    tp.textSize = 22f
+                    tp.textAlign = Paint.Align.RIGHT
                     tp.color = Color.parseColor("#1e1b4b")
                     hiCanvas.drawText("${tempC}°C", 328f, 54f, tp)
                     tp.color = Color.parseColor("#fffbeb")
                     hiCanvas.drawText("${tempC}°C", 326f, 52f, tp)
 
-                    // Tiny Companion Name Tag on the Wooden Window Sill
-                    tp.textSize = 7.5f
+                    // 3. Active Cat Name Tag on the Wooden Window Sill
+                    tp.typeface = pixelRegFont
+                    tp.textSize = 15f
                     tp.textAlign = Paint.Align.CENTER
+                    tp.color = Color.parseColor("#3b1d0a")
+                    hiCanvas.drawText("${activeCat.name} (${catIdx + 1}/${roster.size})", 190f, 225f, tp)
                     tp.color = Color.parseColor("#ffefc7")
-                    hiCanvas.drawText("Lilo • Cheeto • ${thirdCat.name}", 184f, 222f, tp)
+                    hiCanvas.drawText("${activeCat.name} (${catIdx + 1}/${roster.size})", 188f, 223f, tp)
 
                     val safeBmp = scaled.copy(Bitmap.Config.RGB_565, false) ?: scaled
                     if (safeBmp != scaled) scaled.recycle()
@@ -321,7 +390,7 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
             frame: Int,
             weather: String,
             timePhase: String,
-            thirdCat: PeekCatSpec,
+            activeCat: PeekCatSpec,
             isPetted: Boolean,
             bush1: Bitmap?,
             bush2: Bitmap?
@@ -346,7 +415,7 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
             val isNight = timePhase == "NIGHT" || weather == "NIGHT"
             val isSunset = timePhase == "SUNSET" && !isNight
 
-            // 1. DYNAMIC SKY BACKDROP INSIDE WINDOW (x = 10..190, y = 10..96)
+            // 1. DYNAMIC SKY BACKDROP INSIDE WINDOW
             val skyBands = when {
                 isRain -> arrayOf("#1e293b", "#283548", "#334155", "#475569")
                 isCloudy && isNight -> arrayOf("#0f172a", "#1e293b", "#263346", "#334155")
@@ -361,7 +430,7 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
                 px(10, 10 + i * bandH, 180, bandH, skyBands[i])
             }
 
-            // 2. CELESTIAL BODIES & SKY EFFECTS (Stars, Sunset Orb, Drifting Clouds, Rain)
+            // 2. CELESTIAL BODIES & SKY EFFECTS
             if (isNight && !isRain) {
                 val starCol1 = if (frame % 2 == 0) "#fde047" else "#ffffff"
                 val starCol2 = if (frame % 2 == 1) "#fde047" else "#bae6fd"
@@ -371,15 +440,13 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
                 px(118, 16, 1, 1, starCol1)
                 px(144, 28, 2, 2, starCol2)
                 px(42, 38, 1, 1, "#bae6fd")
-                px(104, 42, 2, 2, starCol1)
+                px(124, 42, 2, 2, starCol1)
             } else if (isSunset && !isRain) {
-                // Glowing Golden-Hour Setting Sun near Horizon
                 px(88, 56, 24, 16, "#f97316")
                 px(90, 54, 20, 18, "#fbbf24")
                 px(93, 57, 14, 12, "#fef08a")
             }
 
-            // Drifting Clouds (Cloudy, Rain, Sunset, or Fair Day)
             val cloudShift = frame * 2
             if (isRain || isCloudy) {
                 val cCol = if (isRain) "#64748b" else "#e2e8f0"
@@ -399,7 +466,6 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
                 px(132 - cloudShift, 42, 18, 3, cCol)
             }
 
-            // Animated Raindrops in RAIN mode
             if (isRain) {
                 for (rx in 18 until 182 step 16) {
                     val ry1 = 18 + ((rx * 3 + frame * 11) % 66)
@@ -409,26 +475,25 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
                 }
             }
 
-            // 3. DISTANT GARDEN TREELINE / BUSHES JUST OUTSIDE THE WINDOW SILL
+            // 3. GARDEN BUSHES OUTSIDE THE WINDOW SILL
             px(10, 82, 180, 14, if (isNight) "#172d1a" else "#2d5c2b")
             if (bush1 != null) {
-                c.drawBitmap(bush1, null, Rect(12, 74, 42, 94), p)
-                c.drawBitmap(bush1, null, Rect(156, 74, 186, 94), p)
+                c.drawBitmap(bush1, null, Rect(14, 72, 46, 94), p)
+                c.drawBitmap(bush1, null, Rect(152, 72, 184, 94), p)
             }
             if (bush2 != null) {
-                c.drawBitmap(bush2, null, Rect(78, 75, 118, 94), p)
+                c.drawBitmap(bush2, null, Rect(52, 74, 86, 94), p)
+                c.drawBitmap(bush2, null, Rect(114, 74, 148, 94), p)
             }
 
-            // Subtle Window Mullion Crossbar behind the Cats
+            // Window Mullion Crossbar behind the Cat
             px(99, 10, 2, 84, "#3b1d0a")
             px(10, 48, 180, 2, "#3b1d0a")
 
-            // 4. TOP-RIGHT WEATHER ICON ONLY (No Weather Text — Paired with Temp)
-            // Soft translucent badge pill behind Temp + Weather Icon for contrast
-            p.color = Color.argb(115, 15, 23, 42)
-            c.drawRect(130f, 14f, 186f, 32f, p)
-            p.color = Color.argb(115, 15, 23, 42)
-            c.drawRect(14f, 14f, 118f, 32f, p)
+            // 4. TOP TIME & WEATHER ICON PILLS
+            p.color = Color.argb(120, 15, 23, 42)
+            c.drawRect(14f, 14f, 114f, 32f, p)
+            c.drawRect(128f, 14f, 186f, 32f, p)
 
             val wx = 168
             val wy = 17
@@ -441,11 +506,9 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
             }
 
             // 5. OUTER CARVED WOODEN WINDOW CASING & SILL
-            // Top wooden arch / lintel
             px(0, 0, w, 10, "#3b1d0a")
             px(2, 2, w - 4, 6, "#8f4d22")
             px(4, 3, w - 8, 2, "#c87d3b")
-            // Left & Right wooden window jambs
             px(0, 0, 10, h, "#3b1d0a")
             px(2, 2, 6, h - 4, "#8f4d22")
             px(3, 4, 2, h - 8, "#c87d3b")
@@ -453,24 +516,26 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
             px(w - 8, 2, 6, h - 4, "#8f4d22")
             px(w - 5, 4, 2, h - 8, "#c87d3b")
 
-            // Protruding Wooden Window Sill (y = 92..118)
             px(0, 92, w, 28, "#3b1d0a")
             px(2, 94, w - 4, 8, "#c87d3b")
             px(2, 94, w - 4, 2, "#e6a968")
             px(2, 102, w - 4, 16, "#8f4d22")
             px(2, 102, w - 4, 2, "#5e2c11")
 
-            // Gold Corner Rivets
             px(4, 4, 2, 2, "#fde047")
             px(w - 6, 4, 2, 2, "#fde047")
             px(4, h - 6, 2, 2, "#fde047")
             px(w - 6, h - 6, 2, 2, "#fde047")
 
-            // 6. PEEKING CATS (LILO, CHEETO & SWITCHABLE COMPANION — HEAD & PAWS ON SILL)
-            // Left: Lilo | Center: Cheeto | Right: Switchable Companion
-            drawPeekingCatHeadAndPaws(c, p, cx = 44, sillY = 94, frame = frame, cat = LILO_SPEC, isPetted = isPetted)
-            drawPeekingCatHeadAndPaws(c, p, cx = 94, sillY = 94, frame = (frame + 1) % 4, cat = CHEETO_SPEC, isPetted = isPetted)
-            drawPeekingCatHeadAndPaws(c, p, cx = 144, sillY = 94, frame = (frame + 2) % 4, cat = thirdCat, isPetted = isPetted)
+            // 6. 1 SWITCHABLE PEEKING CAT CENTERED IN THE WINDOW (2.8x scale for crisp detail)
+            drawPeekingCatHeadAndPaws(
+                c, p,
+                cx = 100,
+                sillY = 94,
+                frame = frame,
+                cat = activeCat,
+                isPetted = isPetted
+            )
 
             // 7. COMPACT PIXEL SWITCH-CAT ICON BUTTON ON RIGHT SIDE OF SILL
             val swX = 175
@@ -496,40 +561,35 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
             val bobY = if (frame % 2 == 1) -1 else 0
             c.save()
             c.translate(cx.toFloat(), sillY.toFloat())
-            c.scale(2.0f, 2.0f)
+            c.scale(2.8f, 2.8f)
 
             fun r(rx: Int, ry: Int, rw: Int, rh: Int, hex: String) {
                 p.color = Color.parseColor(hex)
                 c.drawRect(rx.toFloat(), ry.toFloat(), (rx + rw).toFloat(), (ry + rh).toFloat(), p)
             }
 
-            // Upper shoulders peeking just above sill
             r(-6, -3 + bobY, 12, 4, cat.shade)
             r(-5, -4 + bobY, 10, 4, cat.coat)
             if (cat.pattern == "tuxedo") {
                 r(-2, -3 + bobY, 4, 3, "#ffffff")
             }
 
-            // Collar & Gold Bell (Lilo's signature royal blue collar)
             if (cat.collar != null) {
                 r(-4, -3 + bobY, 8, 1, cat.collar)
                 r(-1, -2 + bobY, 2, 2, "#fde047")
             }
 
-            // Head (Front-facing peeking over the window sill)
             val hy = -11 + bobY
             r(-5, hy, 10, 8, cat.coat)
             r(-4, hy - 1, 8, 1, cat.coat)
             r(-5, hy + 7, 10, 1, cat.shade)
 
-            // Pointy Pixel Ears + Pink Inner Ears
             val earTwitch = if (frame == 2) 1 else 0
             r(-5, hy - 3 + earTwitch, 3, 3, cat.coat)
             r(2, hy - 3, 3, 3, cat.coat)
             r(-4, hy - 2 + earTwitch, 1, 2, "#ff9ebb")
             r(3, hy - 2, 1, 2, "#ff9ebb")
 
-            // Forehead Pattern Markings (Tabby / Patches / Tuxedo)
             if (cat.pattern == "tabby") {
                 r(-1, hy - 1, 2, 3, cat.shade)
                 r(-4, hy + 1, 2, 1, cat.shade)
@@ -541,7 +601,6 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
                 r(-2, hy + 4, 4, 4, "#ffffff")
             }
 
-            // Eyes (Blinking on frame 3 or happy closed arcs when petted)
             if (isPetted || frame == 3) {
                 r(-3, hy + 3, 2, 1, "#334155")
                 r(1, hy + 3, 2, 1, "#334155")
@@ -552,14 +611,12 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
                 r(1, hy + 2, 1, 1, "#ffffff")
             }
 
-            // Cute Pink Nose & Blushing Cheeks
             r(-1, hy + 5, 2, 1, "#ff9ebb")
             if (isPetted) {
                 r(-4, hy + 5, 1, 1, "#fda4af")
                 r(3, hy + 5, 1, 1, "#fda4af")
             }
 
-            // Cute Front Paws Resting Over the Wooden Sill Edge
             val pawCol = if (cat.pattern == "tuxedo") "#ffffff" else cat.coat
             r(-6, -1, 3, 3, pawCol)
             r(-6, 1, 3, 1, cat.shade)
@@ -568,10 +625,9 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
 
             c.restore()
 
-            // Floating Heart above Peeking Cat when Petted
-            if (isPetted || (cat.id == "lilo" && frame % 2 == 0)) {
+            if (isPetted || frame % 2 == 0) {
                 val heartCol = if (cat.id == "cheeto") "#ffb300" else "#fb7185"
-                drawPixelHeart(c, p, cx, sillY - 28 - (frame * 2), heartCol)
+                drawPixelHeart(c, p, cx, sillY - 38 - (frame * 2), heartCol)
             }
         }
 
@@ -653,4 +709,4 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
             c.drawRect((x - 1).toFloat(), (y + 2).toFloat(), (x + 2).toFloat(), (y + 3).toFloat(), p)
         }
     }
-}
+}
