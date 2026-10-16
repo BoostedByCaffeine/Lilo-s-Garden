@@ -57,16 +57,21 @@ jobs:
       - name: Build APK with Gradle
         working-directory: android
         run: |
+          set -e -o pipefail
           chmod +x gradlew || true
-          ./gradlew assembleDebug --stacktrace 2>&1 | tee ../build.log || {
-            BUILD_STATUS=$?
-            echo "Build failed with exit code $BUILD_STATUS"
-            echo "### Gradle Build Failure Log" >> $GITHUB_STEP_SUMMARY
-            echo '```text' >> $GITHUB_STEP_SUMMARY
+          ./gradlew assembleDebug --stacktrace 2>&1 | tee ../build.log
+
+      - name: Report Build Failure Summary
+        if: failure()
+        run: |
+          echo "### Gradle Build Failure Log" >> $GITHUB_STEP_SUMMARY
+          echo '```text' >> $GITHUB_STEP_SUMMARY
+          if [ -f build.log ]; then
+            tail -n 120 build.log >> $GITHUB_STEP_SUMMARY
+          elif [ -f ../build.log ]; then
             tail -n 120 ../build.log >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            exit $BUILD_STATUS
-          }
+          fi
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Upload Build Log on Failure
         if: failure()
