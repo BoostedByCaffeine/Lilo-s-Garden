@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lilos-garden-pwa-v4';
+const CACHE_NAME = 'lilos-garden-pwa-v5';
 
 const CORE_ASSETS = [
   './',
@@ -10,7 +10,9 @@ const CORE_ASSETS = [
   './assets/lilo.jpg',
   './assets/cheeto.jpg',
   './assets/icon-192.png',
-  './assets/icon-512.png'
+  './assets/icon-512.png',
+  './assets/fonts/Stardew_Valley.ttf',
+  './assets/fonts/Stardew_Valley.otf'
 ];
 
 // Install: Pre-cache core files and optional assets safely

@@ -1,6 +1,7 @@
 @font-face {
   font-family: 'StardewValley';
-  src: url('./assets/fonts/Stardew Valley Regular.ttf') format('truetype');
+  src: url('./assets/fonts/Stardew_Valley.ttf') format('truetype'),
+       url('./assets/fonts/Stardew_Valley.otf') format('opentype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -8,7 +9,8 @@
 
 @font-face {
   font-family: 'StardewValleyCaps';
-  src: url('./assets/fonts/Stardew Valley ALL CAPS.ttf') format('truetype');
+  src: url('./assets/fonts/Stardew_Valley.ttf') format('truetype'),
+       url('./assets/fonts/Stardew_Valley.otf') format('opentype');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -204,13 +206,13 @@ canvas#garden-canvas:active {
   box-shadow: inset 0 -2px 0 var(--sv-parchment-dark);
   color: var(--sv-ink);
   font-family: 'StardewValleyCaps', 'Press Start 2P', monospace;
-  font-size: 8px;
+  font-size: 11px; letter-spacing: 0.04em;
   margin-bottom: 8px;
 }
 
 .intro-title {
   font-family: 'StardewValleyCaps', 'Press Start 2P', monospace;
-  font-size: 1.2rem;
+  font-size: 1.55rem;
   color: var(--sv-ink);
   text-shadow: 2px 2px 0 var(--sv-parchment-light), 3px 3px 0 rgba(59, 29, 10, 0.25);
   margin: 4px 0 10px;
@@ -266,7 +268,7 @@ canvas#garden-canvas:active {
     0 4px 0 var(--sv-border-dark);
   color: #fff;
   font-family: 'StardewValleyCaps', 'Press Start 2P', monospace;
-  font-size: 0.72rem;
+  font-size: 0.95rem;
   text-shadow: 1px 1px 0 #1b3b07;
   cursor: pointer;
   transition: transform 0.08s ease, box-shadow 0.08s ease;
@@ -548,7 +550,7 @@ canvas#garden-canvas:active {
 
 .polaroid-title {
   font-family: 'StardewValleyCaps', 'Press Start 2P', monospace;
-  font-size: 9px;
+  font-size: 13px;
   color: var(--sv-ink);
   margin-top: 9px;
   margin-bottom: 3px;

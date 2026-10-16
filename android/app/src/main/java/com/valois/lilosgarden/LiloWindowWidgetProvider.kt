@@ -2,7 +2,7 @@ package com.valois.lilosgarden
 
 import android.app.AlarmManager
 import android.app.PendingIntent
-import android.appwidget.AppWidgetManager
+import androidwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
@@ -197,14 +197,12 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
             }
         }
 
-        private fun loadPixelTypeface(context: Context, allCaps: Boolean = false): Typeface {
-            val fontFile = if (allCaps) {
-                "www/assets/fonts/Stardew Valley ALL CAPS.ttf"
-            } else {
-                "www/assets/fonts/Stardew Valley Regular.ttf"
-            }
+        private fun loadPixelTypeface(context: Context): Typeface {
             try {
-                return Typeface.createFromAsset(context.assets, fontFile)
+                return Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew_Valley.ttf")
+            } catch (e: Exception) {}
+            try {
+                return Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew_Valley.otf")
             } catch (e: Exception) {}
             try {
                 ResourcesCompat.getFont(context, R.font.press_start_2p)?.let { return it }
@@ -264,8 +262,7 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
                 val bush1 = loadAssetBitmap(context, "assets/sprites/tileSprite/2 Objects/9 Bush/1.png")
                 val bush2 = loadAssetBitmap(context, "assets/sprites/tileSprite/2 Objects/9 Bush/2.png")
 
-                val pixelCapsFont = loadPixelTypeface(context, allCaps = true)
-                val pixelRegFont = loadPixelTypeface(context, allCaps = false)
+                val pixelFont = loadPixelTypeface(context)
 
                 val frameIds = intArrayOf(
                     R.id.win_frame_0,
@@ -291,34 +288,33 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
 
                     val hiCanvas = Canvas(scaled)
                     val tp = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                        typeface = pixelFont
                         isFakeBoldText = true
                     }
 
-                    // 1. Bold Pixel Time on Top-Left (Guaranteed Custom Pixel Font!)
-                    tp.typeface = pixelCapsFont
+                    // 1. Solid Bold Pixel Time on Top-Left
                     tp.textSize = 26f
                     tp.textAlign = Paint.Align.LEFT
-                    tp.color = Color.parseColor("#1e1b4b")
+                    tp.color = Color.parseColor("#0f172a")
                     hiCanvas.drawText(timeStr, 36f, 55f, tp)
                     tp.color = Color.parseColor("#fffbeb")
                     hiCanvas.drawText(timeStr, 34f, 53f, tp)
 
-                    // 2. Bold Pixel Temperature next to Weather Icon on Top-Right
-                    tp.textSize = 22f
+                    // 2. Solid Bold Pixel Temperature next to Weather Icon on Top-Right
+                    tp.textSize = 23f
                     tp.textAlign = Paint.Align.RIGHT
-                    tp.color = Color.parseColor("#1e1b4b")
+                    tp.color = Color.parseColor("#0f172a")
                     hiCanvas.drawText("${tempC}°C", 328f, 54f, tp)
                     tp.color = Color.parseColor("#fffbeb")
                     hiCanvas.drawText("${tempC}°C", 326f, 52f, tp)
 
-                    // 3. Active Cat Name Tag on the Wooden Window Sill
-                    tp.typeface = pixelRegFont
-                    tp.textSize = 15f
-                    tp.textAlign = Paint.Align.CENTER
-                    tp.color = Color.parseColor("#3b1d0a")
-                    hiCanvas.drawText("${activeCat.name} (${catIdx + 1}/${roster.size})", 190f, 225f, tp)
+                    // 3. Active Cat Name Tag Aligned Under the Left-Corner Peeking Cat
+                    tp.textSize = 15.5f
+                    tp.textAlign = Paint.Align.LEFT
+                    tp.color = Color.parseColor("#2a1208")
+                    hiCanvas.drawText("${activeCat.name} (${catIdx + 1}/${roster.size})", 26f, 224f, tp)
                     tp.color = Color.parseColor("#ffefc7")
-                    hiCanvas.drawText("${activeCat.name} (${catIdx + 1}/${roster.size})", 188f, 223f, tp)
+                    hiCanvas.drawText("${activeCat.name} (${catIdx + 1}/${roster.size})", 24f, 222f, tp)
 
                     val safeBmp = scaled.copy(Bitmap.Config.RGB_565, false) ?: scaled
                     if (safeBmp != scaled) scaled.recycle()
@@ -439,12 +435,12 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
                 px(88, 22, 2, 2, starCol2)
                 px(118, 16, 1, 1, starCol1)
                 px(144, 28, 2, 2, starCol2)
-                px(42, 38, 1, 1, "#bae6fd")
-                px(124, 42, 2, 2, starCol1)
+                px(66, 38, 1, 1, "#bae6fd")
+                px(134, 42, 2, 2, starCol1)
             } else if (isSunset && !isRain) {
-                px(88, 56, 24, 16, "#f97316")
-                px(90, 54, 20, 18, "#fbbf24")
-                px(93, 57, 14, 12, "#fef08a")
+                px(124, 56, 24, 16, "#f97316")
+                px(126, 54, 20, 18, "#fbbf24")
+                px(129, 57, 14, 12, "#fef08a")
             }
 
             val cloudShift = frame * 2
@@ -478,15 +474,15 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
             // 3. GARDEN BUSHES OUTSIDE THE WINDOW SILL
             px(10, 82, 180, 14, if (isNight) "#172d1a" else "#2d5c2b")
             if (bush1 != null) {
-                c.drawBitmap(bush1, null, Rect(14, 72, 46, 94), p)
-                c.drawBitmap(bush1, null, Rect(152, 72, 184, 94), p)
+                c.drawBitmap(bush1, null, Rect(12, 74, 40, 94), p)
+                c.drawBitmap(bush1, null, Rect(154, 74, 184, 94), p)
             }
             if (bush2 != null) {
-                c.drawBitmap(bush2, null, Rect(52, 74, 86, 94), p)
-                c.drawBitmap(bush2, null, Rect(114, 74, 148, 94), p)
+                c.drawBitmap(bush2, null, Rect(66, 74, 98, 94), p)
+                c.drawBitmap(bush2, null, Rect(112, 74, 146, 94), p)
             }
 
-            // Window Mullion Crossbar behind the Cat
+            // Window Mullion Crossbar
             px(99, 10, 2, 84, "#3b1d0a")
             px(10, 48, 180, 2, "#3b1d0a")
 
@@ -527,10 +523,10 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
             px(4, h - 6, 2, 2, "#fde047")
             px(w - 6, h - 6, 2, 2, "#fde047")
 
-            // 6. 1 SWITCHABLE PEEKING CAT CENTERED IN THE WINDOW (2.8x scale for crisp detail)
+            // 6. PEEKING CAT TUCKED IN THE BOTTOM-LEFT WINDOW CORNER (cx = 42, scale = 2.0f)
             drawPeekingCatHeadAndPaws(
                 c, p,
-                cx = 100,
+                cx = 42,
                 sillY = 94,
                 frame = frame,
                 cat = activeCat,
@@ -561,7 +557,8 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
             val bobY = if (frame % 2 == 1) -1 else 0
             c.save()
             c.translate(cx.toFloat(), sillY.toFloat())
-            c.scale(2.8f, 2.8f)
+            // Smaller 2.0f scale so the cat sits cozily in the bottom-left corner
+            c.scale(2.0f, 2.0f)
 
             fun r(rx: Int, ry: Int, rw: Int, rh: Int, hex: String) {
                 p.color = Color.parseColor(hex)
@@ -627,7 +624,7 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
 
             if (isPetted || frame % 2 == 0) {
                 val heartCol = if (cat.id == "cheeto") "#ffb300" else "#fb7185"
-                drawPixelHeart(c, p, cx, sillY - 38 - (frame * 2), heartCol)
+                drawPixelHeart(c, p, cx, sillY - 30 - (frame * 2), heartCol)
             }
         }
 
@@ -709,4 +706,4 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
             c.drawRect((x - 1).toFloat(), (y + 2).toFloat(), (x + 2).toFloat(), (y + 3).toFloat(), p)
         }
     }
-}
+}

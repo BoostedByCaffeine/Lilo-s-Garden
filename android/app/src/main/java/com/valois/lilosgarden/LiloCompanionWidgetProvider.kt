@@ -195,13 +195,11 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
         }
 
         private fun loadPixelTypeface(context: Context, allCaps: Boolean = false): Typeface {
-            val fontFile = if (allCaps) {
-                "www/assets/fonts/Stardew Valley ALL CAPS.ttf"
-            } else {
-                "www/assets/fonts/Stardew Valley Regular.ttf"
-            }
             try {
-                return Typeface.createFromAsset(context.assets, fontFile)
+                return Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew_Valley.ttf")
+            } catch (e: Exception) {}
+            try {
+                return Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew_Valley.otf")
             } catch (e: Exception) {}
             try {
                 ResourcesCompat.getFont(context, R.font.press_start_2p)?.let { return it }

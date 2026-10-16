@@ -190,13 +190,17 @@ class LiloWidgetProvider : AppWidgetProvider() {
                 )
 
                 val pixelTypeface = try {
-                    Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew Valley Regular.ttf")
+                    Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew_Valley.ttf")
                 } catch (e: Exception) {
                     try {
-                        ResourcesCompat.getFont(context, R.font.press_start_2p)
-                            ?: Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
-                    } catch (e: Exception) {
-                        Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+                        Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew_Valley.otf")
+                    } catch (e2: Exception) {
+                        try {
+                            ResourcesCompat.getFont(context, R.font.press_start_2p)
+                                ?: Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+                        } catch (e3: Exception) {
+                            Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+                        }
                     }
                 }
 
@@ -217,8 +221,9 @@ class LiloWidgetProvider : AppWidgetProvider() {
                     val hiCanvas = Canvas(scaled)
                     val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                         typeface = pixelTypeface
+                        isFakeBoldText = true
                         textAlign = Paint.Align.CENTER
-                        textSize = 16.5f
+                        textSize = 17f
                     }
 
                     val bannerText = when {
