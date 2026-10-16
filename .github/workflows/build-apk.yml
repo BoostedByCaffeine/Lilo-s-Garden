@@ -33,6 +33,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: '8.4'
+          cache-disabled: true
 
       - name: Synchronize Web Assets to Android
         run: |
@@ -57,12 +58,22 @@ jobs:
         working-directory: android
         run: |
           chmod +x gradlew || true
-          if [ ! -f "gradle/wrapper/gradle-wrapper.jar" ]; then
-            echo "Generating Gradle wrapper with Gradle 8.4..."
-            gradle wrapper --gradle-version 8.4 --distribution-type bin || true
-            chmod +x gradlew || true
-          fi
-          ./gradlew assembleDebug --stacktrace || gradle assembleDebug --stacktrace
+          ./gradlew assembleDebug --stacktrace 2>&1 | tee ../build.log || {
+            BUILD_STATUS=$?
+            echo "Build failed with exit code $BUILD_STATUS"
+            echo "### Gradle Build Failure Log" >> $GITHUB_STEP_SUMMARY
+            echo '```text' >> $GITHUB_STEP_SUMMARY
+            tail -n 120 ../build.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            exit $BUILD_STATUS
+          }
+
+      - name: Upload Build Log on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-build-log
+          path: build.log
 
       - name: Copy APK for Direct Download
         run: |
