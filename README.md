@@ -89,9 +89,12 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, key
 
 ---
 
-### 7. Android App & Stardew-Style Companion Widget
+### 7. Android App, Stardew Companion Widget & GitHub Actions CI/CD
 - **Full Android APK Build**:
-  - Gradle-based Android project in `android/` with WebView wrapper, native bridge, and offline assets.
+  - Gradle-based Android project in `android/` with WebView wrapper, native bridge, and offline bundled assets.
+- **Automated GitHub Actions CI/CD (`.github/workflows/build-apk.yml`)**:
+  - Automatically compiles `lilos-garden.apk` on pushes to `remastered`, `main`, or `master`.
+  - Publishes direct 1-tap downloadable release assets to GitHub Releases (`releases/latest/download/lilos-garden.apk`) without requiring GitHub login or unzipping.
 - **Stardew Valley Carved Wooden Companion Widget**:
   - 4-frame animated ViewFlipper HUD with transparent overlays.
   - Real-time clock, date, live weather status, and current cat activity tracker.

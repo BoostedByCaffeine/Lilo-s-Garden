@@ -2393,7 +2393,34 @@ safeOn('copy-garden-link-btn', 'click', async () => {
 /********************************************************************
  * RUNTIME ENVIRONMENT DETECTION (LIVE WEB vs INSTALLED PWA vs APK)
  ********************************************************************/
-const GITHUB_APK_BUILD_URL = 'https://github.com/BoostedByCaffeine/Lilo-s-Garden/actions/runs/3882873335';
+function getGitHubRepoInfo() {
+  const defaultOwner = 'BoostedByCaffeine';
+  const defaultRepo = 'Lilo-s-Garden';
+
+  try {
+    const host = window.location.hostname || '';
+    const pathParts = (window.location.pathname || '').split('/').filter(Boolean);
+
+    // If hosted on GitHub Pages: <owner>.github.io/<repo>
+    if (host.endsWith('.github.io')) {
+      const owner = host.split('.')[0] || defaultOwner;
+      const repo = pathParts[0] || defaultRepo;
+      return { owner, repo, slug: `${owner}/${repo}` };
+    }
+  } catch (e) {}
+
+  return { owner: defaultOwner, repo: defaultRepo, slug: `${defaultOwner}/${defaultRepo}` };
+}
+
+function getGitHubUrls() {
+  const { slug } = getGitHubRepoInfo();
+  return {
+    releaseDirectApk: `https://github.com/${slug}/releases/download/latest/lilos-garden.apk`,
+    releasesPage: `https://github.com/${slug}/releases/latest`,
+    allReleases: `https://github.com/${slug}/releases`,
+    actionsPage: `https://github.com/${slug}/actions`
+  };
+}
 
 function getAppEnvironment() {
   const isNativeApk = Boolean(
@@ -2452,11 +2479,14 @@ safeOn('btnOpenApkTutorial', 'click', () => {
   openModal('apk-tutorial-modal');
 });
 
-// 3. Inside Tutorial Modal: Open GitHub Actions Run 3882873335 (or direct ./lilos-garden.apk if present)
+// 3. Inside Tutorial Modal: Direct 1-Tap APK Download from GitHub Release (or local ./lilos-garden.apk)
 safeOn('btnProceedApkDownload', 'click', async () => {
+  const urls = getGitHubUrls();
+
+  // A. Check if APK is hosted locally in the web root
   try {
-    const check = await fetch('./lilos-garden.apk', { method: 'HEAD' });
-    if (check.ok) {
+    const localCheck = await fetch('./lilos-garden.apk', { method: 'HEAD' });
+    if (localCheck.ok) {
       const a = document.createElement('a');
       a.href = './lilos-garden.apk';
       a.download = 'lilos-garden.apk';
@@ -2468,8 +2498,28 @@ safeOn('btnProceedApkDownload', 'click', async () => {
     }
   } catch (e) {}
 
-  window.open(GITHUB_APK_BUILD_URL, '_blank', 'noopener,noreferrer');
-  showToast('Opened GitHub Build Page! Scroll to Artifacts -> lilos-garden-apk', 'download');
+  // B. Direct 1-tap download from GitHub Releases
+  try {
+    const a = document.createElement('a');
+    a.href = urls.releaseDirectApk;
+    a.download = 'lilos-garden.apk';
+    a.target = '_blank';
+    a.rel = 'noopener,noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast('Downloading Android APK (.apk)...', 'download');
+  } catch (err) {
+    window.open(urls.allReleases, '_blank', 'noopener,noreferrer');
+    showToast('Opening GitHub Releases page...', 'download');
+  }
+});
+
+// 3b. Open GitHub Releases & Actions page
+safeOn('btnOpenGitHubReleases', 'click', () => {
+  const urls = getGitHubUrls();
+  window.open(urls.allReleases, '_blank', 'noopener,noreferrer');
+  showToast('Opened GitHub Releases page!', 'link');
 });
 
 // 4. Choice B: Instant Offline Web App (PWA) for All Devices

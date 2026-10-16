@@ -443,16 +443,16 @@
         <div class="p-2.5 rounded-lg bg-[#ffefc7] border border-[#c87d3b] flex items-start gap-2.5">
           <span class="font-pixel text-[10px] bg-[#8f4d22] text-white px-2 py-1 rounded shrink-0">1</span>
           <div>
-            <strong class="block text-[#3b1d0a]">Download from GitHub Build Page</strong>
-            Tap the green button below to open our official GitHub build page. Scroll down to the <strong>"Artifacts"</strong> section at the bottom and tap <strong><code>lilos-garden-apk</code></strong> (sign into GitHub if prompted).
+            <strong class="block text-[#3b1d0a]">Download Android APK (.apk)</strong>
+            Tap the green button below to directly download <strong><code>lilos-garden.apk</code></strong> from our official GitHub release (no GitHub account or login required).
           </div>
         </div>
 
         <div class="p-2.5 rounded-lg bg-[#ffefc7] border border-[#c87d3b] flex items-start gap-2.5">
           <span class="font-pixel text-[10px] bg-[#8f4d22] text-white px-2 py-1 rounded shrink-0">2</span>
           <div>
-            <strong class="block text-[#3b1d0a]">Unzip &amp; Open the APK</strong>
-            Open your phone's <strong>Files / Downloads</strong> app, tap <strong><code>lilos-garden-apk.zip</code></strong> to extract it, then tap <strong><code>app-debug.apk</code></strong>.
+            <strong class="block text-[#3b1d0a]">Open Downloaded APK</strong>
+            Once downloaded, tap the download notification or open your phone's <strong>Downloads</strong> folder and tap <strong><code>lilos-garden.apk</code></strong> (no unzipping needed).
           </div>
         </div>
 
@@ -467,17 +467,22 @@
         <div class="p-2.5 rounded-lg bg-[#ffefc7] border border-[#c87d3b] flex items-start gap-2.5">
           <span class="font-pixel text-[10px] bg-[#8f4d22] text-white px-2 py-1 rounded shrink-0">4</span>
           <div>
-            <strong class="block text-[#3b1d0a]">Add the Home Screen Widgets!</strong>
-            Long-press an empty space on your Android Home Screen &rarr; tap <strong>Widgets</strong> &rarr; choose <strong>Lilo's Garden</strong>!
+            <strong class="block text-[#3b1d0a]">Add Home Screen Widgets &amp; Wallpaper!</strong>
+            Open the app, then long-press an empty space on your Android Home Screen &rarr; tap <strong>Widgets</strong> &rarr; choose <strong>Lilo's Garden</strong>!
           </div>
         </div>
       </div>
 
       <div class="flex flex-col sm:flex-row gap-2">
         <button type="button" id="btnProceedApkDownload"
-          class="flex-1 stardew-btn-green py-3 px-4 text-xs font-bold flex items-center justify-center gap-1.5">
+          class="flex-1 stardew-btn-green py-3 px-4 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer">
           <svg class="pixel-icon"><use href="#pi-download"/></svg>
-          <span>Open GitHub Build &amp; Download APK</span>
+          <span>Download Android APK (.apk)</span>
+        </button>
+        <button type="button" id="btnOpenGitHubReleases"
+          class="stardew-btn py-3 px-4 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer">
+          <svg class="pixel-icon"><use href="#pi-link"/></svg>
+          <span>GitHub Releases</span>
         </button>
       </div>
     </div>
