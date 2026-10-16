@@ -97,7 +97,7 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                 for (id in ids) {
                     updateCompanionWidget(context, manager, id)
                 }
-            } catch (_: Exception) {}
+            } catch (e: Exception) {}
         }
 
         private fun getAvailableCats(prefs: android.content.SharedPreferences): List<CatSpec> {
@@ -127,7 +127,7 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                             )
                         }
                     }
-                } catch (_: Exception) {}
+                } catch (e: Exception) {}
             }
             return list
         }
@@ -137,7 +137,7 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                 context.assets.open("www/$relPath").use { stream ->
                     BitmapFactory.decodeStream(stream)
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
                 null
             }
         }
@@ -175,7 +175,7 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                 val pixelTypeface = try {
                     ResourcesCompat.getFont(context, R.font.press_start_2p)
                         ?: Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
-                } catch (_: Exception) {
+                } catch (e: Exception) {
                     Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
                 }
 
@@ -193,7 +193,7 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                     )
                     // 440x224 matches 220x112 at 2x nearest-neighbor scale
                     val scaledRaw = Bitmap.createScaledBitmap(raw, 440, 224, false)
-                    val scaled = if (scaledRaw.isMutable) scaledRaw else scaledRaw.copy(Bitmap.Config.ARGB_8888, true)
+                    val scaled = (if (scaledRaw.isMutable) scaledRaw else scaledRaw.copy(Bitmap.Config.ARGB_8888, true)) ?: scaledRaw
                     raw.recycle()
                     if (scaledRaw != scaled) scaledRaw.recycle()
 
@@ -226,8 +226,8 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                     tp.textAlign = Paint.Align.LEFT
                     hiCanvas.drawText("${tempC}°C $weatherShort", 242f, 176f, tp)
 
-                    val safeBmp = scaled.copy(Bitmap.Config.RGB_565, false)
-                    scaled.recycle()
+                    val safeBmp = scaled.copy(Bitmap.Config.RGB_565, false) ?: scaled
+                    if (safeBmp != scaled) scaled.recycle()
                     views.setImageViewBitmap(frameIds[f], safeBmp)
                 }
 
@@ -274,7 +274,7 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                 views.setOnClickPendingIntent(R.id.comp_btn_switch_cat, switchPending)
 
                 appWidgetManager.updateAppWidget(appWidgetId, views)
-            } catch (_: Exception) {}
+            } catch (e: Exception) {}
         }
 
         private fun drawStardewCompanionHudPixelPass(

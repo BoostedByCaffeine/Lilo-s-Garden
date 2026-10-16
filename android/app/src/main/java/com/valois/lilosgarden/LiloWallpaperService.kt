@@ -31,7 +31,7 @@ class LiloWallpaperService : WallpaperService() {
 
     inner class LiloWallpaperEngine : Engine() {
         private val handler = Handler(Looper.getMainLooper())
-        private var isVisible = false
+        private var isWallpaperVisible = false
         private var screenWidth = 1080
         private var screenHeight = 2400
 
@@ -97,6 +97,7 @@ class LiloWallpaperService : WallpaperService() {
 
         inner class GrassTuft(val x: Int, val y: Int, val key: String, val shade: String, val phase: Float)
         inner class Wildflower(val x: Int, val y: Int, val key: String, val color: String, val phase: Float)
+        inner class Renderable(val y: Float, val draw: () -> Unit)
 
         private val cats = mutableListOf<Cat>()
         private val particles = mutableListOf<Particle>()
@@ -131,7 +132,7 @@ class LiloWallpaperService : WallpaperService() {
 
         private val drawRunnable = object : Runnable {
             override fun run() {
-                if (!isVisible) return
+                if (!isWallpaperVisible) return
                 val now = System.currentTimeMillis()
                 val dt = ((now - lastTime) / 1000f).coerceIn(0.01f, 0.1f)
                 lastTime = now
@@ -192,7 +193,7 @@ class LiloWallpaperService : WallpaperService() {
                 applicationContext.assets.open("www/$relPath").use { stream ->
                     BitmapFactory.decodeStream(stream)
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
                 null
             }
         }
@@ -328,12 +329,12 @@ class LiloWallpaperService : WallpaperService() {
                         }
                     }
                     cats.removeAll { !it.isDefault && it.id !in wantedIds }
-                } catch (_: Exception) {}
+                } catch (e: Exception) {}
             }
         }
 
         override fun onVisibilityChanged(visible: Boolean) {
-            this.isVisible = visible
+            this.isWallpaperVisible = visible
             if (visible) {
                 lastTime = System.currentTimeMillis()
                 syncStateFromPrefs()
@@ -360,7 +361,7 @@ class LiloWallpaperService : WallpaperService() {
         }
 
         override fun onDestroy() {
-            isVisible = false
+            isWallpaperVisible = false
             handler.removeCallbacksAndMessages(null)
             spriteBank.values.forEach { it.recycle() }
             spriteBank.clear()
@@ -695,7 +696,6 @@ class LiloWallpaperService : WallpaperService() {
             px(sx + 7, sy + 2, 2, 2, "#fbbf24")
 
             // 11. Depth-Sorted Renderables (Shrine, Bowl, Shelter Roof, Tree1, Cats)
-            data class Renderable(val y: Float, val draw: () -> Unit)
             val renderables = mutableListOf<Renderable>()
 
             renderables.add(Renderable(240f) {

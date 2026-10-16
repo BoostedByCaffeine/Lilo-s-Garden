@@ -62,7 +62,7 @@ jobs:
             gradle wrapper --gradle-version 8.4 --distribution-type bin || true
             chmod +x gradlew || true
           fi
-          ./gradlew assembleDebug || gradle assembleDebug
+          ./gradlew assembleDebug --stacktrace || gradle assembleDebug --stacktrace
 
       - name: Copy APK for Direct Download
         run: |

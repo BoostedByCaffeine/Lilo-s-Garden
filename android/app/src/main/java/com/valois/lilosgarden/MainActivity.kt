@@ -86,7 +86,7 @@ class MainActivity : AppCompatActivity() {
                         or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                 )
             }
-        } catch (_: Exception) {}
+        } catch (e: Exception) {}
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -118,7 +118,7 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     try {
                         startActivity(Intent(Intent.ACTION_VIEW, request.url))
-                    } catch (_: Exception) {}
+                    } catch (e: Exception) {}
                     true
                 }
             }
@@ -204,7 +204,7 @@ class MainActivity : AppCompatActivity() {
                 editor.apply()
                 LiloWidgetProvider.refreshAllWidgets(activity)
                 LiloCompanionWidgetProvider.refreshAllCompanionWidgets(activity)
-            } catch (_: Exception) {}
+            } catch (e: Exception) {}
         }
 
         @JavascriptInterface
@@ -218,10 +218,10 @@ class MainActivity : AppCompatActivity() {
                         )
                     }
                     activity.startActivity(intent)
-                } catch (_: Exception) {
+                } catch (e: Exception) {
                     try {
                         activity.startActivity(Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER))
-                    } catch (_: Exception) {
+                    } catch (e: Exception) {
                         Toast.makeText(
                             activity,
                             "Choose Lilo's Garden in your phone's Live Wallpaper settings",
@@ -244,7 +244,7 @@ class MainActivity : AppCompatActivity() {
                             return@runOnUiThread
                         }
                     }
-                } catch (_: Exception) {}
+                } catch (e: Exception) {}
                 Toast.makeText(
                     activity,
                     "Long-press Home Screen -> Widgets -> Lilo's Garden",
@@ -267,7 +267,7 @@ class MainActivity : AppCompatActivity() {
                         Toast.LENGTH_SHORT
                     ).show()
                 }
-            } catch (_: Exception) {}
+            } catch (e: Exception) {}
         }
 
         @JavascriptInterface
@@ -287,7 +287,7 @@ class MainActivity : AppCompatActivity() {
                             return@runOnUiThread
                         }
                     }
-                } catch (_: Exception) {}
+                } catch (e: Exception) {}
                 Toast.makeText(
                     activity,
                     "Long-press Home Screen -> Widgets -> Cat Companion Widget",

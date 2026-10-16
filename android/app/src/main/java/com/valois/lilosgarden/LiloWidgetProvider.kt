@@ -141,7 +141,7 @@ class LiloWidgetProvider : AppWidgetProvider() {
                 context.assets.open("www/$relPath").use { stream ->
                     BitmapFactory.decodeStream(stream)
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
                 null
             }
         }
@@ -153,7 +153,7 @@ class LiloWidgetProvider : AppWidgetProvider() {
                 for (id in ids) {
                     updateAppWidget(context, manager, id)
                 }
-            } catch (_: Exception) {}
+            } catch (e: Exception) {}
         }
 
         fun updateAppWidget(
@@ -192,7 +192,7 @@ class LiloWidgetProvider : AppWidgetProvider() {
                 val pixelTypeface = try {
                     ResourcesCompat.getFont(context, R.font.press_start_2p)
                         ?: Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
-                } catch (_: Exception) {
+                } catch (e: Exception) {
                     Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
                 }
 
@@ -206,7 +206,7 @@ class LiloWidgetProvider : AppWidgetProvider() {
                 for (frameIdx in 0..3) {
                     val raw = drawStardewGardenFrame(frameIdx, mode, activeWeather, blooms, stepTick, cats, sprites)
                     val scaledRaw = Bitmap.createScaledBitmap(raw, 440, 246, false)
-                    val scaled = if (scaledRaw.isMutable) scaledRaw else scaledRaw.copy(Bitmap.Config.ARGB_8888, true)
+                    val scaled = (if (scaledRaw.isMutable) scaledRaw else scaledRaw.copy(Bitmap.Config.ARGB_8888, true)) ?: scaledRaw
                     raw.recycle()
                     if (scaledRaw != scaled) scaledRaw.recycle()
 
@@ -239,8 +239,8 @@ class LiloWidgetProvider : AppWidgetProvider() {
                     textPaint.color = Color.parseColor("#3b1d0a")
                     hiCanvas.drawText("Cat(${cats.size})", 384f, btnTextY, textPaint)
 
-                    val safeBmp = scaled.copy(Bitmap.Config.RGB_565, false)
-                    scaled.recycle()
+                    val safeBmp = scaled.copy(Bitmap.Config.RGB_565, false) ?: scaled
+                    if (safeBmp != scaled) scaled.recycle()
                     views.setImageViewBitmap(frameIds[frameIdx], safeBmp)
                 }
 
@@ -275,7 +275,7 @@ class LiloWidgetProvider : AppWidgetProvider() {
                 )
 
                 appWidgetManager.updateAppWidget(appWidgetId, views)
-            } catch (_: Exception) {}
+            } catch (e: Exception) {}
         }
 
         private fun makeBroadcastPending(context: Context, reqCode: Int, action: String): PendingIntent {
@@ -389,7 +389,7 @@ class LiloWidgetProvider : AppWidgetProvider() {
                             addedFromJson++
                         }
                     }
-                } catch (_: Exception) {}
+                } catch (e: Exception) {}
             }
 
             for (i in 0 until extraCatsCount) {
