@@ -71,8 +71,8 @@ jobs:
           echo '```text' >> $GITHUB_STEP_SUMMARY
           tail -n 120 "$LOGFILE" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          tail -n 35 "$LOGFILE" | while IFS= read -r line; do
-            [ -n "$line" ] && echo "::error title=Gradle::$line"
+          grep -E "(e: |error: |Compilation error)" "$LOGFILE" | head -n 35 | while IFS= read -r line; do
+            [ -n "$line" ] && echo "::error title=KotlinError::$line"
           done
 
       - name: Upload Build Log on Failure
