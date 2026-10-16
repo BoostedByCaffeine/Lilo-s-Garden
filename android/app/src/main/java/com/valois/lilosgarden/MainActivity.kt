@@ -1,0 +1,302 @@
+package com.valois.lilosgarden
+
+import android.Manifest
+import android.annotation.SuppressLint
+import android.app.WallpaperManager
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import android.os.Bundle
+import android.view.View
+import android.view.WindowInsets
+import android.view.WindowInsetsController
+import android.webkit.GeolocationPermissions
+import android.webkit.JavascriptInterface
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebSettings
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import org.json.JSONObject
+
+class MainActivity : AppCompatActivity() {
+
+    private lateinit var webView: WebView
+    private var pendingGeoCallback: GeolocationPermissions.Callback? = null
+    private var pendingGeoOrigin: String? = null
+
+    companion object {
+        private const val LOCATION_REQ_CODE = 1001
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // CRITICAL FIX: Always call setContentView BEFORE accessing window.insetsController
+        setContentView(R.layout.activity_main)
+        window.decorView.post { hideSystemUI() }
+
+        webView = findViewById(R.id.webView)
+        configureWebView()
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (::webView.isInitialized && webView.canGoBack()) {
+                    webView.goBack()
+                } else {
+                    finish()
+                }
+            }
+        })
+
+        webView.loadUrl("file:///android_asset/www/index.html")
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            window.decorView.post { hideSystemUI() }
+        }
+    }
+
+    private fun hideSystemUI() {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                window.insetsController?.let { controller ->
+                    controller.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
+                    controller.systemBarsBehavior =
+                        WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                }
+            } else {
+                @Suppress("DEPRECATION")
+                window.decorView.systemUiVisibility = (
+                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                        or View.SYSTEM_UI_FLAG_FULLSCREEN
+                        or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                )
+            }
+        } catch (_: Exception) {}
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun configureWebView() {
+        val settings = webView.settings
+        settings.javaScriptEnabled = true
+        settings.domStorageEnabled = true
+        settings.databaseEnabled = true
+        settings.allowFileAccess = true
+        settings.allowContentAccess = true
+        settings.mediaPlaybackRequiresUserGesture = false
+        settings.cacheMode = WebSettings.LOAD_DEFAULT
+        settings.useWideViewPort = true
+        settings.loadWithOverviewMode = true
+        settings.setSupportZoom(true)
+        settings.builtInZoomControls = false
+        settings.displayZoomControls = false
+
+        webView.addJavascriptInterface(AndroidBridge(this), "AndroidBridge")
+
+        webView.webViewClient = object : WebViewClient() {
+            override fun shouldOverrideUrlLoading(
+                view: WebView?,
+                request: WebResourceRequest?
+            ): Boolean {
+                val url = request?.url?.toString() ?: return false
+                return if (url.startsWith("file:///android_asset/")) {
+                    false
+                } else {
+                    try {
+                        startActivity(Intent(Intent.ACTION_VIEW, request.url))
+                    } catch (_: Exception) {}
+                    true
+                }
+            }
+        }
+
+        webView.webChromeClient = object : WebChromeClient() {
+            override fun onGeolocationPermissionsShowPrompt(
+                origin: String?,
+                callback: GeolocationPermissions.Callback?
+            ) {
+                pendingGeoOrigin = origin
+                pendingGeoCallback = callback
+
+                val hasFine = ContextCompat.checkSelfPermission(
+                    this@MainActivity,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
+                val hasCoarse = ContextCompat.checkSelfPermission(
+                    this@MainActivity,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
+
+                if (hasFine || hasCoarse) {
+                    callback?.invoke(origin, true, false)
+                } else {
+                    ActivityCompat.requestPermissions(
+                        this@MainActivity,
+                        arrayOf(
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION
+                        ),
+                        LOCATION_REQ_CODE
+                    )
+                }
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == LOCATION_REQ_CODE) {
+            val granted = grantResults.isNotEmpty() &&
+                grantResults[0] == PackageManager.PERMISSION_GRANTED
+            pendingGeoCallback?.invoke(pendingGeoOrigin, granted, false)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::webView.isInitialized) webView.onResume()
+    }
+
+    override fun onPause() {
+        if (::webView.isInitialized) webView.onPause()
+        super.onPause()
+    }
+
+    override fun onDestroy() {
+        if (::webView.isInitialized) webView.destroy()
+        super.onDestroy()
+    }
+
+    class AndroidBridge(private val activity: MainActivity) {
+
+        @JavascriptInterface
+        fun syncGardenToWidget(jsonState: String) {
+            try {
+                val obj = JSONObject(jsonState)
+                val prefs = activity.getSharedPreferences("lilo_widget_prefs", Context.MODE_PRIVATE)
+                val editor = prefs.edit()
+                editor.putString("garden_json", jsonState)
+                if (obj.has("blooms")) editor.putInt("blooms", obj.optInt("blooms", 8))
+                if (obj.has("weather")) editor.putString("weather", obj.optString("weather", "SUNNY"))
+                if (obj.has("tempC")) editor.putInt("tempC", obj.optInt("tempC", 24))
+                val stats = obj.optJSONObject("stats")
+                if (stats != null) {
+                    editor.putInt("pets", stats.optInt("pets", 8))
+                }
+                editor.apply()
+                LiloWidgetProvider.refreshAllWidgets(activity)
+                LiloCompanionWidgetProvider.refreshAllCompanionWidgets(activity)
+            } catch (_: Exception) {}
+        }
+
+        @JavascriptInterface
+        fun openWallpaperPicker() {
+            activity.runOnUiThread {
+                try {
+                    val intent = Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER).apply {
+                        putExtra(
+                            WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT,
+                            ComponentName(activity, LiloWallpaperService::class.java)
+                        )
+                    }
+                    activity.startActivity(intent)
+                } catch (_: Exception) {
+                    try {
+                        activity.startActivity(Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER))
+                    } catch (_: Exception) {
+                        Toast.makeText(
+                            activity,
+                            "Choose Lilo's Garden in your phone's Live Wallpaper settings",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun pinWidget() {
+            activity.runOnUiThread {
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        val appWidgetManager = AppWidgetManager.getInstance(activity)
+                        val widgetProvider = ComponentName(activity, LiloWidgetProvider::class.java)
+                        if (appWidgetManager.isRequestPinAppWidgetSupported) {
+                            appWidgetManager.requestPinAppWidget(widgetProvider, null, null)
+                            return@runOnUiThread
+                        }
+                    }
+                } catch (_: Exception) {}
+                Toast.makeText(
+                    activity,
+                    "Long-press Home Screen -> Widgets -> Lilo's Garden",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+
+        @JavascriptInterface
+        fun setCompanionWidgetCat(catId: String, catName: String) {
+            try {
+                val prefs = activity.getSharedPreferences("lilo_widget_prefs", Context.MODE_PRIVATE)
+                prefs.edit().putString("preferred_comp_cat_id", catId).apply()
+                LiloCompanionWidgetProvider.refreshAllCompanionWidgets(activity)
+                activity.runOnUiThread {
+                    val displayName = if (catName.isNotBlank()) catName else "Selected cat"
+                    Toast.makeText(
+                        activity,
+                        "$displayName featured in Companion Widget!",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            } catch (_: Exception) {}
+        }
+
+        @JavascriptInterface
+        fun setCompanionWidgetCat(catId: String) {
+            setCompanionWidgetCat(catId, "")
+        }
+
+        @JavascriptInterface
+        fun pinCompanionWidget() {
+            activity.runOnUiThread {
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        val appWidgetManager = AppWidgetManager.getInstance(activity)
+                        val widgetProvider = ComponentName(activity, LiloCompanionWidgetProvider::class.java)
+                        if (appWidgetManager.isRequestPinAppWidgetSupported) {
+                            appWidgetManager.requestPinAppWidget(widgetProvider, null, null)
+                            return@runOnUiThread
+                        }
+                    }
+                } catch (_: Exception) {}
+                Toast.makeText(
+                    activity,
+                    "Long-press Home Screen -> Widgets -> Cat Companion Widget",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+
+        @JavascriptInterface
+        fun isNativeApp(): Boolean = true
+    }
+}

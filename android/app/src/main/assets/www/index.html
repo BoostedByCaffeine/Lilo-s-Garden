@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Lilo's Garden — Reunited with Cheeto</title>
+
+  <meta name="title" content="Lilo's Garden — Reunited with Cheeto" />
+  <meta name="description" content="A cozy pixel-art virtual pet garden sandbox tribute honoring Lilo and Cheeto." />
+  <meta name="theme-color" content="#2e4736" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Lilo's Garden" />
+
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/png" href="./favicon.png" />
+  <link rel="apple-touch-icon" href="./assets/icon-192.png" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Quicksand:wght@500;600;700&display=swap"
+    rel="stylesheet" />
+
+  <!-- External Stylesheet -->
+  <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+
+  <!-- ==================== PIXELARTICONS SPRITE DEFINITIONS ==================== -->
+  <svg style="display:none;" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <symbol id="pi-heart" viewBox="0 0 24 24"><path d="M13 22h-2v-2h2v2Zm-2-2H9v-2h2v2Zm4 0h-2v-2h2v2Zm-6-2H7v-2h2v2Zm8 0h-2v-2h2v2ZM7 16H5v-2h2v2Zm12 0h-2v-2h2v2ZM5 14H3v-2h2v2Zm16 0h-2v-2h2v2ZM3 12H1V6h2v6Zm20 0h-2V6h2v6ZM13 8h-2V6h2v2ZM5 6H3V4h2v2Zm6 0H9V4h2v2Zm4 0h-2V4h2v2Zm6 0h-2V4h2v2ZM9 4H5V2h4v2Zm10 0h-4V2h4v2Z"/></symbol>
+      <symbol id="pi-heart-solid" viewBox="0 0 24 24"><path d="M5 2h4v2h2v2h2V4h2V2h4v2h2v2h2v6h-2v2h-2v2h-2v2h-2v2h-2v2h-2v-2H9v-2H7v-2H5v-2H3v-2H1V6h2V4h2V2z"/></symbol>
+      <symbol id="pi-paw" viewBox="0 0 24 24"><path d="M4 5h3v4H4V5zm4-2h3v4H8V3zm5 0h3v4h-3V3zm4 2h3v4h-3V5zm-9 5h8v2h2v4h-2v4H8v-4H6v-4h2v-2z"/></symbol>
+      <symbol id="pi-leaf" viewBox="0 0 24 24"><path d="M3 22H1v-4h2v4Zm10 0H9v-2h4v2Zm-4-2H5v-2h4v2Zm8 0h-4v-2h4v2ZM5 18H3v-2h2v2Zm14 0h-2v-2h2v2Zm-8-2H5v-2h6v2Zm10 0h-2V4h2v12ZM5 14H3v-4h2v4Zm8 0h-2v-2h2v2Zm-6-4H5V8h2v2Zm6-2H7V6h6v2Zm4-2h-4V4h4v2Zm2-2h-2V2h2v2Z"/></symbol>
+      <symbol id="pi-sun" viewBox="0 0 24 24"><path d="M13 22h-2v-3h2v3Zm-6-3H5v-2h2v2Zm12 0h-2v-2h2v2Zm-4-2H9v-2h6v2Zm-6-2H7V9h2v6Zm8 0h-2V9h2v6ZM5 13H2v-2h3v2Zm17 0h-3v-2h3v2Zm-7-4H9V7h6v2ZM7 7H5V5h2v2Zm12 0h-2V5h2v2Zm-6-2h-2V2h2v3Z"/></symbol>
+      <symbol id="pi-cloud-sun" viewBox="0 0 24 24"><path d="M14 22H4v-2h10v2ZM4 20H2v-4h2v4Zm12 0h-2v-4h2v4Zm-6-2H8v-2h2v2Zm-2-2H4v-2h4v2Zm6 0h-2v-2h2v2Zm-2-2H8v-2h4v2Zm12-1h-4v-2h4v2Zm-6-1h-2v-2h2v2ZM8 10H6V8h2v2Zm8 0h-2V8h2v2Zm-2-2H8V6h6v2ZM6 6H4V4h2v2Zm14 0h-2V4h2v2ZM4 4H2V2h2v2Zm9 0h-2V0h2v4Zm9 0h-2V2h2v2Z"/></symbol>
+      <symbol id="pi-cloud" viewBox="0 0 24 24"><path d="M22 20H2v-2h20v2ZM2 18H0v-6h2v6Zm22 0h-2v-6h2v6Zm-6-6v2h-2v-2h2ZM4 12H2v-2h2v2Zm6 0H8v-2h2v2Zm10-2h2v2h-4V8h2v2ZM8 10H4V8h4v2Zm2-2H8V6h2v2Zm8 0h-2V6h2v2Zm-2-2h-6V4h6v2Z"/></symbol>
+      <symbol id="pi-waves" viewBox="0 0 24 24"><path d="M10 20H6v-2h4v2Zm8 0h-4v-2h4v2ZM6 18H2v-2h4v2Zm8 0h-4v-2h4v2Zm8 0h-4v-2h4v2Zm-12-4H6v-2h4v2Zm8 0h-4v-2h4v2ZM6 12H2v-2h4v2Zm8 0h-4v-2h4v2Zm8 0h-4v-2h4v2ZM10 8H6V6h4v2Zm8 0h-4V6h4v2ZM6 6H2V4h4v2Zm8 0h-4V4h4v2Zm8-2v2h-4V4h4Z"/></symbol>
+      <symbol id="pi-moon" viewBox="0 0 24 24"><path d="M18 22H8v-2h10v2ZM8 20H6v-2h2v2Zm12 0h-2v-2h2v2ZM6 18H4v-2h2v2Zm16 0h-2v-4h-2v-2h2v-2h2v8ZM4 16H2V6h2v10Zm14 0h-6v-2h6v2Zm-6-2h-2v-2h2v2Zm-2-2H8V6h2v6ZM6 6H4V4h2v2Zm8-2h-2v2h-2V4H6V2h8v2Z"/></symbol>
+      <symbol id="pi-volume-3" viewBox="0 0 24 24"><path d="M11 22H9v-2H7v-2h2V6H7V4h2V2h2v20Zm8 0h-6v-2h6v2Zm2-2h-2v-2h2v2ZM7 18H5v-2h2v2Zm10 0h-4v-2h4v2Zm6 0h-2V6h2v12ZM5 10H3v4h2v2H1V8h4v2Zm14 6h-2V8h2v8Zm-4-2h-2v-4h2v4ZM7 8H5V6h2v2Zm10 0h-4V6h4v2Zm4-2h-2V4h2v2Zm-2-2h-6V2h6v2Z"/></symbol>
+      <symbol id="pi-volume-x" viewBox="0 0 24 24"><path d="M13 22h-2v-2H9v-2h2V6H9V4h2V2h2v20Zm-4-4H7v-2h2v2Zm-2-8H5v4h2v2H3V8h4v2Zm10.001 5.224h-2v-2H17v-2h-1.999v-2h2v2H19v2h-1.999v2Zm3.999 0h-2v-2h2v2Zm0-4h-2v-2h2v2ZM9 8H7V6h2v2Z"/></symbol>
+      <symbol id="pi-target" viewBox="0 0 24 24"><path d="M19 23H5v-2h14v2ZM5 21H3v-2h2v2Zm16 0h-2v-2h2v2ZM3 19H1V5h2v14Zm12 0H9v-2h6v2Zm8 0h-2V5h2v14ZM9 17H7v-2h2v2Zm8 0h-2v-2h2v2ZM7 15H5V9h2v6Zm6 0h-2v-2h2v2Zm6 0h-2V9h2v6Zm-8-2H9v-2h2v2Zm4 0h-2v-2h2v2Zm-2-2h-2V9h2v2ZM9 9H7V7h2v2Zm8 0h-2V7h2v2Zm-2-2H9V5h6v2ZM5 5H3V3h2v2Zm16 0h-2V3h2v2Zm-2-2H5V1h14v2Z"/></symbol>
+      <symbol id="pi-map" viewBox="0 0 24 24"><path d="M4 20h2v2H2V6h2v14Zm12 0h2v2h-4v-2h-2v-2h2V8h-2V6h4v14Zm-8 0H6v-2h2v2Zm12 0h-2v-2h2v2ZM10 4h2v2h-2v10h2v2H8V4H6V2h4v2Zm12 14h-2V4h-2V2h4v16ZM6 6H4V4h2v2Zm12 0h-2V4h2v2Z"/></symbol>
+      <symbol id="pi-zoom-in" viewBox="0 0 24 24"><path d="M22 22h-2v-2h2v2Zm-2-2h-2v-2h2v2Zm-6-2H6v-2h8v2Zm4 0h-2v-2h2v2ZM6 16H4v-2h2v2Zm10 0h-2v-2h2v2ZM4 14H2V6h2v8Zm7-5h3v2h-3v3H9v-3H6V9h3V6h2v3Zm7 5h-2V6h2v8ZM6 6H4V4h2v2Zm10 0h-2V4h2v2Zm-2-2H6V2h8v2Z"/></symbol>
+      <symbol id="pi-camera" viewBox="0 0 24 24"><path d="M20 21H4v-2h16v2ZM4 19H2V7h2v12Zm18 0h-2V7h2v12Zm-8-3h-4v-2h4v2Zm-4-2H8v-4h2v4Zm6 0h-2v-4h2v4Zm-2-4h-4V8h4v2ZM8 7H4V5h4v2Zm12 0h-4V5h4v2Zm-4-2H8V3h8v2Z"/></symbol>
+      <symbol id="pi-link" viewBox="0 0 24 24"><path d="M11 18H4v-2h7v2Zm9 0h-7v-2h7v2ZM4 16H2V8h2v8Zm18 0h-2V8h2v8Zm-5-3H7v-2h10v2Zm-6-5H4V6h7v2Zm9 0h-7V6h7v2Z"/></symbol>
+      <symbol id="pi-download" viewBox="0 0 24 24"><path d="M19 21H5v-2h14v2ZM5 19H3v-4h2v4Zm16 0h-2v-4h2v4Zm-8-8h4v2h-2v2h-2v2h-2v-2H9v-2H7v-2h4V3h2v8Z"/></symbol>
+      <symbol id="pi-smartphone" viewBox="0 0 24 24"><path d="M18 22H6v-2h12v2ZM6 20H4V4h2v16Zm14 0h-2V4h2v16Zm-7-1h-2v-2h2v2Zm5-15H6V2h12v2Z"/></symbol>
+      <symbol id="pi-image" viewBox="0 0 24 24"><path d="M8 20h6v-2h2v2h4v2H4v-2h2v-2h2v2Zm-4 0H2V4h2v16Zm18 0h-2v-4h-2v-2h2V4h2v16Zm-12-2H8v-2h2v2Zm4 0h-2v-2h2v2Zm-2-2h-2v-2h2v2Zm4 0h-2v-2h2v2Zm2-2h-2v-2h2v2Zm-8-2H8v-2h2v2Zm-2-2H6V8h2v2Zm4 0h-2V8h2v2Zm-2-2H8V6h2v2Zm10-4H4V2h16v2Z"/></symbol>
+      <symbol id="pi-grid-2x2" viewBox="0 0 24 24"><path d="M20 4h-7v7h7V4h2v16h-2v-7h-7v7h7v2H4v-2h7v-7H4v7H2V4h2v7h7V4H4V2h16v2Z"/></symbol>
+      <symbol id="pi-close" viewBox="0 0 24 24"><path d="M7 19H5v-2h2v2Zm12 0h-2v-2h2v2ZM9 15v2H7v-2h2Zm8 2h-2v-2h2v2Zm-6-2H9v-2h2v2Zm4 0h-2v-2h2v2Zm-2-2h-2v-2h2v2Zm-2-2H9V9h2v2Zm4 0h-2V9h2v2ZM9 9H7V7h2v2Zm8 0h-2V7h2v2ZM7 7H5V5h2v2Zm12 0h-2V5h2v2Z"/></symbol>
+      <symbol id="pi-fish" viewBox="0 0 24 24"><path d="M18 19h-6v-2h6v2ZM4 9h2v2H4v2h2v2H4v2H2V7h2v2Zm8 8h-2v-2h2v2Zm8 0h-2v-2h2v2Zm-10-2H8v-2h2v2Zm12 0h-2V9h2v6ZM8 13H6v-2h2v2Zm9-1h-2v-2h2v2Zm-7-1H8V9h2v2Zm2-2h-2V7h2v2Zm8 0h-2V7h2v2Zm-2-2h-6V5h6v2Z"/></symbol>
+      <symbol id="pi-users" viewBox="0 0 24 24"><path d="M2 22H0v-4h2v4Zm14 0h-2v-4h2v4Zm8 0h-2v-4h2v4ZM4 18H2v-2h2v2Zm10 0h-2v-2h2v2Zm8 0h-2v-2h2v2Zm-10-2H4v-2h8v2Zm8 0h-4v-2h4v2Zm-9-4H5v-2h6v2Zm8 0h-4v-2h4v2ZM5 10H3V4h2v6Zm8 0h-2V4h2v6Zm8 0h-2V4h2v6ZM11 4H5V2h6v2Zm8 0h-4V2h4v2Z"/></symbol>
+      <symbol id="pi-sparkle" viewBox="0 0 24 24"><path d="M13 23h-2v-4h2v4Zm-2-4H9v-4h2v4Zm4 0h-2v-4h2v4Zm-6-4H5v-2h4v2Zm10-2v2h-4v-2h4ZM5 13H1v-2h4v2Zm18 0h-4v-2h4v2ZM9 11H5V9h4v2Zm10 0h-4V9h4v2Zm-8-2H9V5h2v4Zm4 0h-2V5h2v4Zm-2-4h-2V1h2v4Z"/></symbol>
+    </defs>
+  </svg>
+
+  <!-- ==================== COZY FROSTED INTRO OVERLAY ==================== -->
+  <div id="intro-overlay">
+    <div class="intro-card">
+      <div class="intro-badge">
+        <span class="inline-flex items-center gap-1">
+          <svg class="pixel-icon text-sky-400"><use href="#pi-heart-solid"/></svg>
+          <svg class="pixel-icon text-amber-400"><use href="#pi-heart-solid"/></svg>
+        </span>
+        Eternal Brothers Sanctuary
+      </div>
+      <div class="intro-portrait-wrap">
+        <canvas id="intro-canvas" width="110" height="62"></canvas>
+      </div>
+      <h1 class="intro-title">Lilo's Garden</h1>
+      <p class="intro-subtitle">
+        A peaceful pixel sanctuary where <strong>Lilo</strong> and his brother <strong>Cheeto</strong> wander together
+        under the open sky.
+      </p>
+      <div class="intro-brothers-legend">
+        <span class="brother-chip">
+          <svg class="pixel-icon text-[#3d2516] mr-1"><use href="#pi-paw"/></svg>
+          Lilo • <span class="eye-dot" style="background:#29b6f6;"></span><span class="eye-dot"
+            style="background:#29b6f6;"></span> + Blue Collar
+        </span>
+        <span class="brother-chip">
+          <svg class="pixel-icon text-[#3d2516] mr-1"><use href="#pi-paw"/></svg>
+          Cheeto • <span class="eye-dot" style="background:#ffb300;"></span><span class="eye-dot"
+            style="background:#29b6f6;"></span> Amber & Blue Eyes
+        </span>
+      </div>
+      <button type="button" class="enter-garden-btn" id="enter-garden-btn">
+        <svg class="pixel-icon mr-1.5"><use href="#pi-leaf"/></svg>Step into the Garden
+      </button>
+      <div class="intro-stats-note" id="intro-stats-note">Drag to pan • Pinch to zoom • Tap cats to pet</div>
+    </div>
+  </div>
+
+  <!-- ==================== TOP FLOATING WHISPER PILL ==================== -->
+  <aside id="whisper-pill">
+    <div class="whisper-container">
+      <button type="button" id="btnWeather" class="whisper-btn"
+        title="Tap to cycle: Live GPS / Sunny / Cloudy / Rain / Night">
+        <span id="weatherIcon" class="inline-flex items-center text-amber-400">
+          <svg class="pixel-icon"><use href="#pi-sun"/></svg>
+        </span>
+        <span id="weatherText">24°C • Sunny Sky</span>
+      </button>
+
+      <span id="whisperMood" class="whisper-mood">Lilo & Cheeto: Reunited</span>
+
+      <span id="whisperBlooms" class="whisper-stat" title="Forget-Me-Not blooms honoring Lilo & Cheeto">
+        <svg class="pixel-icon text-sky-400 mr-1"><use href="#pi-sparkle"/></svg><b id="statBlooms">8</b>/24
+      </span>
+
+      <button type="button" id="btnAudio" class="whisper-icon-btn" title="Toggle Cozy Audio">
+        <span id="audioIcon" class="inline-flex items-center">
+          <svg class="pixel-icon"><use href="#pi-volume-3"/></svg>
+        </span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ==================== FLOATING TOAST NOTIFICATION ==================== -->
+  <div id="toastBox"
+    class="fixed top-16 left-1/2 -translate-x-1/2 z-40 pointer-events-none transition-all duration-300 opacity-0 -translate-y-2">
+    <div
+      class="bg-[#fff9ea] border-2 border-[#8c5832] text-[#3d2516] px-4 py-1.5 rounded-full shadow-lg flex items-center gap-2 text-xs font-bold whitespace-nowrap">
+      <span id="toastIcon" class="inline-flex items-center text-sky-500">
+        <svg class="pixel-icon"><use href="#pi-heart-solid"/></svg>
+      </span>
+      <span id="toastText">Lilo purred happily!</span>
+    </div>
+  </div>
+
+  <!-- ==================== MAIN GARDEN STAGE ==================== -->
+  <div id="garden-stage">
+    <canvas id="garden-canvas"></canvas>
+  </div>
+
+  <!-- ==================== BOTTOM COZY DOCK ==================== -->
+  <nav id="cozy-dock">
+    <button type="button" id="btnFeed"
+      class="stardew-btn-green rounded-full px-4 py-2.5 text-xs sm:text-sm font-bold flex items-center gap-1.5">
+      <svg class="pixel-icon text-amber-300"><use href="#pi-fish"/></svg>
+      <span>Fill Bowl</span>
+      <span id="bowlBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-black/25 text-white">Full</span>
+    </button>
+
+    <button type="button" id="btnCameraMode"
+      class="stardew-btn-sky rounded-full px-3.5 py-2.5 text-xs sm:text-sm font-bold flex items-center gap-1.5"
+      title="Center on Lilo or toggle zoom">
+      <span id="cameraBtnIcon" class="inline-flex items-center">
+        <svg class="pixel-icon text-sky-200"><use href="#pi-target"/></svg>
+      </span>
+      <span id="cameraBtnText">Follow Lilo</span>
+    </button>
+
+    <button type="button" id="btnOpenFriends"
+      class="stardew-btn rounded-full px-4 py-2.5 text-xs sm:text-sm font-bold flex items-center gap-1.5">
+      <svg class="pixel-icon text-[#5c3820]"><use href="#pi-paw"/></svg>
+      <span>Cat Friends</span>
+      <span id="catCountBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-black/20 text-[#3e2213]">2</span>
+    </button>
+  </nav>
+
+  <!-- ==================== MODAL 1: TWIN POLAROID TRIBUTE MODAL ==================== -->
+  <div id="tribute-modal" class="modal-overlay">
+    <div class="cozy-card">
+      <div class="flex items-center justify-between border-b-2 border-[#d8bfa3] pb-3 mb-3">
+        <div class="flex items-center gap-2.5">
+          <span class="inline-flex items-center text-sky-500">
+            <svg class="pixel-icon pixel-icon-xl"><use href="#pi-heart-solid"/></svg>
+          </span>
+          <div>
+            <h2 class="font-pixel text-xs sm:text-sm text-[#4a3525]">REUNITED FOREVER</h2>
+            <p class="text-xs text-[#7c624c] font-semibold">In loving memory of Lilo and Cheeto</p>
+          </div>
+        </div>
+        <button type="button" data-close-modal="tribute-modal"
+          class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center cursor-pointer">
+          <svg class="pixel-icon"><use href="#pi-close"/></svg>
+        </button>
+      </div>
+
+      <!-- Twin Polaroid Frames -->
+      <div class="flex items-center justify-center gap-4 sm:gap-6 my-2 px-1">
+        <!-- Lilo's Polaroid -->
+        <div id="polaroidLilo" class="polaroid-card polaroid-lilo" title="Tap to upload custom photo of Lilo">
+          <div class="polaroid-img-wrap">
+            <img id="lilo-polaroid-img" class="polaroid-img" src="./assets/lilo.jpg" alt="Lilo" />
+            <canvas id="lilo-polaroid-canvas" width="64" height="64" class="polaroid-pixel-canvas"></canvas>
+            <span class="polaroid-badge flex items-center justify-center">
+              <svg class="pixel-icon pixel-icon-sm"><use href="#pi-camera"/></svg>
+            </span>
+          </div>
+          <div class="polaroid-title flex items-center justify-center gap-1">
+            <span>Lilo</span>
+            <svg class="pixel-icon text-sky-500"><use href="#pi-heart-solid"/></svg>
+          </div>
+          <div class="polaroid-caption">Blue Eyes & Blue Collar</div>
+          <input type="file" id="lilo-photo-input" accept="image/*" class="hidden" />
+        </div>
+
+        <!-- Cheeto's Polaroid -->
+        <div id="polaroidCheeto" class="polaroid-card polaroid-cheeto" title="Tap to upload custom photo of Cheeto">
+          <div class="polaroid-img-wrap">
+            <img id="cheeto-polaroid-img" class="polaroid-img" src="./assets/cheeto.jpg" alt="Cheeto" />
+            <canvas id="cheeto-polaroid-canvas" width="64" height="64" class="polaroid-pixel-canvas"></canvas>
+            <span class="polaroid-badge flex items-center justify-center">
+              <svg class="pixel-icon pixel-icon-sm"><use href="#pi-camera"/></svg>
+            </span>
+          </div>
+          <div class="polaroid-title flex items-center justify-center gap-1">
+            <span>Cheeto</span>
+            <svg class="pixel-icon text-amber-500"><use href="#pi-heart-solid"/></svg>
+          </div>
+          <div class="polaroid-caption">Amber & Blue Eyes</div>
+          <input type="file" id="cheeto-photo-input" accept="image/*" class="hidden" />
+        </div>
+      </div>
+      <p class="text-center text-[11px] text-[#7c624c] mb-3 italic">
+        Tip: Tap either Polaroid above to upload a custom picture!
+      </p>
+
+      <!-- Forget-Me-Not Bloom Progress -->
+      <div
+        class="mb-3.5 bg-[#f5e6c8] p-2.5 rounded-xl border border-[#b88b5a]/60 text-xs flex items-center justify-between">
+        <div class="flex items-center gap-1.5 font-bold text-[#4a3525]">
+          <svg class="pixel-icon text-sky-600"><use href="#pi-sparkle"/></svg>
+          <span>Memorial Blooms:</span>
+          <span id="modalBloomCount" class="text-sky-700">8 / 24</span>
+        </div>
+        <span class="text-[11px] text-[#7c624c]">Every 3 pets grows a blue flower</span>
+      </div>
+
+      <!-- Editable Memory Dedication Note -->
+      <div class="mb-4">
+        <label for="inputTributeNote" class="block text-xs font-bold text-[#4a3525] mb-1">Personal Dedication /
+          Memory:</label>
+        <textarea id="inputTributeNote" rows="3"
+          class="w-full rounded-lg border-2 border-[#b88b5a] bg-[#fffdf7] px-3 py-2 text-xs text-[#3d2516] focus:outline-none focus:border-[#5c3820]"
+          placeholder="Write a special memory of Lilo & Cheeto..."></textarea>
+      </div>
+
+      <div class="flex gap-2">
+        <button type="button" id="btnSaveTributeNote"
+          class="flex-1 stardew-btn-green rounded-xl py-2.5 text-xs font-bold flex items-center justify-center gap-1.5">
+          <svg class="pixel-icon"><use href="#pi-leaf"/></svg>
+          <span>Save Note</span>
+        </button>
+        <button type="button" id="btnPetLiloNow"
+          class="flex-1 stardew-btn rounded-xl py-2.5 text-xs font-bold flex items-center justify-center gap-1.5">
+          <svg class="pixel-icon text-sky-400"><use href="#pi-heart-solid"/></svg>
+          <svg class="pixel-icon text-amber-400"><use href="#pi-heart-solid"/></svg>
+          <span>Pet Brothers</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 2: CAT FRIENDS & COMPANIONS ==================== -->
+  <div id="modalFriends" class="modal-overlay">
+    <div class="cozy-card">
+      <div class="flex items-center justify-between border-b-2 border-[#d8bfa3] pb-3 mb-3">
+        <div>
+          <h2 class="font-pixel text-xs sm:text-sm text-[#4a3525]">CAT FRIENDS & COMPANIONS</h2>
+          <p class="text-xs text-[#7c624c] font-semibold">Pet existing cats or invite a friend to the garden</p>
+        </div>
+        <button type="button" data-close-modal="modalFriends"
+          class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center cursor-pointer">
+          <svg class="pixel-icon"><use href="#pi-close"/></svg>
+        </button>
+      </div>
+
+      <!-- Cross-Device Save Link & Offline App Install Box -->
+      <div class="remote-save-box">
+        <div class="remote-save-text">
+          <strong class="flex items-center gap-1">
+            <svg class="pixel-icon text-sky-700"><use href="#pi-cloud"/></svg>
+            Save Progress & Offline App
+          </strong>
+          Copy your garden link for other devices, install to home screen, or set live wallpaper.
+        </div>
+        <div class="remote-save-actions">
+          <button type="button" class="copy-link-btn flex items-center justify-center gap-1.5" id="copy-garden-link-btn">
+            <svg class="pixel-icon"><use href="#pi-link"/></svg>
+            <span>Copy Save</span>
+          </button>
+          <button type="button" class="copy-link-btn install-pwa-btn flex items-center justify-center gap-1.5" id="install-pwa-btn">
+            <svg class="pixel-icon"><use href="#pi-download"/></svg>
+            <span>Install App</span>
+          </button>
+          <button type="button" class="copy-link-btn flex items-center justify-center gap-1.5" id="btnAndroidWallpaper" style="background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);">
+            <svg class="pixel-icon"><use href="#pi-image"/></svg>
+            <span>Wallpaper</span>
+          </button>
+          <button type="button" class="copy-link-btn flex items-center justify-center gap-1.5" id="btnAndroidWidget" style="background: linear-gradient(180deg, #8b5cf6 0%, #6d28d9 100%);">
+            <svg class="pixel-icon"><use href="#pi-grid-2x2"/></svg>
+            <span>Widget</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Current Garden Residents -->
+      <div class="mb-4">
+        <span class="text-xs font-bold text-[#4a3525] block mb-2">Garden Residents (Tap to Pet):</span>
+        <div id="residentList" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <!-- Companion Customizer -->
+      <div class="border-t-2 border-[#d8bfa3] pt-3 mb-3">
+        <h3 class="font-pixel text-[11px] text-[#4a3525] mb-1">INVITE A NEW COMPANION</h3>
+        <p class="text-[11px] text-[#7c624c] mb-3">Customize fur pattern, coat color, and eyes:</p>
+
+        <div class="flex items-center gap-3 bg-[#f5e6c8] p-2.5 rounded-xl border border-[#b88b5a]/60 mb-3">
+          <canvas id="previewCatCanvas" width="64" height="48"
+            class="rounded-lg border border-[#b88b5a] bg-[#3f7d3b] shrink-0"
+            style="image-rendering: pixelated; width: 64px; height: 48px;"></canvas>
+          <div class="flex-1">
+            <label for="inputCatName" class="block text-[11px] font-bold text-[#4a3525] mb-1">Companion Name (<span
+                id="previewCatTitle">Mochi</span>):</label>
+            <input type="text" id="inputCatName" maxlength="16" placeholder="e.g., Mochi, Luna..."
+              class="w-full rounded-lg border-2 border-[#b88b5a] bg-[#fffdf7] px-2.5 py-1.5 text-xs font-bold text-[#3d2516] focus:outline-none" />
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <span class="block text-[11px] font-bold text-[#4a3525] mb-1.5">Coat Pattern:</span>
+          <div class="grid grid-cols-4 gap-1.5 text-xs">
+            <button type="button" data-pattern="solid"
+              class="pattern-opt rounded-lg border-2 border-[#5c3820] bg-[#f3dfc1] py-1.5 px-2 font-bold text-[#3d2516] text-center cursor-pointer">Solid</button>
+            <button type="button" data-pattern="tuxedo"
+              class="pattern-opt rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] py-1.5 px-2 font-semibold text-[#5c3820] text-center cursor-pointer">Tuxedo</button>
+            <button type="button" data-pattern="tabby"
+              class="pattern-opt rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] py-1.5 px-2 font-semibold text-[#5c3820] text-center cursor-pointer">Tabby</button>
+            <button type="button" data-pattern="patches"
+              class="pattern-opt rounded-lg border-2 border-[#c8ab89] bg-[#fff9ea] py-1.5 px-2 font-semibold text-[#5c3820] text-center cursor-pointer">Patches</button>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <span class="block text-[11px] font-bold text-[#4a3525] mb-1.5">Coat Color:</span>
+          <div id="coatColorSelector" class="flex flex-wrap gap-2"></div>
+        </div>
+
+        <div class="mb-4">
+          <span class="block text-[11px] font-bold text-[#4a3525] mb-1.5">Eye Color:</span>
+          <div id="eyeColorSelector" class="flex flex-wrap gap-1.5"></div>
+        </div>
+
+        <button type="button" id="btnConfirmAddCat"
+          class="w-full stardew-btn-green rounded-xl py-3 text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5">
+          <svg class="pixel-icon"><use href="#pi-paw"/></svg>
+          <span>Welcome Companion to Garden</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 3: INSTALL METHOD CHOOSER ==================== -->
+  <div id="install-choice-modal" class="modal-overlay">
+    <div class="cozy-card">
+      <div class="flex items-center justify-between border-b-2 border-[#d8bfa3] pb-3 mb-3">
+        <div class="flex items-center gap-2">
+          <svg class="pixel-icon pixel-icon-lg text-[#4a3525]"><use href="#pi-download"/></svg>
+          <div>
+            <h2 class="font-pixel text-xs sm:text-sm text-[#4a3525]">INSTALL LILO'S GARDEN</h2>
+            <p class="text-xs text-[#7c624c] font-semibold">Choose your preferred version below</p>
+          </div>
+        </div>
+        <button type="button" data-close-modal="install-choice-modal"
+          class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center cursor-pointer">
+          <svg class="pixel-icon"><use href="#pi-close"/></svg>
+        </button>
+      </div>
+
+      <div class="flex flex-col gap-3 my-2">
+        <!-- Option 1: Android APK with Widgets & Live Wallpaper -->
+        <div class="p-3.5 rounded-lg border-2 border-[#5c3820] bg-[#ffefc7] flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-xs sm:text-sm text-[#3b1d0a] flex items-center gap-1.5">
+              <svg class="pixel-icon text-emerald-700"><use href="#pi-smartphone"/></svg>
+              Android APK (Widgets + Live Wallpaper)
+            </span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-700 text-white">ANDROID</span>
+          </div>
+          <p class="text-xs text-[#6e3f1d] leading-relaxed">
+            Includes the 100% offline Android app, the <strong>Garden Sandbox Widget</strong>, the <strong>Cat Bed &amp; Clock Widget</strong>, and the <strong>Interactive Live Wallpaper</strong>.
+          </p>
+          <button type="button" id="btnOpenApkTutorial"
+            class="w-full stardew-btn-green py-2.5 px-4 text-xs font-bold flex items-center justify-center gap-1.5">
+            <svg class="pixel-icon"><use href="#pi-download"/></svg>
+            <span>Get Android APK (With Easy Guide)</span>
+          </button>
+        </div>
+
+        <!-- Option 2: Instant Browser Offline Web App (PWA) -->
+        <div class="p-3.5 rounded-lg border-2 border-[#8f4d22] bg-[#fff9ea] flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-xs sm:text-sm text-[#3b1d0a] flex items-center gap-1.5">
+              <svg class="pixel-icon text-sky-700"><use href="#pi-cloud"/></svg>
+              Instant Offline Web App (PWA)
+            </span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-sky-700 text-white">ALL DEVICES</span>
+          </div>
+          <p class="text-xs text-[#6e3f1d] leading-relaxed">
+            Installs Lilo's Garden directly to your phone or PC home screen from your browser in 1 tap—no APK download needed.
+          </p>
+          <button type="button" id="btnInstallWebPwa"
+            class="w-full stardew-btn py-2.5 px-4 text-xs font-bold flex items-center justify-center gap-1.5">
+            <svg class="pixel-icon"><use href="#pi-sparkle"/></svg>
+            <span>Add Web App to Home Screen</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 4: NON-TECH-SAVVY APK TUTORIAL MODAL ==================== -->
+  <div id="apk-tutorial-modal" class="modal-overlay">
+    <div class="cozy-card">
+      <div class="flex items-center justify-between border-b-2 border-[#d8bfa3] pb-3 mb-3">
+        <div class="flex items-center gap-2">
+          <svg class="pixel-icon pixel-icon-lg text-emerald-700"><use href="#pi-smartphone"/></svg>
+          <div>
+            <h2 class="font-pixel text-xs sm:text-sm text-[#4a3525]">HOW TO INSTALL ANDROID APK</h2>
+            <p class="text-xs text-[#7c624c] font-semibold">4 easy steps to get the App, Widgets &amp; Wallpaper</p>
+          </div>
+        </div>
+        <button type="button" data-close-modal="apk-tutorial-modal"
+          class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center cursor-pointer">
+          <svg class="pixel-icon"><use href="#pi-close"/></svg>
+        </button>
+      </div>
+
+      <!-- Step-by-Step Visual Guide -->
+      <div class="flex flex-col gap-2.5 mb-4 text-xs text-[#3b1d0a]">
+        <div class="p-2.5 rounded-lg bg-[#ffefc7] border border-[#c87d3b] flex items-start gap-2.5">
+          <span class="font-pixel text-[10px] bg-[#8f4d22] text-white px-2 py-1 rounded shrink-0">1</span>
+          <div>
+            <strong class="block text-[#3b1d0a]">Download from GitHub Build Page</strong>
+            Tap the green button below to open our official GitHub build page. Scroll down to the <strong>"Artifacts"</strong> section at the bottom and tap <strong><code>lilos-garden-apk</code></strong> (sign into GitHub if prompted).
+          </div>
+        </div>
+
+        <div class="p-2.5 rounded-lg bg-[#ffefc7] border border-[#c87d3b] flex items-start gap-2.5">
+          <span class="font-pixel text-[10px] bg-[#8f4d22] text-white px-2 py-1 rounded shrink-0">2</span>
+          <div>
+            <strong class="block text-[#3b1d0a]">Unzip &amp; Open the APK</strong>
+            Open your phone's <strong>Files / Downloads</strong> app, tap <strong><code>lilos-garden-apk.zip</code></strong> to extract it, then tap <strong><code>app-debug.apk</code></strong>.
+          </div>
+        </div>
+
+        <div class="p-2.5 rounded-lg bg-[#ffefc7] border border-[#c87d3b] flex items-start gap-2.5">
+          <span class="font-pixel text-[10px] bg-[#8f4d22] text-white px-2 py-1 rounded shrink-0">3</span>
+          <div>
+            <strong class="block text-[#3b1d0a]">Allow Android Installation</strong>
+            If your phone shows a standard Play Protect / Unknown Apps prompt, tap <strong>"Allow from this source"</strong> or <strong>"Install anyway"</strong>.
+          </div>
+        </div>
+
+        <div class="p-2.5 rounded-lg bg-[#ffefc7] border border-[#c87d3b] flex items-start gap-2.5">
+          <span class="font-pixel text-[10px] bg-[#8f4d22] text-white px-2 py-1 rounded shrink-0">4</span>
+          <div>
+            <strong class="block text-[#3b1d0a]">Add the Home Screen Widgets!</strong>
+            Long-press an empty space on your Android Home Screen &rarr; tap <strong>Widgets</strong> &rarr; choose <strong>Lilo's Garden</strong>!
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-2">
+        <button type="button" id="btnProceedApkDownload"
+          class="flex-1 stardew-btn-green py-3 px-4 text-xs font-bold flex items-center justify-center gap-1.5">
+          <svg class="pixel-icon"><use href="#pi-download"/></svg>
+          <span>Open GitHub Build &amp; Download APK</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- External Application Script -->
+  <script src="./app.js" defer></script>
+</body>
+
+</html>

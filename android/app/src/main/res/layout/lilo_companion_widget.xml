@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/comp_widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent">
+
+    <!-- Full-Bleed Stardew Valley Split-Screen Pixel HUD (4 Frames @ 280ms) -->
+    <ViewFlipper
+        android:id="@+id/comp_flipper"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:autoStart="true"
+        android:flipInterval="280">
+
+        <ImageView
+            android:id="@+id/comp_frame_0"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitXY" />
+
+        <ImageView
+            android:id="@+id/comp_frame_1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitXY" />
+
+        <ImageView
+            android:id="@+id/comp_frame_2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitXY" />
+
+        <ImageView
+            android:id="@+id/comp_frame_3"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitXY" />
+    </ViewFlipper>
+
+    <!-- Overlay Grid Matching the Left (44%) & Right (56%) Stardew Panels -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:weightSum="100">
+
+        <!-- Left Hotspot (44%): Tap Cat Nook to Open Full Sanctuary App -->
+        <FrameLayout
+            android:id="@+id/comp_left_frame"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="44"
+            android:background="@android:color/transparent" />
+
+        <!-- Right HUD Overlay (56%): Live Clock, Date & Bottom Button Hotspots -->
+        <LinearLayout
+            android:id="@+id/comp_right_panel"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="56"
+            android:orientation="vertical"
+            android:paddingBottom="8dp"
+            android:paddingLeft="10dp"
+            android:paddingRight="12dp"
+            android:paddingTop="28dp"
+            android:weightSum="100">
+
+            <TextView
+                android:id="@+id/comp_cat_title"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/comp_weather_text"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone" />
+
+            <!-- Middle Recessed Slot: Live Real-Time Clock & Date -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="62"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                android:paddingLeft="6dp">
+
+                <TextClock
+                    android:id="@+id/comp_clock"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="monospace"
+                    android:format12Hour="hh:mm a"
+                    android:format24Hour="HH:mm"
+                    android:shadowColor="#ffefc7"
+                    android:shadowDx="2"
+                    android:shadowDy="2"
+                    android:shadowRadius="0.1"
+                    android:textColor="#3b1d0a"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextClock
+                    android:id="@+id/comp_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="-2dp"
+                    android:fontFamily="monospace"
+                    android:format12Hour="EEE, MMM d"
+                    android:format24Hour="EEE, MMM d"
+                    android:textColor="#5e2c11"
+                    android:textSize="10.5sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Bottom 2 Stardew Button Hotspots: [Pose / Pet] & [Switch Cat] -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="38"
+                android:orientation="horizontal"
+                android:weightSum="2">
+
+                <FrameLayout
+                    android:id="@+id/comp_btn_action"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent" />
+
+                <FrameLayout
+                    android:id="@+id/comp_btn_switch_cat"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </LinearLayout>
+</RelativeLayout>

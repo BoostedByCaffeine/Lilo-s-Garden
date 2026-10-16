@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent">
+
+    <!-- Auto-cycling 4-frame VSCode-Pets Style Animator (280ms per frame) -->
+    <ViewFlipper
+        android:id="@+id/widget_flipper"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerInParent="true"
+        android:autoStart="true"
+        android:flipInterval="280">
+
+        <ImageView
+            android:id="@+id/widget_frame_0"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/widget_name"
+            android:scaleType="fitCenter" />
+
+        <ImageView
+            android:id="@+id/widget_frame_1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/widget_name"
+            android:scaleType="fitCenter" />
+
+        <ImageView
+            android:id="@+id/widget_frame_2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/widget_name"
+            android:scaleType="fitCenter" />
+
+        <ImageView
+            android:id="@+id/widget_frame_3"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/widget_name"
+            android:scaleType="fitCenter" />
+    </ViewFlipper>
+
+    <!-- Bottom 4-Button Stardew Hotbar (Pet | Feed | Sky/Act | +Cat) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="38dp"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal"
+        android:weightSum="4">
+
+        <FrameLayout
+            android:id="@+id/widget_btn_pet"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@android:color/transparent" />
+
+        <FrameLayout
+            android:id="@+id/widget_btn_feed"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@android:color/transparent" />
+
+        <FrameLayout
+            android:id="@+id/widget_btn_weather"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@android:color/transparent" />
+
+        <FrameLayout
+            android:id="@+id/widget_btn_add_cat"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@android:color/transparent" />
+    </LinearLayout>
+
+</RelativeLayout>

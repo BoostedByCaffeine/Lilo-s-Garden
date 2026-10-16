@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Lilo\'s Garden</string>
+    <string name="widget_name">Lilo &amp; Cheeto Garden Widget</string>
+    <string name="companion_widget_name">Lilo\'s Cat Companion &amp; Clock Widget</string>
+    <string name="wallpaper_name">Lilo\'s Garden Live Wallpaper</string>
+    <string name="wallpaper_description">Interactive cozy pixel sanctuary with Lilo and Cheeto wandering under open sky.</string>
+</resources>
