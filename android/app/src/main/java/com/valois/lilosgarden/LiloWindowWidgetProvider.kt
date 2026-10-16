@@ -2,7 +2,7 @@ package com.valois.lilosgarden
 
 import android.app.AlarmManager
 import android.app.PendingIntent
-import androidwidget.AppWidgetManager
+import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
