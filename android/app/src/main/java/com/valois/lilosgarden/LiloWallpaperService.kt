@@ -826,7 +826,7 @@ class LiloWallpaperService : WallpaperService() {
             fun px(rx: Int, ry: Int, w: Int, h: Int, hex: String, alpha: Int = 255) {
                 nearestPaint.color = Color.parseColor(hex)
                 nearestPaint.alpha = alpha
-                c.drawRect(rx.toFloat(), ry.toFloat(), (rx + w).toFloat(), (ry + rh).toFloat(), nearestPaint)
+                c.drawRect(rx.toFloat(), ry.toFloat(), (rx + w).toFloat(), (ry + h).toFloat(), nearestPaint)
                 nearestPaint.alpha = 255
             }
 
