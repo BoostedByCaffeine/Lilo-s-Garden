@@ -2222,6 +2222,8 @@ safeOn('copy-garden-link-btn', 'click', async () => {
 /********************************************************************
  * RUNTIME ENVIRONMENT DETECTION (LIVE WEB vs INSTALLED PWA vs APK)
  ********************************************************************/
+const GITHUB_APK_BUILD_URL = 'https://github.com/BoostedByCaffeine/Lilo-s-Garden/actions/runs/3882873335';
+
 function getAppEnvironment() {
   const isNativeApk =
     Boolean(window.AndroidBridge && typeof window.AndroidBridge.isNativeApp === 'function') ||
@@ -2242,12 +2244,11 @@ function syncInstallButtonsVisibility() {
   const wallBtn = document.getElementById('btnAndroidWallpaper');
   const widgBtn = document.getElementById('btnAndroidWidget');
 
-  // 1. Hide "Install App" if already running inside the installed APK or installed Offline PWA
+  // Hide "Install App" when already inside the installed Android APK or installed Offline Web PWA
   if (installBtn) {
     installBtn.style.display = env.isLiveBrowserWeb ? 'inline-flex' : 'none';
   }
-
-  // 2. Only show Native Wallpaper & Widget buttons when running inside the Android APK
+  // Only show Native Wallpaper & Widget buttons inside the Android APK
   if (wallBtn) {
     wallBtn.style.display = env.isNativeApk ? 'inline-flex' : 'none';
   }
@@ -2259,11 +2260,12 @@ function syncInstallButtonsVisibility() {
 window.addEventListener('appinstalled', () => {
   deferredInstallPrompt = null;
   closeModal('install-choice-modal');
+  closeModal('apk-tutorial-modal');
   syncInstallButtonsVisibility();
   showToast("Lilo's Garden installed to Home Screen!", 'download');
 });
 
-// Clicking "Install App" on the live GitHub Pages site opens the APK vs Offline Web chooser
+// 1. Clicking "Install App" on the live web opens the Chooser Modal
 safeOn('install-pwa-btn', 'click', () => {
   const env = getAppEnvironment();
   if (!env.isLiveBrowserWeb) {
@@ -2273,28 +2275,33 @@ safeOn('install-pwa-btn', 'click', () => {
   openModal('install-choice-modal');
 });
 
-// Option A: Download the Android APK from GitHub Pages / Releases
-safeOn('btnDownloadApk', 'click', () => {
+// 2. Choice A: Open the Non-Tech-Savvy Android APK Tutorial Modal
+safeOn('btnOpenApkTutorial', 'click', () => {
   closeModal('install-choice-modal');
-  let apkUrl = './lilos-garden.apk';
-  // If hosted on username.github.io/repo-name/, also support GitHub Releases latest APK
-  if (window.location.hostname.endsWith('.github.io')) {
-    const user = window.location.hostname.split('.')[0];
-    const repo = window.location.pathname.split('/').filter(Boolean)[0];
-    if (user && repo) {
-      apkUrl = `https://github.com/${user}/${repo}/releases/latest/download/lilos-garden.apk`;
-    }
-  }
-  const a = document.createElement('a');
-  a.href = apkUrl;
-  a.download = 'lilos-garden.apk';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  showToast("Downloading Lilo's Garden Android APK...", 'download');
+  openModal('apk-tutorial-modal');
 });
 
-// Option B: Install the Instant Offline Web App (PWA)
+// 3. Inside Tutorial Modal: Open GitHub Actions Run 3882873335 (or direct ./lilos-garden.apk if present)
+safeOn('btnProceedApkDownload', 'click', async () => {
+  try {
+    const check = await fetch('./lilos-garden.apk', { method: 'HEAD' });
+    if (check.ok) {
+      const a = document.createElement('a');
+      a.href = './lilos-garden.apk';
+      a.download = 'lilos-garden.apk';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast('Downloading lilos-garden.apk directly...', 'download');
+      return;
+    }
+  } catch (e) {}
+
+  window.open(GITHUB_APK_BUILD_URL, '_blank', 'noopener,noreferrer');
+  showToast('Opened GitHub Build Page! Scroll to Artifacts -> lilos-garden-apk', 'download');
+});
+
+// 4. Choice B: Instant Offline Web App (PWA) for All Devices
 safeOn('btnInstallWebPwa', 'click', async () => {
   closeModal('install-choice-modal');
   if (deferredInstallPrompt) {
@@ -2305,10 +2312,10 @@ safeOn('btnInstallWebPwa', 'click', async () => {
         syncInstallButtonsVisibility();
         showToast("Lilo's Garden Offline Web App installed!", 'download');
       }
-    } catch (e) { }
+    } catch (e) {}
     deferredInstallPrompt = null;
   } else {
-    showToast("Tap your browser menu -> 'Add to Home Screen'", 'download');
+    showToast("Tap your browser menu (⋮ or Share) -> 'Add to Home Screen'", 'smartphone');
   }
 });
 

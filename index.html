@@ -362,7 +362,7 @@
     </div>
   </div>
 
-  <!-- ==================== MODAL 3: INSTALL CHOOSER (APK VS OFFLINE WEB PWA) ==================== -->
+  <!-- ==================== MODAL 3: INSTALL METHOD CHOOSER ==================== -->
   <div id="install-choice-modal" class="modal-overlay">
     <div class="cozy-card">
       <div class="flex items-center justify-between border-b-2 border-[#d8bfa3] pb-3 mb-3">
@@ -370,7 +370,7 @@
           <svg class="pixel-icon pixel-icon-lg text-[#4a3525]"><use href="#pi-download"/></svg>
           <div>
             <h2 class="font-pixel text-xs sm:text-sm text-[#4a3525]">INSTALL LILO'S GARDEN</h2>
-            <p class="text-xs text-[#7c624c] font-semibold">Choose how you want to install the sanctuary</p>
+            <p class="text-xs text-[#7c624c] font-semibold">Choose your preferred version below</p>
           </div>
         </div>
         <button type="button" data-close-modal="install-choice-modal"
@@ -380,43 +380,105 @@
       </div>
 
       <div class="flex flex-col gap-3 my-2">
-        <!-- Option 1: Android APK (Full Widgets + Live Wallpaper) -->
+        <!-- Option 1: Android APK with Widgets & Live Wallpaper -->
         <div class="p-3.5 rounded-lg border-2 border-[#5c3820] bg-[#ffefc7] flex flex-col gap-2">
           <div class="flex items-center justify-between">
-            <span class="font-bold text-sm text-[#3b1d0a] flex items-center gap-1.5">
+            <span class="font-bold text-xs sm:text-sm text-[#3b1d0a] flex items-center gap-1.5">
               <svg class="pixel-icon text-emerald-700"><use href="#pi-smartphone"/></svg>
-              Android APK (Widgets + Wallpaper)
+              Android APK (Widgets + Live Wallpaper)
             </span>
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-700 text-white">RECOMMENDED</span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-700 text-white">ANDROID</span>
           </div>
           <p class="text-xs text-[#6e3f1d] leading-relaxed">
-            Downloads <strong>lilos-garden.apk</strong> with the 100% offline app, the <strong>Garden Sandbox Widget</strong>, the <strong>Cat Bed &amp; Clock Widget</strong>, and the <strong>Interactive Live Wallpaper</strong>.
+            Includes the 100% offline Android app, the <strong>Garden Sandbox Widget</strong>, the <strong>Cat Bed &amp; Clock Widget</strong>, and the <strong>Interactive Live Wallpaper</strong>.
           </p>
-          <button type="button" id="btnDownloadApk"
+          <button type="button" id="btnOpenApkTutorial"
             class="w-full stardew-btn-green py-2.5 px-4 text-xs font-bold flex items-center justify-center gap-1.5">
             <svg class="pixel-icon"><use href="#pi-download"/></svg>
-            <span>Download Android APK (.apk)</span>
+            <span>Get Android APK (With Easy Guide)</span>
           </button>
         </div>
 
-        <!-- Option 2: Instant Offline Web App (PWA) -->
+        <!-- Option 2: Instant Browser Offline Web App (PWA) -->
         <div class="p-3.5 rounded-lg border-2 border-[#8f4d22] bg-[#fff9ea] flex flex-col gap-2">
           <div class="flex items-center justify-between">
-            <span class="font-bold text-sm text-[#3b1d0a] flex items-center gap-1.5">
+            <span class="font-bold text-xs sm:text-sm text-[#3b1d0a] flex items-center gap-1.5">
               <svg class="pixel-icon text-sky-700"><use href="#pi-cloud"/></svg>
-              Offline Web App (Instant PWA)
+              Instant Offline Web App (PWA)
             </span>
             <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-sky-700 text-white">ALL DEVICES</span>
           </div>
           <p class="text-xs text-[#6e3f1d] leading-relaxed">
-            Installs the full-screen offline sanctuary directly from your browser onto Android, iOS, or Desktop without downloading an APK.
+            Installs Lilo's Garden directly to your phone or PC home screen from your browser in 1 tap—no APK download needed.
           </p>
           <button type="button" id="btnInstallWebPwa"
             class="w-full stardew-btn py-2.5 px-4 text-xs font-bold flex items-center justify-center gap-1.5">
             <svg class="pixel-icon"><use href="#pi-sparkle"/></svg>
-            <span>Install Offline Web App</span>
+            <span>Add Web App to Home Screen</span>
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 4: NON-TECH-SAVVY APK TUTORIAL MODAL ==================== -->
+  <div id="apk-tutorial-modal" class="modal-overlay">
+    <div class="cozy-card">
+      <div class="flex items-center justify-between border-b-2 border-[#d8bfa3] pb-3 mb-3">
+        <div class="flex items-center gap-2">
+          <svg class="pixel-icon pixel-icon-lg text-emerald-700"><use href="#pi-smartphone"/></svg>
+          <div>
+            <h2 class="font-pixel text-xs sm:text-sm text-[#4a3525]">HOW TO INSTALL ANDROID APK</h2>
+            <p class="text-xs text-[#7c624c] font-semibold">4 easy steps to get the App, Widgets &amp; Wallpaper</p>
+          </div>
+        </div>
+        <button type="button" data-close-modal="apk-tutorial-modal"
+          class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center cursor-pointer">
+          <svg class="pixel-icon"><use href="#pi-close"/></svg>
+        </button>
+      </div>
+
+      <!-- Step-by-Step Visual Guide -->
+      <div class="flex flex-col gap-2.5 mb-4 text-xs text-[#3b1d0a]">
+        <div class="p-2.5 rounded-lg bg-[#ffefc7] border border-[#c87d3b] flex items-start gap-2.5">
+          <span class="font-pixel text-[10px] bg-[#8f4d22] text-white px-2 py-1 rounded shrink-0">1</span>
+          <div>
+            <strong class="block text-[#3b1d0a]">Download from GitHub Build Page</strong>
+            Tap the green button below to open our official GitHub build page. Scroll down to the <strong>"Artifacts"</strong> section at the bottom and tap <strong><code>lilos-garden-apk</code></strong> (sign into GitHub if prompted).
+          </div>
+        </div>
+
+        <div class="p-2.5 rounded-lg bg-[#ffefc7] border border-[#c87d3b] flex items-start gap-2.5">
+          <span class="font-pixel text-[10px] bg-[#8f4d22] text-white px-2 py-1 rounded shrink-0">2</span>
+          <div>
+            <strong class="block text-[#3b1d0a]">Unzip &amp; Open the APK</strong>
+            Open your phone's <strong>Files / Downloads</strong> app, tap <strong><code>lilos-garden-apk.zip</code></strong> to extract it, then tap <strong><code>app-debug.apk</code></strong>.
+          </div>
+        </div>
+
+        <div class="p-2.5 rounded-lg bg-[#ffefc7] border border-[#c87d3b] flex items-start gap-2.5">
+          <span class="font-pixel text-[10px] bg-[#8f4d22] text-white px-2 py-1 rounded shrink-0">3</span>
+          <div>
+            <strong class="block text-[#3b1d0a]">Allow Android Installation</strong>
+            If your phone shows a standard Play Protect / Unknown Apps prompt, tap <strong>"Allow from this source"</strong> or <strong>"Install anyway"</strong>.
+          </div>
+        </div>
+
+        <div class="p-2.5 rounded-lg bg-[#ffefc7] border border-[#c87d3b] flex items-start gap-2.5">
+          <span class="font-pixel text-[10px] bg-[#8f4d22] text-white px-2 py-1 rounded shrink-0">4</span>
+          <div>
+            <strong class="block text-[#3b1d0a]">Add the Home Screen Widgets!</strong>
+            Long-press an empty space on your Android Home Screen &rarr; tap <strong>Widgets</strong> &rarr; choose <strong>Lilo's Garden</strong>!
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-2">
+        <button type="button" id="btnProceedApkDownload"
+          class="flex-1 stardew-btn-green py-3 px-4 text-xs font-bold flex items-center justify-center gap-1.5">
+          <svg class="pixel-icon"><use href="#pi-download"/></svg>
+          <span>Open GitHub Build &amp; Download APK</span>
+        </button>
       </div>
     </div>
   </div>
