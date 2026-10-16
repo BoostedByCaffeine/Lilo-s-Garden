@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/comp_widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:background="#3b1d0a"
+    android:padding="4dp"
+    android:weightSum="10">
+
+    <!-- Inner Honey-Oak Frame Container -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:background="#8f4d22"
+        android:padding="3dp"
+        android:weightSum="10">
+
+        <!-- LEFT SECTION (45%): Animated Cat Bed Frame (Sit, Groom, Sleep) -->
+        <FrameLayout
+            android:id="@+id/comp_left_frame"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="4.4"
+            android:background="#3b1d0a"
+            android:padding="2dp">
+
+            <ViewFlipper
+                android:id="@+id/comp_flipper"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:autoStart="true"
+                android:flipInterval="280">
+
+                <ImageView
+                    android:id="@+id/comp_frame_0"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="fitXY" />
+
+                <ImageView
+                    android:id="@+id/comp_frame_1"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="fitXY" />
+
+                <ImageView
+                    android:id="@+id/comp_frame_2"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="fitXY" />
+
+                <ImageView
+                    android:id="@+id/comp_frame_3"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="fitXY" />
+            </ViewFlipper>
+        </FrameLayout>
+
+        <!-- Center Wooden Divider -->
+        <FrameLayout
+            android:layout_width="4dp"
+            android:layout_height="match_parent"
+            android:background="#3b1d0a" />
+
+        <!-- RIGHT SECTION (55%): Live Clock, Date, Today's Weather & Cat Controls -->
+        <LinearLayout
+            android:id="@+id/comp_right_panel"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="5.6"
+            android:orientation="vertical"
+            android:background="#f7dba7"
+            android:padding="8dp"
+            android:gravity="center_vertical">
+
+            <!-- Cat Name & Current Action Badge -->
+            <TextView
+                android:id="@+id/comp_cat_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#ffefc7"
+                android:paddingLeft="6dp"
+                android:paddingRight="6dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp"
+                android:text="Lilo • Grooming in Bed"
+                android:textColor="#3b1d0a"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:singleLine="true"
+                android:ellipsize="end" />
+
+            <!-- Live Real-Time Clock -->
+            <TextClock
+                android:id="@+id/comp_clock"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:format12Hour="hh:mm a"
+                android:format24Hour="HH:mm"
+                android:textColor="#3b1d0a"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:fontFamily="monospace" />
+
+            <!-- Live Date + Weather Today Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextClock
+                    android:id="@+id/comp_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:format12Hour="EEE, MMM d"
+                    android:format24Hour="EEE, MMM d"
+                    android:textColor="#6e3f1d"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/comp_weather_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="6dp"
+                    android:text="• 25°C Sunny"
+                    android:textColor="#0369a1"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:singleLine="true" />
+            </LinearLayout>
+
+            <!-- Bottom Interactive Buttons: [Pose / Pet] & [Switch Cat] -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="28dp"
+                android:layout_marginTop="5dp"
+                android:orientation="horizontal"
+                android:weightSum="2">
+
+                <TextView
+                    android:id="@+id/comp_btn_action"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_marginRight="3dp"
+                    android:background="#68b82e"
+                    android:gravity="center"
+                    android:text="Pose / Pet"
+                    android:textColor="#ffffff"
+                    android:textSize="10.5sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/comp_btn_switch_cat"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_marginLeft="3dp"
+                    android:background="#dca03a"
+                    android:gravity="center"
+                    android:text="Switch Cat"
+                    android:textColor="#3b1d0a"
+                    android:textSize="10.5sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

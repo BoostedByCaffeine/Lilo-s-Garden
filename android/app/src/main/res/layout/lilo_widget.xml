@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="@android:color/transparent">
 
-    <!-- Auto-cycling 4-frame VSCode-Pets Style Animator (450ms per frame) -->
+    <!-- Auto-cycling 4-frame VSCode-Pets Style Animator (280ms per frame) -->
     <ViewFlipper
         android:id="@+id/widget_flipper"
         android:layout_width="match_parent"

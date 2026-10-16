@@ -1978,6 +1978,7 @@ function renderFriendsList() {
   const list = document.getElementById('residentList');
   if (!list) return;
   list.innerHTML = '';
+  const env = getAppEnvironment();
   world.cats.forEach((cat) => {
     const badge = document.createElement('div');
     badge.className = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#f3dfc1] border border-[#b88b5a] text-[#3d2516] shadow-sm';
@@ -2006,6 +2007,23 @@ function renderFriendsList() {
       updateCameraBtnUI();
     });
     badge.appendChild(petBtn);
+
+    // Native APK: Feature this cat in the Companion Widget
+    if (env.isNativeApk) {
+      const widgetBtn = document.createElement('button');
+      widgetBtn.type = 'button';
+      widgetBtn.className = 'ml-1 px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-900 text-[10px] font-bold hover:bg-amber-300 cursor-pointer inline-flex items-center gap-1';
+      widgetBtn.title = `Feature ${cat.name} in Companion Widget`;
+      widgetBtn.innerHTML = `${getPixelIcon('grid-2x2', 'pixel-icon-sm')}<span>Widget</span>`;
+      widgetBtn.addEventListener('click', () => {
+        if (window.AndroidBridge && typeof window.AndroidBridge.setCompanionWidgetCat === 'function') {
+          window.AndroidBridge.setCompanionWidgetCat(cat.id, cat.name);
+        } else {
+          showToast(`${cat.name} set for Companion Widget`, 'grid-2x2');
+        }
+      });
+      badge.appendChild(widgetBtn);
+    }
 
     if (!cat.isDefault) {
       const delBtn = document.createElement('button');
@@ -2201,18 +2219,96 @@ safeOn('copy-garden-link-btn', 'click', async () => {
   }
 });
 
-safeOn('install-pwa-btn', 'click', async () => {
+/********************************************************************
+ * RUNTIME ENVIRONMENT DETECTION (LIVE WEB vs INSTALLED PWA vs APK)
+ ********************************************************************/
+function getAppEnvironment() {
+  const isNativeApk =
+    Boolean(window.AndroidBridge && typeof window.AndroidBridge.isNativeApp === 'function') ||
+    window.location.protocol === 'file:';
+  const isStandalonePwa =
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true;
+  return {
+    isNativeApk,
+    isStandalonePwa,
+    isLiveBrowserWeb: !isNativeApk && !isStandalonePwa
+  };
+}
+
+function syncInstallButtonsVisibility() {
+  const env = getAppEnvironment();
+  const installBtn = document.getElementById('install-pwa-btn');
+  const wallBtn = document.getElementById('btnAndroidWallpaper');
+  const widgBtn = document.getElementById('btnAndroidWidget');
+
+  // 1. Hide "Install App" if already running inside the installed APK or installed Offline PWA
+  if (installBtn) {
+    installBtn.style.display = env.isLiveBrowserWeb ? 'inline-flex' : 'none';
+  }
+
+  // 2. Only show Native Wallpaper & Widget buttons when running inside the Android APK
+  if (wallBtn) {
+    wallBtn.style.display = env.isNativeApk ? 'inline-flex' : 'none';
+  }
+  if (widgBtn) {
+    widgBtn.style.display = env.isNativeApk ? 'inline-flex' : 'none';
+  }
+}
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  closeModal('install-choice-modal');
+  syncInstallButtonsVisibility();
+  showToast("Lilo's Garden installed to Home Screen!", 'download');
+});
+
+// Clicking "Install App" on the live GitHub Pages site opens the APK vs Offline Web chooser
+safeOn('install-pwa-btn', 'click', () => {
+  const env = getAppEnvironment();
+  if (!env.isLiveBrowserWeb) {
+    showToast('App is already installed offline!', 'leaf');
+    return;
+  }
+  openModal('install-choice-modal');
+});
+
+// Option A: Download the Android APK from GitHub Pages / Releases
+safeOn('btnDownloadApk', 'click', () => {
+  closeModal('install-choice-modal');
+  let apkUrl = './lilos-garden.apk';
+  // If hosted on username.github.io/repo-name/, also support GitHub Releases latest APK
+  if (window.location.hostname.endsWith('.github.io')) {
+    const user = window.location.hostname.split('.')[0];
+    const repo = window.location.pathname.split('/').filter(Boolean)[0];
+    if (user && repo) {
+      apkUrl = `https://github.com/${user}/${repo}/releases/latest/download/lilos-garden.apk`;
+    }
+  }
+  const a = document.createElement('a');
+  a.href = apkUrl;
+  a.download = 'lilos-garden.apk';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast("Downloading Lilo's Garden Android APK...", 'download');
+});
+
+// Option B: Install the Instant Offline Web App (PWA)
+safeOn('btnInstallWebPwa', 'click', async () => {
+  closeModal('install-choice-modal');
   if (deferredInstallPrompt) {
     deferredInstallPrompt.prompt();
     try {
       const { outcome } = await deferredInstallPrompt.userChoice;
       if (outcome === 'accepted') {
-        showToast("Lilo's Garden installed to Home Screen!", 'download');
+        syncInstallButtonsVisibility();
+        showToast("Lilo's Garden Offline Web App installed!", 'download');
       }
     } catch (e) { }
     deferredInstallPrompt = null;
   } else {
-    showToast("Select 'Add to Home Screen' in browser menu", 'download');
+    showToast("Tap your browser menu -> 'Add to Home Screen'", 'download');
   }
 });
 
@@ -2284,6 +2380,7 @@ function initGame() {
   updateCanvasResolution();
   updateCameraBtnUI();
   renderIntroCanvas();
+  syncInstallButtonsVisibility();
 
   initPolaroidFrame(
     'lilo',

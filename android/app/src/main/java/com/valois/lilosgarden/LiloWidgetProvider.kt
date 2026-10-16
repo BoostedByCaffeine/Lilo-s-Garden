@@ -144,54 +144,42 @@ class LiloWidgetProvider : AppWidgetProvider() {
 
                 for (frameIdx in 0..3) {
                     val raw = drawStardewGardenFrame(frameIdx, mode, activeWeather, blooms, stepTick, cats)
-                    val scaled = Bitmap.createScaledBitmap(raw, 440, 246, false).copy(Bitmap.Config.ARGB_8888, true)
+                    val scaledRaw = Bitmap.createScaledBitmap(raw, 440, 246, false)
+                    val scaled = if (scaledRaw.isMutable) scaledRaw else scaledRaw.copy(Bitmap.Config.ARGB_8888, true)
                     raw.recycle()
+                    if (scaledRaw != scaled) scaledRaw.recycle()
 
-                    // Pass 2: Native High-Res Text Rendering (440x246)
-                    val scaledCanvas = Canvas(scaled)
+                    // PASS 2: Draw Native High-Resolution Text directly onto the 440x246 bitmap
+                    val hiCanvas = Canvas(scaled)
                     val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                        typeface = Typeface.DEFAULT_BOLD
+                        typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
                         textAlign = Paint.Align.CENTER
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                            letterSpacing = 0.02f
-                        }
+                        textSize = 15.5f
                     }
 
-                    // 1. Top Banner Status Text
                     val bannerText = when {
                         activeWeather == "RAIN" -> "Cozy Rain • ${cats.size} Cats in Gazebo"
                         mode == "PET" -> "Purring Happily • $blooms/24 Blooms"
-                        mode == "EAT" -> "Munching Crunchy Kibble • ${cats.size} Cats"
+                        mode == "EAT" -> "Munching Kibble • ${cats.size} Cats"
                         mode == "SLEEP" -> "Napping in Garden (zZz) • ${cats.size} Cats"
                         mode == "YARN" -> "Playing with Blue Yarn • ${cats.size} Cats"
                         else -> "${cats.size} Cats Wandering • $activeWeather Sky"
                     }
-                    textPaint.textSize = 15.5f
                     textPaint.color = Color.parseColor("#3b1d0a")
-                    scaledCanvas.drawText(bannerText, 220f, 30.5f, textPaint)
+                    hiCanvas.drawText(bannerText, 220f, 31f, textPaint)
 
-                    // 2. Bottom 4 Button Labels
-                    val btnTextY = 225.5f
+                    // Bottom 4 Button Labels at crisp 15f resolution
                     textPaint.textSize = 15f
-
-                    // Pet
+                    val btnTextY = 226f
                     textPaint.color = Color.parseColor("#3b1d0a")
-                    scaledCanvas.drawText("Pet", 73f, btnTextY, textPaint)
-
-                    // Feed
+                    hiCanvas.drawText("Pet", 69f, btnTextY, textPaint)
                     textPaint.color = Color.parseColor("#ffffff")
-                    scaledCanvas.drawText("Feed", 181f, btnTextY, textPaint)
-
-                    // Sky
+                    hiCanvas.drawText("Feed", 178f, btnTextY, textPaint)
                     textPaint.color = Color.parseColor("#0c4a6e")
-                    scaledCanvas.drawText("Sky", 281f, btnTextY, textPaint)
-
-                    // Cat
+                    hiCanvas.drawText("Sky", 280f, btnTextY, textPaint)
                     textPaint.color = Color.parseColor("#3b1d0a")
-                    textPaint.textSize = 14.5f
-                    scaledCanvas.drawText("Cat (${cats.size})", 386f, btnTextY, textPaint)
+                    hiCanvas.drawText("Cat(${cats.size})", 384f, btnTextY, textPaint)
 
-                    // Convert to RGB_565 (~216 KB per frame, ~865 KB total for 4 frames)
                     val safeBmp = scaled.copy(Bitmap.Config.RGB_565, false)
                     scaled.recycle()
                     views.setImageViewBitmap(frameIds[frameIdx], safeBmp)
