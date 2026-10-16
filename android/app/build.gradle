@@ -3,6 +3,8 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+def runNumber = System.getenv("GITHUB_RUN_NUMBER")?.toInteger() ?: 10
+
 android {
     namespace 'com.valois.lilosgarden'
     compileSdk 34
@@ -11,18 +13,28 @@ android {
         applicationId "com.valois.lilosgarden"
         minSdk 26
         targetSdk 34
-        versionCode 1
-        versionName "1.0.0"
-
+        versionCode 100 + runNumber
+        versionName "1.2.${runNumber}"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        persistentConfig {
+            storeFile file("lilos-garden.keystore")
+            storePassword "lilosgarden123"
+            keyAlias "lilosgarden"
+            keyPassword "lilosgarden123"
+        }
     }
 
     buildTypes {
         release {
+            signingConfig signingConfigs.persistentConfig
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
+            signingConfig signingConfigs.persistentConfig
             applicationIdSuffix ""
             debuggable true
         }

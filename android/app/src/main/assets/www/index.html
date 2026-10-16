@@ -488,6 +488,65 @@
     </div>
   </div>
 
+  <!-- ==================== MODAL 5: ANDROID WIDGET CHOOSER MODAL ==================== -->
+  <div id="widget-choice-modal" class="modal-overlay">
+    <div class="cozy-card">
+      <div class="flex items-center justify-between border-b-2 border-[#d8bfa3] pb-3 mb-3">
+        <div class="flex items-center gap-2">
+          <svg class="pixel-icon pixel-icon-lg text-purple-700"><use href="#pi-grid-2x2"/></svg>
+          <div>
+            <h2 class="font-pixel text-xs sm:text-sm text-[#4a3525]">CHOOSE HOME SCREEN WIDGET</h2>
+            <p class="text-xs text-[#7c624c] font-semibold">Pick which pixel widget to pin to your screen</p>
+          </div>
+        </div>
+        <button type="button" data-close-modal="widget-choice-modal"
+          class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center cursor-pointer">
+          <svg class="pixel-icon"><use href="#pi-close"/></svg>
+        </button>
+      </div>
+
+      <div class="flex flex-col gap-3 my-2">
+        <!-- Widget Option 1: Garden Sandbox Widget -->
+        <div class="p-3.5 rounded-lg border-2 border-[#5c3820] bg-[#ffefc7] flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-xs sm:text-sm text-[#3b1d0a] flex items-center gap-1.5">
+              <svg class="pixel-icon text-emerald-700"><use href="#pi-leaf"/></svg>
+              Lilo &amp; Cheeto Garden Widget
+            </span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-700 text-white">SANDBOX</span>
+          </div>
+          <p class="text-xs text-[#6e3f1d] leading-relaxed">
+            Interactive full mini-garden with wandering cats, memorial blooms, campfire, and 4 quick-action buttons (Pet, Feed, Sky, +Cat).
+          </p>
+          <button type="button" id="btnPinGardenWidget"
+            class="w-full stardew-btn-green py-2.5 px-4 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer">
+            <svg class="pixel-icon"><use href="#pi-grid-2x2"/></svg>
+            <span>Add Garden Sandbox Widget</span>
+          </button>
+        </div>
+
+        <!-- Widget Option 2: Cat Companion & Pixel Clock Widget -->
+        <div class="p-3.5 rounded-lg border-2 border-[#8f4d22] bg-[#fff9ea] flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-xs sm:text-sm text-[#3b1d0a] flex items-center gap-1.5">
+              <svg class="pixel-icon text-amber-600"><use href="#pi-paw"/></svg>
+              Cat Companion &amp; Pixel Clock Widget
+            </span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-700 text-white">CLOCK + PET</span>
+          </div>
+          <p class="text-xs text-[#6e3f1d] leading-relaxed">
+            Split-screen Stardew HUD featuring your chosen cat on a plush velvet bed alongside a bold pixelated live clock, date, weather, and compact Pose &amp; Switch icon buttons.
+          </p>
+          <button type="button" id="btnPinCompanionWidget"
+            class="w-full stardew-btn py-2.5 px-4 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer">
+            <svg class="pixel-icon"><use href="#pi-sparkle"/></svg>
+            <span>Add Cat Companion &amp; Clock Widget</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- External Application Script -->
   <script src="./app.js" defer></script>
 </body>

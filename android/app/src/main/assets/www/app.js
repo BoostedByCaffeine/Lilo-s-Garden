@@ -617,6 +617,8 @@ const world = {
       blooms: this.blooms,
       bowlLevel: this.bowlLevel,
       weatherMode: this.weatherMode,
+      weather: this.weather,
+      tempC: this.tempC,
       tributeNote: this.tributeNote,
       companions
     };
@@ -2550,8 +2552,22 @@ safeOn('btnAndroidWallpaper', 'click', () => {
 });
 
 safeOn('btnAndroidWidget', 'click', () => {
+  openModal('widget-choice-modal');
+});
+
+safeOn('btnPinGardenWidget', 'click', () => {
+  closeModal('widget-choice-modal');
   if (window.AndroidBridge && typeof window.AndroidBridge.pinWidget === 'function') {
     window.AndroidBridge.pinWidget();
+  } else {
+    showToast('Available in Lilo Garden Android APK!', 'grid-2x2');
+  }
+});
+
+safeOn('btnPinCompanionWidget', 'click', () => {
+  closeModal('widget-choice-modal');
+  if (window.AndroidBridge && typeof window.AndroidBridge.pinCompanionWidget === 'function') {
+    window.AndroidBridge.pinCompanionWidget();
   } else {
     showToast('Available in Lilo Garden Android APK!', 'grid-2x2');
   }

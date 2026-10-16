@@ -7,12 +7,14 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Rect
 import android.graphics.Typeface
-import android.os.Build
 import android.widget.RemoteViews
+import androidx.core.content.res.ResourcesCompat
 import org.json.JSONObject
 import java.util.Calendar
 
@@ -57,7 +59,6 @@ class LiloWidgetProvider : AppWidgetProvider() {
                 val curW = prefs.getString("weather_override", "AUTO") ?: "AUTO"
                 val nextW = weathers[(weathers.indexOf(curW) + 1) % weathers.size]
 
-                // Also cycle VSCode-Pets activity mode (WALK -> SLEEP -> YARN -> WALK)
                 val modes = arrayOf("WALK", "SLEEP", "YARN")
                 val curM = prefs.getString("mode", "WALK") ?: "WALK"
                 val nextM = modes[(modes.indexOf(curM) + 1) % modes.size]
@@ -97,15 +98,53 @@ class LiloWidgetProvider : AppWidgetProvider() {
             val pattern: String,
             val baseX: Int,
             val baseY: Int,
-            val activity: String // WALK, SLEEP, EAT, PET, YARN, SHELTER
+            val activity: String
         )
 
+        data class GardenSprites(
+            val grassTile: Bitmap?,
+            val tree1: Bitmap?,
+            val bush1: Bitmap?,
+            val bush2: Bitmap?,
+            val lamp1: Bitmap?,
+            val log1: Bitmap?,
+            val stone7: Bitmap?,
+            val flower1: Bitmap?,
+            val flower3: Bitmap?,
+            val campfireActive: Bitmap?,
+            val campfireSmoke: Bitmap?
+        ) {
+            fun recycleAll() {
+                grassTile?.recycle()
+                tree1?.recycle()
+                bush1?.recycle()
+                bush2?.recycle()
+                lamp1?.recycle()
+                log1?.recycle()
+                stone7?.recycle()
+                flower1?.recycle()
+                flower3?.recycle()
+                campfireActive?.recycle()
+                campfireSmoke?.recycle()
+            }
+        }
+
         private val PRESET_COMPANIONS = arrayOf(
-            WidgetCat("Mochi", "#f59e42", "#c96f18", "#4ade80", "#4ade80", null, "tabby", 48, 72, "WALK"),
+            WidgetCat("Mochi", "#f59e42", "#c96f18", "#4ade80", "#4ade80", null, "tabby", 54, 72, "WALK"),
             WidgetCat("Luna", "#374151", "#1f2937", "#fde047", "#fde047", null, "tuxedo", 142, 70, "SLEEP"),
-            WidgetCat("Cleo", "#f5deb3", "#d4b47c", "#29b6f6", "#29b6f6", null, "patches", 64, 58, "WALK"),
+            WidgetCat("Cleo", "#f5deb3", "#d4b47c", "#29b6f6", "#29b6f6", null, "patches", 68, 58, "WALK"),
             WidgetCat("Bambi", "#7c98b3", "#536b82", "#c084fc", "#c084fc", null, "solid", 130, 56, "SLEEP")
         )
+
+        private fun loadAssetBitmap(context: Context, relPath: String): Bitmap? {
+            return try {
+                context.assets.open("www/$relPath").use { stream ->
+                    BitmapFactory.decodeStream(stream)
+                }
+            } catch (_: Exception) {
+                null
+            }
+        }
 
         fun refreshAllWidgets(context: Context) {
             try {
@@ -125,6 +164,7 @@ class LiloWidgetProvider : AppWidgetProvider() {
             try {
                 val views = RemoteViews(context.packageName, R.layout.lilo_widget)
                 val prefs = context.getSharedPreferences("lilo_widget_prefs", Context.MODE_PRIVATE)
+
                 val mode = prefs.getString("mode", "WALK") ?: "WALK"
                 val weatherOverride = prefs.getString("weather_override", "AUTO") ?: "AUTO"
                 val syncedWeather = prefs.getString("weather", null)
@@ -135,6 +175,27 @@ class LiloWidgetProvider : AppWidgetProvider() {
                 val activeWeather = resolveWeather(weatherOverride, syncedWeather)
                 val cats = buildCatRoster(prefs, mode, activeWeather, stepTick, extraCatsCount)
 
+                val sprites = GardenSprites(
+                    grassTile = loadAssetBitmap(context, "assets/sprites/tileSprite/1 Tiles/FieldsTile_38.png"),
+                    tree1 = loadAssetBitmap(context, "assets/sprites/tileSprite/2 Objects/7 Decor/Tree1.png"),
+                    bush1 = loadAssetBitmap(context, "assets/sprites/tileSprite/2 Objects/9 Bush/1.png"),
+                    bush2 = loadAssetBitmap(context, "assets/sprites/tileSprite/2 Objects/9 Bush/2.png"),
+                    lamp1 = loadAssetBitmap(context, "assets/sprites/tileSprite/2 Objects/7 Decor/Lamp1.png"),
+                    log1 = loadAssetBitmap(context, "assets/sprites/tileSprite/2 Objects/7 Decor/Log1.png"),
+                    stone7 = loadAssetBitmap(context, "assets/sprites/tileSprite/2 Objects/4 Stone/7.png"),
+                    flower1 = loadAssetBitmap(context, "assets/sprites/tileSprite/2 Objects/6 Flower/1.png"),
+                    flower3 = loadAssetBitmap(context, "assets/sprites/tileSprite/2 Objects/6 Flower/3.png"),
+                    campfireActive = loadAssetBitmap(context, "assets/sprites/tileSprite/3 Animated Objects/2 Campfire/2.png"),
+                    campfireSmoke = loadAssetBitmap(context, "assets/sprites/tileSprite/3 Animated Objects/2 Campfire/1.png")
+                )
+
+                val pixelTypeface = try {
+                    ResourcesCompat.getFont(context, R.font.press_start_2p)
+                        ?: Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+                } catch (_: Exception) {
+                    Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+                }
+
                 val frameIds = intArrayOf(
                     R.id.widget_frame_0,
                     R.id.widget_frame_1,
@@ -143,34 +204,32 @@ class LiloWidgetProvider : AppWidgetProvider() {
                 )
 
                 for (frameIdx in 0..3) {
-                    val raw = drawStardewGardenFrame(frameIdx, mode, activeWeather, blooms, stepTick, cats)
+                    val raw = drawStardewGardenFrame(frameIdx, mode, activeWeather, blooms, stepTick, cats, sprites)
                     val scaledRaw = Bitmap.createScaledBitmap(raw, 440, 246, false)
                     val scaled = if (scaledRaw.isMutable) scaledRaw else scaledRaw.copy(Bitmap.Config.ARGB_8888, true)
                     raw.recycle()
                     if (scaledRaw != scaled) scaledRaw.recycle()
 
-                    // PASS 2: Draw Native High-Resolution Text directly onto the 440x246 bitmap
                     val hiCanvas = Canvas(scaled)
                     val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                        typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+                        typeface = pixelTypeface
                         textAlign = Paint.Align.CENTER
-                        textSize = 15.5f
+                        textSize = 9.5f
                     }
 
                     val bannerText = when {
-                        activeWeather == "RAIN" -> "Cozy Rain • ${cats.size} Cats in Gazebo"
-                        mode == "PET" -> "Purring Happily • $blooms/24 Blooms"
-                        mode == "EAT" -> "Munching Kibble • ${cats.size} Cats"
-                        mode == "SLEEP" -> "Napping in Garden (zZz) • ${cats.size} Cats"
-                        mode == "YARN" -> "Playing with Blue Yarn • ${cats.size} Cats"
-                        else -> "${cats.size} Cats Wandering • $activeWeather Sky"
+                        activeWeather == "RAIN" -> "Cozy Rain • ${cats.size} Cats"
+                        mode == "PET" -> "Purring • $blooms/24 Blooms"
+                        mode == "EAT" -> "Munching • ${cats.size} Cats"
+                        mode == "SLEEP" -> "Napping (zZz) • ${cats.size} Cats"
+                        mode == "YARN" -> "Playing Yarn • ${cats.size} Cats"
+                        else -> "${cats.size} Cats • $activeWeather Sky"
                     }
                     textPaint.color = Color.parseColor("#3b1d0a")
-                    hiCanvas.drawText(bannerText, 220f, 31f, textPaint)
+                    hiCanvas.drawText(bannerText, 220f, 30f, textPaint)
 
-                    // Bottom 4 Button Labels at crisp 15f resolution
-                    textPaint.textSize = 15f
-                    val btnTextY = 226f
+                    textPaint.textSize = 9.5f
+                    val btnTextY = 225f
                     textPaint.color = Color.parseColor("#3b1d0a")
                     hiCanvas.drawText("Pet", 69f, btnTextY, textPaint)
                     textPaint.color = Color.parseColor("#ffffff")
@@ -185,7 +244,8 @@ class LiloWidgetProvider : AppWidgetProvider() {
                     views.setImageViewBitmap(frameIds[frameIdx], safeBmp)
                 }
 
-                // Tap main garden -> Open Full Sanctuary App
+                sprites.recycleAll()
+
                 val openIntent = Intent(context, MainActivity::class.java).apply {
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
                 }
@@ -197,7 +257,6 @@ class LiloWidgetProvider : AppWidgetProvider() {
                 )
                 views.setOnClickPendingIntent(R.id.widget_flipper, openPending)
 
-                // Bind 4 Bottom Toolbar Buttons
                 views.setOnClickPendingIntent(
                     R.id.widget_btn_pet,
                     makeBroadcastPending(context, appWidgetId + 100, ACTION_PET)
@@ -246,7 +305,6 @@ class LiloWidgetProvider : AppWidgetProvider() {
             extraCatsCount: Int
         ): List<WidgetCat> {
             val list = mutableListOf<WidgetCat>()
-
             val liloAct = when {
                 weather == "RAIN" -> "SHELTER"
                 mode == "EAT" -> "EAT"
@@ -255,7 +313,6 @@ class LiloWidgetProvider : AppWidgetProvider() {
                 mode == "YARN" -> "YARN"
                 else -> if (stepTick % 4 == 3) "SLEEP" else "WALK"
             }
-
             val cheetoAct = when {
                 weather == "RAIN" -> "SHELTER"
                 mode == "EAT" -> "EAT"
@@ -277,7 +334,6 @@ class LiloWidgetProvider : AppWidgetProvider() {
                 "SLEEP" -> 64
                 else -> 66
             }
-
             val cheetoStartX = when (cheetoAct) {
                 "SHELTER" -> 170
                 "EAT" -> 114
@@ -291,7 +347,6 @@ class LiloWidgetProvider : AppWidgetProvider() {
                 else -> 68
             }
 
-            // 1. Lilo (White coat, twin blue eyes, blue collar + gold bell)
             list.add(
                 WidgetCat(
                     "Lilo", "#ffffff", "#dbe7f5",
@@ -299,8 +354,6 @@ class LiloWidgetProvider : AppWidgetProvider() {
                     "solid", liloStartX, liloStartY, liloAct
                 )
             )
-
-            // 2. Cheeto (White coat, left amber eye, right blue eye)
             list.add(
                 WidgetCat(
                     "Cheeto", "#ffffff", "#eee8dc",
@@ -309,7 +362,6 @@ class LiloWidgetProvider : AppWidgetProvider() {
                 )
             )
 
-            // 3. Companion cats synced from WebView app OR added via Widget "+ Cat" button
             var addedFromJson = 0
             val jsonStr = prefs.getString("garden_json", null)
             if (!jsonStr.isNullOrEmpty()) {
@@ -320,7 +372,7 @@ class LiloWidgetProvider : AppWidgetProvider() {
                         for (i in 0 until arr.length().coerceAtMost(4)) {
                             val c = arr.getJSONObject(i)
                             val act = if (weather == "RAIN") "SHELTER" else if ((i + stepTick) % 2 == 0) "WALK" else "SLEEP"
-                            val cx = if (act == "SHELTER") 148 + (i * 8) else 46 + ((i * 28 + stepTick * 11) % 100)
+                            val cx = if (act == "SHELTER") 148 + (i * 8) else 52 + ((i * 28 + stepTick * 11) % 92)
                             val cy = if (act == "SHELTER") 54 else 56 + ((i * 7) % 20)
                             list.add(
                                 WidgetCat(
@@ -347,12 +399,11 @@ class LiloWidgetProvider : AppWidgetProvider() {
                 val cx = when (act) {
                     "SHELTER" -> 150 + (i * 7)
                     "EAT" -> 76 + (i * 14)
-                    else -> 44 + ((i * 31 + stepTick * 13) % 108)
+                    else -> 50 + ((i * 31 + stepTick * 13) % 96)
                 }
                 val cy = if (act == "SHELTER") 53 else if (act == "EAT") 76 else preset.baseY
                 list.add(preset.copy(baseX = cx, baseY = cy, activity = act))
             }
-
             return list
         }
 
@@ -362,7 +413,8 @@ class LiloWidgetProvider : AppWidgetProvider() {
             weather: String,
             blooms: Int,
             stepTick: Int,
-            cats: List<WidgetCat>
+            cats: List<WidgetCat>,
+            sprites: GardenSprites
         ): Bitmap {
             val w = 200
             val h = 112
@@ -383,78 +435,98 @@ class LiloWidgetProvider : AppWidgetProvider() {
             val isRain = weather == "RAIN"
             val isCloudy = weather == "CLOUDY"
 
-            // 1. Dynamic Sky & Forest Horizon
-            val skyHex = when (weather) {
-                "NIGHT" -> "#0f172a"
-                "RAIN" -> "#1e293b"
-                "CLOUDY" -> "#334155"
-                else -> "#172d1a"
-            }
-            px(0, 0, w, 34, skyHex)
-            px(0, 22, w, 12, if (isNight) "#1e3a2f" else "#2d5c2b")
+            // 1. Deep Forest Horizon & Top Hedge (Matching app.js)
+            px(0, 0, w, 34, "#172d1a")
+            px(0, 22, w, 12, "#2d5c2b")
             for (hx in 6 until w step 12) {
-                px(hx, 23 + (if (hx % 24 == 0) 2 else 0), 9, 11, if (isNight) "#224434" else "#386e35")
+                px(hx, 23 + (if (hx % 24 == 0) 2 else 0), 9, 11, "#386e35")
             }
 
-            // Drifting Clouds in CLOUDY / RAIN
-            if (isCloudy || isRain) {
-                val cloudShift = frame * 3
-                px(24 + cloudShift, 19, 18, 4, "#94a3b8")
-                px(120 - cloudShift, 18, 22, 4, "#94a3b8")
-            }
-
-            // Twinkling Stars in NIGHT
-            if (isNight) {
-                val starCol = if (frame % 2 == 0) "#fef08a" else "#bae6fd"
-                px(12, 19, 2, 2, starCol)
-                px(184, 18, 2, 2, starCol)
-            }
-
-            // 2. Checkerboard Pixel Lawn
-            for (gy in 34 until h step 10) {
-                for (gx in 0 until w step 10) {
-                    val even = ((gx / 10) + (gy / 10)) % 2 == 0
-                    val grassCol = when (weather) {
-                        "NIGHT" -> if (even) "#254c29" else "#1f3f23"
-                        "RAIN" -> if (even) "#3b6e38" else "#336131"
-                        "CLOUDY" -> if (even) "#437d3e" else "#3c7037"
-                        else -> if (even) "#4c9146" else "#478942"
+            // 2. Seamless Tiled Meadow Lawn using FieldsTile_38.png (#a6b04f)
+            if (sprites.grassTile != null) {
+                for (gy in 34 until h step 32) {
+                    for (gx in 0 until w step 32) {
+                        c.drawBitmap(sprites.grassTile, null, Rect(gx, gy, gx + 32, gy + 32), p)
                     }
-                    px(gx, gy, 10, 10, grassCol)
                 }
+            } else {
+                px(0, 34, w, h - 34, "#a6b04f")
             }
 
-            // 3. Wooden Fence
+            // 3. Wooden Fence with Center Gate Opening
             px(6, 29, w - 12, 2, "#8c5832")
             px(6, 33, w - 12, 2, "#8c5832")
-            for (fx in 10 until w - 10 step 16) {
+            for (fx in 10 until w - 10 step 14) {
                 if (fx in 90..110) continue
                 px(fx, 25, 4, 11, "#6e4223")
                 px(fx + 1, 26, 2, 9, "#a86e42")
             }
 
-            // 4. Sunny Nap Picnic Rug
-            px(114, 58, 28, 14, "#fef3c7")
-            for (rx in 116 until 140 step 6) {
-                px(rx, 60, 3, 3, "#f59e0b")
-                px(rx + 3, 66, 3, 3, "#f59e0b")
+            // 4. Fence Bushes & Wildflowers from Sprite Pack
+            if (sprites.bush1 != null) {
+                c.drawBitmap(sprites.bush1, null, Rect(36, 26, 52, 38), p)
+                c.drawBitmap(sprites.bush1, null, Rect(122, 26, 138, 38), p)
+            }
+            if (sprites.bush2 != null) {
+                c.drawBitmap(sprites.bush2, null, Rect(70, 26, 88, 38), p)
+            }
+            if (sprites.flower1 != null) {
+                c.drawBitmap(sprites.flower1, null, Rect(64, 48, 70, 54), p)
+                c.drawBitmap(sprites.flower1, null, Rect(136, 44, 142, 50), p)
+            }
+            if (sprites.flower3 != null) {
+                c.drawBitmap(sprites.flower3, null, Rect(80, 62, 86, 68), p)
             }
 
-            // 5. Memorial Stone (Left) + Blooming Blue Forget-Me-Nots
-            val msX = 26
-            val msY = 49
-            px(msX - 8, msY - 2, 16, 6, "#64748b")
-            px(msX - 6, msY - 14, 12, 13, "#94a3b8")
-            px(msX - 5, msY - 15, 10, 2, "#cbd5e1")
-            px(msX - 4, msY - 10, 2, 2, if (frame % 2 == 0) "#38bdf8" else "#7dd3fc")
-            px(msX + 2, msY - 10, 2, 2, if (frame % 2 == 1) "#ffb300" else "#fde047")
+            // 5. Stepping Stone Path
+            val stones = arrayOf(
+                Pair(96, 36), Pair(94, 42), Pair(86, 46), Pair(74, 48),
+                Pair(97, 50), Pair(98, 57), Pair(97, 64)
+            )
+            for ((sx, sy) in stones) {
+                px(sx, sy + 1, 8, 4, "#64748b")
+                px(sx, sy, 7, 3, "#94a3b8")
+            }
+
+            // 6. Birdbath Pond with Ripples & Corner Stone (Bottom-Left)
+            val pdX = 52
+            val pdY = 78
+            px(pdX - 9, pdY - 5, 18, 10, "#57534e")
+            px(pdX - 8, pdY - 6, 16, 11, "#78716c")
+            px(pdX - 7, pdY - 4, 14, 8, "#0284c7")
+            px(pdX - 6, pdY - 3, 12, 6, "#38bdf8")
+            px(pdX - 3 + (frame % 2), pdY - 1, 4, 1, "#bae6fd")
+            if (sprites.stone7 != null) {
+                c.drawBitmap(sprites.stone7, null, Rect(pdX - 12, pdY - 7, pdX - 4, pdY), p)
+            }
+
+            // 7. Sunny Nap Picnic Rug
+            px(114, 58, 24, 13, "#fef3c7")
+            for (rx in 116 until 136 step 6) {
+                px(rx, 60, 2, 2, "#f59e0b")
+                px(rx + 3, 65, 2, 2, "#f59e0b")
+            }
+
+            // 8. Western Garden Shade Tree (Tree1.png) & Memorial Stone + Shrine Lamp
+            if (sprites.tree1 != null) {
+                c.drawBitmap(sprites.tree1, null, Rect(6, 30, 32, 64), p)
+            }
+            if (sprites.lamp1 != null) {
+                c.drawBitmap(sprites.lamp1, null, Rect(26, 37, 35, 53), p)
+            }
+            val msX = 40
+            val msY = 51
+            px(msX - 7, msY - 2, 14, 5, "#64748b")
+            px(msX - 5, msY - 12, 10, 11, "#94a3b8")
+            px(msX - 4, msY - 13, 8, 2, "#cbd5e1")
+            px(msX - 3, msY - 8, 2, 2, if (frame % 2 == 0) "#38bdf8" else "#7dd3fc")
+            px(msX + 1, msY - 8, 2, 2, if (frame % 2 == 1) "#ffb300" else "#fde047")
 
             val flowerOffsets = arrayOf(
-                Pair(-11, 2), Pair(-9, 7), Pair(9, 3), Pair(11, 7),
-                Pair(-8, -5), Pair(8, -4), Pair(-3, 9), Pair(4, 9),
-                Pair(-14, 5), Pair(13, 5), Pair(-6, 11), Pair(6, 11)
+                Pair(-9, 2), Pair(-7, 6), Pair(8, 3), Pair(9, 6),
+                Pair(-6, -4), Pair(7, -3), Pair(-3, 8), Pair(4, 8)
             )
-            val visibleFlowers = (blooms / 2).coerceIn(4, flowerOffsets.size)
+            val visibleFlowers = (blooms / 3).coerceIn(3, flowerOffsets.size)
             for (i in 0 until visibleFlowers) {
                 val (ox, oy) = flowerOffsets[i]
                 val bob = if ((frame + i) % 2 == 0) 0 else -1
@@ -462,7 +534,7 @@ class LiloWidgetProvider : AppWidgetProvider() {
                 px(msX + ox, msY + oy + bob, 1, 1, "#fef08a")
             }
 
-            // 6. Covered Wooden Gazebo Shelter (Right)
+            // 9. Covered Wooden Gazebo Shelter (Right)
             val gzX = 164
             val gzY = 50
             px(gzX - 18, gzY - 4, 36, 18, "#532e16")
@@ -470,30 +542,43 @@ class LiloWidgetProvider : AppWidgetProvider() {
             px(gzX - 12, gzY - 2, 24, 10, "#9f1239")
             px(gzX - 16, gzY - 20, 3, 28, "#532e16")
             px(gzX + 13, gzY - 20, 3, 28, "#532e16")
-            // Glowing Gazebo Lantern (Brighter in Rain/Night)
             px(gzX - 2, gzY - 15, 4, 5, if (isRain || isNight) "#fde047" else "#fef08a")
             px(gzX - 20, gzY - 24, 40, 8, "#6e3818")
             px(gzX - 15, gzY - 28, 30, 5, "#8c4820")
 
-            // 7. Ceramic Food Bowl
+            // 10. Animated Campfire & Fallen Camp Log (Bottom-Right)
+            val fireSheet = if (isRain) sprites.campfireSmoke else sprites.campfireActive
+            if (fireSheet != null && fireSheet.width >= 192) {
+                val srcX = (frame % 6) * 32
+                c.drawBitmap(
+                    fireSheet,
+                    Rect(srcX, 0, srcX + 32, fireSheet.height),
+                    Rect(144, 68, 160, 84),
+                    p
+                )
+            }
+            if (sprites.log1 != null) {
+                c.drawBitmap(sprites.log1, null, Rect(162, 73, 180, 84), p)
+            }
+
+            // 11. Ceramic Food Bowl & Rolling Blue Yarn Ball
             val bwX = 98
             val bwY = 74
             px(bwX - 7, bwY, 14, 5, "#0284c7")
             px(bwX - 6, bwY - 1, 12, 4, "#38bdf8")
             px(bwX - 4, bwY - 2, 8, 3, "#d97706")
 
-            // 8. Interactive Rolling Blue Yarn Ball (Moves across frames!)
-            val yarnX = if (mode == "YARN") 86 + (frame * 6) else 72
+            val yarnX = if (mode == "YARN") 84 + (frame * 5) else 74
             val yarnY = 72 + (if (frame % 2 == 0) 0 else -1)
-            px(yarnX - 3, yarnY - 3, 6, 6, "#1e88e5")
-            px(yarnX - 2, yarnY - 2, 4, 2, "#60a5fa")
+            px(yarnX - 3, yarnY - 3, 5, 5, "#1e88e5")
+            px(yarnX - 2, yarnY - 2, 3, 2, "#60a5fa")
 
-            // 9. Draw All Cats (Lilo, Cheeto & Added Companions) with VSCode Pets Actions
+            // 12. Draw All Cats
             val sortedCats = cats.sortedBy { it.baseY }
             for ((idx, cat) in sortedCats.withIndex()) {
                 val walkDir = if ((idx + stepTick) % 2 == 0) 1 else -1
                 val animX = when (cat.activity) {
-                    "WALK" -> (cat.baseX + walkDir * (frame * 5)).coerceIn(22, w - 24)
+                    "WALK" -> (cat.baseX + walkDir * (frame * 5)).coerceIn(28, w - 24)
                     "YARN" -> if (idx == 0) yarnX - 10 else yarnX + 12
                     else -> cat.baseX
                 }
@@ -503,7 +588,6 @@ class LiloWidgetProvider : AppWidgetProvider() {
                     "WALK" -> walkDir > 0
                     else -> idx % 2 == 0
                 }
-
                 drawCatSprite(
                     c, p,
                     x = animX,
@@ -514,26 +598,32 @@ class LiloWidgetProvider : AppWidgetProvider() {
                 )
             }
 
-            // 10. Weather Particles (Raindrops, Fireflies, or Flapping Butterflies)
+            // 13. Weather Particles & Atmospheric Tint (Matching app.js)
             if (isRain) {
-                for (rx in 18 until w - 18 step 22) {
+                for (rx in 18 until w - 18 step 20) {
                     val ry = 34 + ((rx * 3 + frame * 11) % 48)
                     px(rx, ry, 1, 5, "#bae6fd")
                 }
+                p.color = Color.argb(65, 30, 41, 59)
+                c.drawRect(0f, 22f, w.toFloat(), (h - 20).toFloat(), p)
             } else if (isNight) {
+                p.color = Color.argb(95, 15, 23, 42)
+                c.drawRect(0f, 22f, w.toFloat(), (h - 20).toFloat(), p)
                 val fy = 44 + (frame % 2) * 3
                 px(56, fy, 2, 2, "#fde047")
                 px(140, 48 - (frame % 2) * 3, 2, 2, "#fde047")
+            } else if (isCloudy) {
+                p.color = Color.argb(32, 148, 163, 184)
+                c.drawRect(0f, 22f, w.toFloat(), (h - 20).toFloat(), p)
             } else {
-                val bfX = 50 + (frame * 4)
-                val bfY = 41 + (if (frame % 2 == 0) -2 else 1)
+                val bfX = 58 + (frame * 4)
+                val bfY = 42 + (if (frame % 2 == 0) -2 else 1)
                 px(bfX, bfY, if (frame % 2 == 0) 3 else 1, 2, "#f472b6")
             }
 
-            // 11. Top Stardew Banner Plaque
+            // 14. Top Stardew Banner Plaque
             px(10, 4, w - 20, 15, "#3b1d0a")
             px(12, 6, w - 24, 11, "#f7dba7")
-
             when (weather) {
                 "NIGHT" -> drawPixelMoonIcon(c, p, 16, 9, "#7c3aed")
                 "RAIN" -> drawPixelRainIcon(c, p, 16, 9, "#0284c7")
@@ -542,29 +632,25 @@ class LiloWidgetProvider : AppWidgetProvider() {
             }
             drawPixelSparkleIcon(c, p, w - 22, 9, "#0284c7")
 
-            // 12. Bottom 4-Button Stardew Toolbar (Pet | Feed | Sky | +Cat)
+            // 15. Bottom 4-Button Stardew Toolbar (Pet | Feed | Sky | +Cat)
             val btnY = h - 19
-            // Button 1: Pet (Gold)
             px(6, btnY, 45, 14, "#3b1d0a")
             px(7, btnY + 1, 43, 12, "#f6d397")
             drawPixelHeart(c, p, 14, btnY + 7, "#e11d48")
 
-            // Button 2: Feed (Green)
             px(53, btnY, 45, 14, "#3b1d0a")
             px(54, btnY + 1, 43, 12, "#68b82e")
             drawPixelFishIcon(c, p, 58, btnY + 4, "#fde047")
 
-            // Button 3: Sky / Action (Sky Blue)
             px(100, btnY, 45, 14, "#3b1d0a")
             px(101, btnY + 1, 43, 12, "#7dd3fc")
             drawPixelSunIcon(c, p, 106, btnY + 4, "#0369a1")
 
-            // Button 4: + Cat (Warm Terracotta)
             px(147, btnY, 47, 14, "#3b1d0a")
             px(148, btnY + 1, 45, 12, "#fbbf24")
             drawPixelPlusIcon(c, p, 153, btnY + 4, "#3b1d0a")
 
-            // 13. Outer Stardew Wooden Frame
+            // 16. Outer Stardew Wooden Frame
             px(0, 0, w, 3, "#3b1d0a")
             px(0, h - 3, w, 3, "#3b1d0a")
             px(0, 0, 3, h, "#3b1d0a")
@@ -592,10 +678,9 @@ class LiloWidgetProvider : AppWidgetProvider() {
                 c.drawRect(rx.toFloat(), ry.toFloat(), (rx + rw).toFloat(), (ry + rh).toFloat(), p)
             }
 
-            // Sleeping Loaf Pose with Rising zZz Bubbles
             if (cat.activity == "SLEEP") {
                 val breath = if (frame % 2 == 0) 0 else 1
-                r(-7, -1, 14, 3, "#223824") // Shadow
+                r(-7, -1, 14, 3, "#223824")
                 r(-6, -6 + breath, 12, 5, cat.coat)
                 r(-6, -2, 12, 2, cat.shade)
                 if (cat.pattern == "tabby") {
@@ -607,8 +692,7 @@ class LiloWidgetProvider : AppWidgetProvider() {
                 r(1, -8 + breath, 6, 5, cat.coat)
                 r(2, -10 + breath, 2, 2, cat.coat)
                 r(5, -10 + breath, 2, 2, cat.coat)
-                r(3, -6 + breath, 2, 1, "#475569") // Closed sleeping eye
-                // Floating pixel zZz
+                r(3, -6 + breath, 2, 1, "#475569")
                 val zy = -13 - (frame * 2)
                 r(7, zy, 3, 1, "#e0f2fe")
                 r(8, zy + 1, 1, 1, "#e0f2fe")
@@ -617,7 +701,6 @@ class LiloWidgetProvider : AppWidgetProvider() {
                 return
             }
 
-            // Standing / Walking / Eating / Playing Pose
             r(-6, -1, 12, 2, "#223824")
             if (!facingRight) c.scale(-1f, 1f)
 
@@ -625,11 +708,8 @@ class LiloWidgetProvider : AppWidgetProvider() {
             val tailWagY = if (frame == 0) -1 else if (frame == 2) 1 else 0
             val headDip = if (cat.activity == "EAT" && frame % 2 == 1) 2 else 0
 
-            // Tail
             r(-8, -8 + bounceY, 2, 3, cat.coat)
             r(-9, -11 + bounceY + tailWagY, 2, 4, cat.coat)
-
-            // Body
             r(-6, -8 + bounceY, 11, 6, cat.coat)
             r(-6, -4 + bounceY, 11, 2, cat.shade)
 
@@ -638,18 +718,17 @@ class LiloWidgetProvider : AppWidgetProvider() {
             } else if (cat.pattern == "tabby") {
                 r(-4, -8 + bounceY, 1, 4, cat.shade)
                 r(-1, -8 + bounceY, 1, 4, cat.shade)
+                r(2, -8 + bounceY, 1, 3, cat.shade)
             } else if (cat.pattern == "patches") {
                 r(-4, -8 + bounceY, 4, 3, "#e07a2b")
                 r(0, -7 + bounceY, 3, 3, "#2d3748")
             }
 
-            // Lilo's Blue Collar + Gold Bell
             if (cat.collar != null) {
                 r(2, -5 + bounceY, 3, 1, cat.collar)
                 r(4, -4 + bounceY, 1, 1, "#fde047")
             }
 
-            // 4-Frame Walking Legs
             val legA = if (cat.activity == "WALK" && frame % 2 == 0) -1 else 0
             val legB = if (cat.activity == "WALK" && frame % 2 == 1) -1 else 0
             r(-5, -2 + legA, 2, 2, cat.shade)
@@ -657,7 +736,6 @@ class LiloWidgetProvider : AppWidgetProvider() {
             r(1, -2 + legB, 2, 2, cat.shade)
             r(3, -2 + legA, 2, 2, cat.coat)
 
-            // Head & Ears
             val hy = -13 + bounceY + headDip
             r(0, hy, 8, 6, cat.coat)
             r(1, hy - 3, 2, 2, cat.coat)
@@ -665,7 +743,6 @@ class LiloWidgetProvider : AppWidgetProvider() {
             r(1, hy - 2, 1, 1, "#ff9ebb")
             r(6, hy - 2, 1, 1, "#ff9ebb")
 
-            // Eyes
             if (frame == 3 || cat.activity == "PET") {
                 r(2, hy + 2, 2, 1, "#334155")
                 r(5, hy + 2, 2, 1, "#334155")
