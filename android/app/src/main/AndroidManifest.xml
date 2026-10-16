@@ -72,6 +72,22 @@
                 android:resource="@xml/lilo_companion_widget_info" />
         </receiver>
 
+        <!-- 5. Wooden Window Peek & Dynamic Sky Clock Widget Provider -->
+        <receiver
+            android:name=".LiloWindowWidgetProvider"
+            android:exported="true"
+            android:label="@string/window_widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.valois.lilosgarden.ACTION_WIN_PET" />
+                <action android:name="com.valois.lilosgarden.ACTION_WIN_SWITCH_CAT" />
+                <action android:name="com.valois.lilosgarden.ACTION_WIN_WEATHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/lilo_window_widget_info" />
+        </receiver>
+
     </application>
 
 </manifest>

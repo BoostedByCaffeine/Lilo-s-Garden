@@ -204,6 +204,7 @@ class MainActivity : AppCompatActivity() {
                 editor.apply()
                 LiloWidgetProvider.refreshAllWidgets(activity)
                 LiloCompanionWidgetProvider.refreshAllCompanionWidgets(activity)
+                LiloWindowWidgetProvider.refreshAllWindowWidgets(activity)
             } catch (e: Exception) {}
         }
 
@@ -259,6 +260,7 @@ class MainActivity : AppCompatActivity() {
                 val prefs = activity.getSharedPreferences("lilo_widget_prefs", Context.MODE_PRIVATE)
                 prefs.edit().putString("preferred_comp_cat_id", catId).apply()
                 LiloCompanionWidgetProvider.refreshAllCompanionWidgets(activity)
+                LiloWindowWidgetProvider.refreshAllWindowWidgets(activity)
                 activity.runOnUiThread {
                     val displayName = if (catName.isNotBlank()) catName else "Selected cat"
                     Toast.makeText(
@@ -291,6 +293,27 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(
                     activity,
                     "Long-press Home Screen -> Widgets -> Cat Companion Widget",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+
+        @JavascriptInterface
+        fun pinWindowWidget() {
+            activity.runOnUiThread {
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        val appWidgetManager = AppWidgetManager.getInstance(activity)
+                        val widgetProvider = ComponentName(activity, LiloWindowWidgetProvider::class.java)
+                        if (appWidgetManager.isRequestPinAppWidgetSupported) {
+                            appWidgetManager.requestPinAppWidget(widgetProvider, null, null)
+                            return@runOnUiThread
+                        }
+                    }
+                } catch (e: Exception) {}
+                Toast.makeText(
+                    activity,
+                    "Long-press Home Screen -> Widgets -> Lilo's Window Peek Widget",
                     Toast.LENGTH_LONG
                 ).show()
             }

@@ -2573,6 +2573,15 @@ safeOn('btnPinCompanionWidget', 'click', () => {
   }
 });
 
+safeOn('btnPinWindowWidget', 'click', () => {
+  closeModal('widget-choice-modal');
+  if (window.AndroidBridge && typeof window.AndroidBridge.pinWindowWidget === 'function') {
+    window.AndroidBridge.pinWindowWidget();
+  } else {
+    showToast('Available in Lilo Garden Android APK!', 'grid-2x2');
+  }
+});
+
 safeOn('btnSaveTributeNote', 'click', () => {
   const input = document.getElementById('inputTributeNote');
   const note = input ? input.value.trim() : '';
