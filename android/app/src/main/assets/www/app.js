@@ -99,12 +99,12 @@ const DEFAULT_CARETAKER = Object.freeze({
 });
 
 const COTTAGE_SPOTS = {
-  hearth: { x: 350, y: 205, radius: 34, label: 'Fireplace Mantle Tribute' },
-  sofa: { x: 345, y: 295, radius: 32, label: 'Plush Red Sofa' },
-  bed: { x: 642, y: 242, radius: 32, label: 'Cozy Checkered Bed' },
-  desk: { x: 648, y: 375, radius: 26, label: 'Wooden Study Desk' },
-  rug: { x: 480, y: 310, radius: 36, label: 'Crimson Living Room Rug' },
-  bowl: { x: 480, y: 405, radius: 22, label: 'Indoor Ceramic Bowl' }
+  hearth: { x: 380, y: 198, radius: 34, label: 'Fireplace Mantle Tribute' },
+  sofa:   { x: 340, y: 286, radius: 28, label: 'Plush Red Sofa' },
+  bed:    { x: 668, y: 228, radius: 28, label: 'Cozy Checkered Bed' },
+  desk:   { x: 654, y: 376, radius: 26, label: 'Wooden Study Desk' },
+  rug:    { x: 480, y: 308, radius: 34, label: 'Crimson Living Room Rug' },
+  bowl:   { x: 480, y: 406, radius: 22, label: 'Indoor Ceramic Bowl' }
 };
 
 const DEFAULT_LILO = Object.freeze({
@@ -662,16 +662,16 @@ const world = {
     this.scene = this.scene === 'COTTAGE' ? 'GARDEN' : 'COTTAGE';
     safeText('sceneBtnText', this.scene === 'COTTAGE' ? 'Garden' : 'Cottage');
     if (this.scene === 'COTTAGE') {
-      this.caretaker.x = 345;
-      this.caretaker.y = 298;
-      this.caretaker.targetX = 345;
-      this.caretaker.targetY = 298;
+      this.caretaker.x = COTTAGE_SPOTS.sofa.x;
+      this.caretaker.y = COTTAGE_SPOTS.sofa.y + 4;
+      this.caretaker.targetX = this.caretaker.x;
+      this.caretaker.targetY = this.caretaker.y;
       this.caretaker.state = 'IDLE';
       this.cats.forEach((c, i) => {
         c.state = 'IDLE';
         c.pose = i % 2 === 0 ? 'sleep' : 'sit';
-        c.x = 460 + ((i * 28) % 70);
-        c.y = 305 + ((i * 18) % 45);
+        c.x = 462 + ((i * 26) % 64);
+        c.y = 302 + ((i * 16) % 40);
         c.targetX = c.x;
         c.targetY = c.y;
       });
@@ -1230,10 +1230,10 @@ const world = {
         ct.state = 'WANDER';
         if (this.scene === 'COTTAGE') {
           const spots = [
-            { x: 345, y: 298 }, // Plush Red Sofa
-            { x: 648, y: 382 }, // Study Desk
-            { x: 480, y: 312 }, // Crimson Rug
-            { x: 350, y: 225 }  // Warm Hearth
+            { x: COTTAGE_SPOTS.sofa.x, y: COTTAGE_SPOTS.sofa.y + 4 }, // Sitting on Plush Red Sofa
+            { x: COTTAGE_SPOTS.desk.x, y: COTTAGE_SPOTS.desk.y + 6 }, // Sitting at Study Desk
+            { x: COTTAGE_SPOTS.rug.x,  y: COTTAGE_SPOTS.rug.y + 4 },  // Lounging on Crimson Rug
+            { x: COTTAGE_SPOTS.hearth.x, y: COTTAGE_SPOTS.hearth.y + 22 } // Warming by Hearth
           ];
           const pick = spots[Math.floor(Math.random() * spots.length)];
           ct.targetX = pick.x;
@@ -1444,7 +1444,7 @@ const SPRITE_BANK = {
 };
 
 const loadedSprites = {};
-let cleanedInteriorSheet = null;
+const extractedFurnitureCache = {};
 let gardenStaticCache = null;
 let cottageStaticCache = null;
 let fireGlowSprite = null;
@@ -1453,45 +1453,7 @@ let lanternGlowSprite = null;
 function invalidateSceneCaches() {
   gardenStaticCache = null;
   cottageStaticCache = null;
-}
-
-// Automatically removes the flat brown demo backdrop from interiors_demo.png so every
-// sliced furniture sprite (bed, sofa, armchairs, bookshelf, desk, plants) has 100% transparent background!
-function buildCleanInteriorSpritesheet(img) {
-  try {
-    const off = document.createElement('canvas');
-    off.width = img.naturalWidth;
-    off.height = img.naturalHeight;
-    const octx = off.getContext('2d');
-    octx.drawImage(img, 0, 0);
-    const imgData = octx.getImageData(0, 0, off.width, off.height);
-    const d = imgData.data;
-
-    // Sample the flat brown background color from the empty margin pixel at (x=42%, y=25%)
-    const sampleX = Math.floor(off.width * 0.41);
-    const sampleY = Math.floor(off.height * 0.25);
-    const sIdx = (sampleY * off.width + sampleX) * 4;
-    const bgR = d[sIdx];
-    const bgG = d[sIdx + 1];
-    const bgB = d[sIdx + 2];
-
-    for (let i = 0; i < d.length; i += 4) {
-      const r = d[i];
-      const g = d[i + 1];
-      const b = d[i + 2];
-      // Match primary background brown or dark border brown around the demo sheet
-      if (
-        (Math.abs(r - bgR) <= 14 && Math.abs(g - bgG) <= 14 && Math.abs(b - bgB) <= 14) ||
-        (Math.abs(r - 122) <= 12 && Math.abs(g - 72) <= 12 && Math.abs(b - 41) <= 12)
-      ) {
-        d[i + 3] = 0;
-      }
-    }
-    octx.putImageData(imgData, 0, 0);
-    return off;
-  } catch (e) {
-    return img;
-  }
+  Object.keys(extractedFurnitureCache).forEach((k) => delete extractedFurnitureCache[k]);
 }
 
 (function preloadGardenSprites() {
@@ -1499,58 +1461,140 @@ function buildCleanInteriorSpritesheet(img) {
     const img = new Image();
     img.onload = () => {
       loadedSprites[key] = img;
-      if (key === 'interiorDemo') {
-        cleanedInteriorSheet = buildCleanInteriorSpritesheet(img);
-      }
       invalidateSceneCaches();
     };
     img.src = encodeURI(src);
   });
 })();
 
-// Normalized 9x8 Grid Furniture Disassembler for assets/interior/interiors_demo.png
+// Calibrated Exact Single-Object Crop Coordinates (Normalized 9x8 Grid on interiors_demo.png)
+// Verified to exclude all neighboring sprites and stray lines.
 const INTERIOR_FURNITURE_SLICES = {
-  blueWallPanel: { gx: 0.02, gy: 0.02, gw: 1.96, gh: 1.96 },
-  stoneBrickWall: { gx: 2.02, gy: 0.02, gw: 1.96, gh: 1.96 },
-  smallWindow:   { gx: 4.02, gy: 0.04, gw: 0.96, gh: 0.96 },
-  armchairFront: { gx: 5.02, gy: 0.02, gw: 0.96, gh: 1.42 },
-  armchairRight: { gx: 6.02, gy: 0.02, gw: 0.96, gh: 1.42 },
-  armchairLeft:  { gx: 7.02, gy: 0.02, gw: 0.96, gh: 1.42 },
-  armchairBack:  { gx: 8.02, gy: 0.02, gw: 0.96, gh: 1.42 },
-  blueMat:       { gx: 3.04, gy: 1.95, gw: 1.05, gh: 0.95 },
-  nightstand:    { gx: 4.18, gy: 2.15, gw: 0.78, gh: 0.85 },
-  cozyBed:       { gx: 6.18, gy: 1.55, gw: 1.95, gh: 2.65 },
-  crimsonRug:    { gx: 3.05, gy: 3.12, gw: 1.88, gh: 2.35 },
-  curtainsRed:   { gx: 6.82, gy: 4.42, gw: 0.95, gh: 1.35 },
-  pottedPlant:   { gx: 7.78, gy: 4.35, gw: 0.65, gh: 1.45 },
-  sofaFront:     { gx: 0.08, gy: 5.75, gw: 1.78, gh: 1.65 },
-  sofaRight:     { gx: 1.92, gy: 5.55, gw: 0.95, gh: 2.35 },
-  sofaBack:      { gx: 2.95, gy: 5.85, gw: 1.82, gh: 1.55 },
-  bookshelf:     { gx: 5.75, gy: 5.75, gw: 1.08, gh: 2.15 },
-  studyDesk:     { gx: 6.85, gy: 5.95, gw: 1.58, gh: 1.92 }
+  blueWallPanel:  { gx: 0.06, gy: 0.06, gw: 1.48, gh: 1.84, keepBg: true },
+  stoneBrickWall: { gx: 1.66, gy: 0.06, gw: 1.48, gh: 1.84, keepBg: true },
+  armchairFront:  { gx: 4.66, gy: 0.08, gw: 0.92, gh: 1.28 },
+  armchairRight:  { gx: 5.72, gy: 0.08, gw: 0.80, gh: 1.28 },
+  armchairBack:   { gx: 6.84, gy: 0.08, gw: 0.90, gh: 1.28 },
+  armchairLeft:   { gx: 7.90, gy: 0.08, gw: 0.80, gh: 1.28 },
+  coffeeTable:    { gx: 0.14, gy: 2.04, gw: 1.76, gh: 1.08 },
+  blueMat:        { gx: 2.84, gy: 2.26, gw: 1.08, gh: 0.68, keepBg: true },
+  nightstand:     { gx: 4.02, gy: 2.38, gw: 0.68, gh: 0.72 },
+  cozyBed:        { gx: 6.16, gy: 1.58, gw: 1.52, gh: 2.38 },
+  wallFrame:      { gx: 0.22, gy: 4.18, gw: 0.92, gh: 1.32 },
+  crimsonRug:     { gx: 2.84, gy: 3.72, gw: 1.36, gh: 1.58, keepBg: true },
+  greenChair:     { gx: 4.30, gy: 4.20, gw: 0.58, gh: 1.08 },
+  curtainsRed:    { gx: 6.84, gy: 4.42, gw: 0.92, gh: 1.30 },
+  pottedPlant:    { gx: 7.80, gy: 4.44, gw: 0.54, gh: 1.34 },
+  sofaFront:      { gx: 0.10, gy: 6.00, gw: 1.44, gh: 1.36 },
+  sofaBack:       { gx: 2.66, gy: 6.02, gw: 1.44, gh: 1.34 },
+  booksOnFloor:   { gx: 3.92, gy: 7.36, gw: 0.95, gh: 0.52 },
+  bookshelf:      { gx: 5.76, gy: 6.04, gw: 0.92, gh: 1.80 },
+  studyDesk:      { gx: 6.86, gy: 6.24, gw: 1.42, gh: 1.52 }
 };
 
-function drawInteriorPiece(c, pieceKey, dx, dy, dw, dh) {
-  const srcSheet = cleanedInteriorSheet || loadedSprites.interiorDemo;
+// Perimeter BFS Flood-Fill Extractor:
+// Removes ONLY the exterior background brown from the edges of each cropped sprite,
+// stopping at the dark pixel-art outline so interior brown wood (desk, nightstand, bed, table) stays 100% solid!
+function getExtractedFurniturePiece(pieceKey) {
+  if (extractedFurnitureCache[pieceKey]) return extractedFurnitureCache[pieceKey];
+  const img = loadedSprites.interiorDemo;
   const spec = INTERIOR_FURNITURE_SLICES[pieceKey];
-  if (!srcSheet || !spec) return false;
-  const sw = srcSheet.width || srcSheet.naturalWidth;
-  const sh = srcSheet.height || srcSheet.naturalHeight;
-  if (!sw || !sh) return false;
+  if (!img || !img.complete || !img.naturalWidth || !spec) return null;
 
+  const sw = img.naturalWidth;
+  const sh = img.naturalHeight;
   const cellW = sw / 9;
   const cellH = sh / 8;
-  c.drawImage(
-    srcSheet,
-    Math.round(spec.gx * cellW),
-    Math.round(spec.gy * cellH),
-    Math.round(spec.gw * cellW),
-    Math.round(spec.gh * cellH),
-    Math.round(dx),
-    Math.round(dy),
-    Math.round(dw),
-    Math.round(dh)
-  );
+
+  const sx = Math.max(0, Math.round(spec.gx * cellW));
+  const sy = Math.max(0, Math.round(spec.gy * cellH));
+  const cw = Math.min(sw - sx, Math.max(1, Math.round(spec.gw * cellW)));
+  const ch = Math.min(sh - sy, Math.max(1, Math.round(spec.gh * cellH)));
+
+  const off = document.createElement('canvas');
+  off.width = cw;
+  off.height = ch;
+  const octx = off.getContext('2d');
+  octx.imageSmoothingEnabled = false;
+  octx.drawImage(img, sx, sy, cw, ch, 0, 0, cw, ch);
+
+  if (spec.keepBg) {
+    extractedFurnitureCache[pieceKey] = off;
+    return off;
+  }
+
+  try {
+    // Sample known background brown from open floor at (0.41, 0.25) of full sheet
+    const fullCanvas = document.createElement('canvas');
+    fullCanvas.width = 1;
+    fullCanvas.height = 1;
+    const fctx = fullCanvas.getContext('2d');
+    fctx.drawImage(img, Math.floor(sw * 0.41), Math.floor(sh * 0.25), 1, 1, 0, 0, 1, 1);
+    const bgPixel = fctx.getImageData(0, 0, 1, 1).data;
+    const bgR = bgPixel[0];
+    const bgG = bgPixel[1];
+    const bgB = bgPixel[2];
+
+    const imgData = octx.getImageData(0, 0, cw, ch);
+    const d = imgData.data;
+
+    const isExteriorBg = (r, g, b) => {
+      // Never cross dark pixel-art outlines
+      if (r < 92 && g < 60 && b < 45) return false;
+      return (
+        (Math.abs(r - bgR) <= 16 && Math.abs(g - bgG) <= 16 && Math.abs(b - bgB) <= 16) ||
+        (Math.abs(r - 122) <= 14 && Math.abs(g - 72) <= 14 && Math.abs(b - 41) <= 14)
+      );
+    };
+
+    // Flood-fill ONLY from the 4 outer borders of this cropped piece
+    const visited = new Uint8Array(cw * ch);
+    const queue = new Int32Array(cw * ch);
+    let head = 0;
+    let tail = 0;
+
+    const pushIfBg = (x, y) => {
+      if (x < 0 || x >= cw || y < 0 || y >= ch) return;
+      const idx = y * cw + x;
+      if (visited[idx]) return;
+      const p = idx * 4;
+      if (isExteriorBg(d[p], d[p + 1], d[p + 2])) {
+        visited[idx] = 1;
+        queue[tail++] = idx;
+      }
+    };
+
+    for (let x = 0; x < cw; x++) {
+      pushIfBg(x, 0);
+      pushIfBg(x, ch - 1);
+    }
+    for (let y = 0; y < ch; y++) {
+      pushIfBg(0, y);
+      pushIfBg(cw - 1, y);
+    }
+
+    while (head < tail) {
+      const idx = queue[head++];
+      d[idx * 4 + 3] = 0;
+      const x = idx % cw;
+      const y = (idx / cw) | 0;
+      pushIfBg(x - 1, y);
+      pushIfBg(x + 1, y);
+      pushIfBg(x, y - 1);
+      pushIfBg(x, y + 1);
+    }
+
+    octx.putImageData(imgData, 0, 0);
+  } catch (e) {}
+
+  extractedFurnitureCache[pieceKey] = off;
+  return off;
+}
+
+function drawInteriorPiece(c, pieceKey, dx, dy, dw, dh) {
+  const piece = getExtractedFurniturePiece(pieceKey);
+  if (!piece) return false;
+  c.drawImage(piece, Math.round(dx), Math.round(dy), Math.round(dw), Math.round(dh));
   return true;
 }
 
@@ -1584,7 +1628,7 @@ function getLanternGlowSprite() {
   return lanternGlowSprite;
 }
 
-// 8-BIT CUSTOMIZABLE CARETAKER RENDERER
+// 8-BIT CUSTOMIZABLE CARETAKER RENDERER (Scaled at 1.35x to match furniture & cats)
 function drawPixelCaretaker(c, caretaker, time) {
   if (!caretaker) return;
   const x = Math.round(caretaker.x);
@@ -1598,8 +1642,8 @@ function drawPixelCaretaker(c, caretaker, time) {
 
   c.save();
   c.translate(x, y);
+  c.scale(1.35, 1.35);
 
-  // Soft floor shadow
   c.fillStyle = 'rgba(15, 23, 42, 0.30)';
   c.fillRect(-7, -1, 14, 3);
 
@@ -1618,7 +1662,6 @@ function drawPixelCaretaker(c, caretaker, time) {
   const outfit = caretaker.outfitColor || '#0284c7';
   const pants = caretaker.pantsColor || '#1e293b';
 
-  // 1. Legs / Boots
   if (isSitting) {
     px(-5, -4, 10, 3, pants);
     px(-6, -2, 4, 2, '#3b1d0a');
@@ -1637,7 +1680,6 @@ function drawPixelCaretaker(c, caretaker, time) {
     px(1, -2, 3, 2, '#3b1d0a');
   }
 
-  // 2. Torso / Hoodie & Arms
   const ty = -12 + bobY;
   px(-5, ty, 10, 7, outfit);
   px(-6, ty + 1, 2, 5, outfit);
@@ -1645,7 +1687,6 @@ function drawPixelCaretaker(c, caretaker, time) {
   px(-6, ty + 5, 2, 2, skin);
   px(4, ty + 5, 2, 2, skin);
 
-  // Activity Props (Book, Coffee Mug, or Pixel Laptop)
   if (!isWalking) {
     if (act === 'READ') {
       px(-4, ty + 3, 8, 4, '#991b1b');
@@ -1665,12 +1706,10 @@ function drawPixelCaretaker(c, caretaker, time) {
     }
   }
 
-  // 3. Head & Face
   const hy = -20 + bobY;
   px(-5, hy, 10, 8, skin);
   px(-5, hy + 7, 10, 1, skinShade);
 
-  // Blinking Eyes
   const isBlinking = Math.sin(time * 1.9) > 0.95;
   if (isBlinking) {
     px(-3, hy + 4, 2, 1, '#1e293b');
@@ -1681,11 +1720,9 @@ function drawPixelCaretaker(c, caretaker, time) {
     px(-3, hy + 3, 1, 1, '#ffffff');
     px(1, hy + 3, 1, 1, '#ffffff');
   }
-  // Rosy Cheeks
   px(-4, hy + 5, 1, 1, '#fda4af');
   px(3, hy + 5, 1, 1, '#fda4af');
 
-  // 4. Hairstyles
   const hs = caretaker.hairStyle || 'short';
   px(-5, hy - 2, 10, 3, hair);
   px(-6, hy - 1, 2, 4, hair);
@@ -1701,7 +1738,6 @@ function drawPixelCaretaker(c, caretaker, time) {
     px(-2, hy - 5, 4, 3, hair);
   }
 
-  // 5. Accessories
   const acc = caretaker.accessory || 'glasses';
   if (acc === 'glasses') {
     px(-4, hy + 3, 4, 2, '#fbbf24');
@@ -1729,9 +1765,9 @@ function drawPixelCaretaker(c, caretaker, time) {
     const labelStr = caretaker.name || 'Caretaker';
     const textW = c.measureText(labelStr).width + 8;
     c.fillStyle = 'rgba(24, 16, 10, 0.82)';
-    c.fillRect(Math.round(x - textW / 2), Math.round(y - 31), Math.round(textW), 9);
+    c.fillRect(Math.round(x - textW / 2), Math.round(y - 36), Math.round(textW), 9);
     c.fillStyle = '#fde047';
-    c.fillText(labelStr, Math.round(x), Math.round(y - 24));
+    c.fillText(labelStr, Math.round(x), Math.round(y - 29));
     c.restore();
   }
 }
@@ -2321,7 +2357,7 @@ function ensureCottageStaticCache() {
   c.imageSmoothingEnabled = false;
   c.translate(-180, -110);
 
-  // 1. Outer Carved Cottage Walls & Honey-Oak Floor (x = 210..750, y = 128..466)
+  // 1. Outer Carved Cottage Border & Warm Honey-Oak Plank Floor (x = 210..750, y = 128..466)
   c.fillStyle = '#3b1d0a';
   c.fillRect(202, 120, 556, 354);
   c.fillStyle = '#9c6234';
@@ -2347,11 +2383,12 @@ function ensureCottageStaticCache() {
   c.fillRect(210, 167, 540, 3);
   c.fillRect(210, 189, 540, 3);
 
-  // 3. Disassembled Wall Wallpaper Accents from interior sheet
-  drawInteriorPiece(c, 'blueWallPanel', 218, 130, 48, 37);
-  drawInteriorPiece(c, 'blueWallPanel', 684, 130, 48, 37);
+  // 3. Clean Blue Striped Accent Wallpaper Panels on Left & Right Corners (No brick bleed!)
+  drawInteriorPiece(c, 'blueWallPanel', 214, 130, 44, 37);
+  drawInteriorPiece(c, 'blueWallPanel', 702, 130, 44, 37);
+  drawInteriorPiece(c, 'wallFrame', 318, 134, 22, 28);
 
-  // 4. Center Cottage Door (x = 458..502, y = 130..190)
+  // 4. Center Cottage Door (x = 458..502, y = 130..190) + Clean Blue Doormat
   c.fillStyle = '#3b1d0a';
   c.fillRect(458, 130, 44, 60);
   c.fillStyle = '#78431e';
@@ -2361,77 +2398,109 @@ function ensureCottageStaticCache() {
   c.fillRect(467, 163, 26, 22);
   c.fillStyle = '#fde047';
   c.fillRect(491, 162, 3, 3);
-  // Welcome Mat in front of Door
-  drawInteriorPiece(c, 'blueMat', 462, 194, 36, 22);
+  drawInteriorPiece(c, 'blueMat', 462, 193, 36, 18);
 
-  // 5. Brick Hearth Fireplace & Twin Polaroid Tribute Mantle (x = 350, y = 190)
+  // 5. Brick Hearth Fireplace & Twin Polaroid Tribute Mantle (x = 380, y = 190)
   const fx = COTTAGE_SPOTS.hearth.x;
   const fy = 190;
   c.fillStyle = '#7f1d1d';
-  c.fillRect(fx - 30, fy - 58, 60, 60);
+  c.fillRect(fx - 28, fy - 58, 56, 60);
   c.fillStyle = '#991b1b';
-  c.fillRect(fx - 27, fy - 55, 54, 55);
+  c.fillRect(fx - 25, fy - 55, 50, 55);
   c.fillStyle = '#532e16';
-  c.fillRect(fx - 34, fy - 62, 68, 7);
+  c.fillRect(fx - 32, fy - 62, 64, 7);
   c.fillStyle = '#1e1b18';
-  c.fillRect(fx - 18, fy - 28, 36, 28);
+  c.fillRect(fx - 16, fy - 28, 32, 28);
 
-  // Twin Mini Polaroids of Lilo & Cheeto on the Fireplace Mantle!
+  // Twin Mini Polaroids of Lilo & Cheeto on the Fireplace Mantle
   c.fillStyle = '#fffdf7';
-  c.fillRect(fx - 22, fy - 52, 16, 18);
+  c.fillRect(fx - 21, fy - 52, 15, 17);
   c.fillStyle = '#0f172a';
-  c.fillRect(fx - 20, fy - 50, 12, 11);
+  c.fillRect(fx - 19, fy - 50, 11, 10);
   c.fillStyle = '#ffffff';
-  c.fillRect(fx - 17, fy - 46, 6, 6);
+  c.fillRect(fx - 16, fy - 46, 5, 5);
   c.fillStyle = '#29b6f6';
-  c.fillRect(fx - 16, fy - 45, 2, 2);
+  c.fillRect(fx - 15, fy - 45, 2, 2);
 
   c.fillStyle = '#fffdf7';
-  c.fillRect(fx + 6, fy - 52, 16, 18);
+  c.fillRect(fx + 6, fy - 52, 15, 17);
   c.fillStyle = '#451a03';
-  c.fillRect(fx + 8, fy - 50, 12, 11);
+  c.fillRect(fx + 8, fy - 50, 11, 10);
   c.fillStyle = '#ffffff';
-  c.fillRect(fx + 11, fy - 46, 6, 6);
+  c.fillRect(fx + 11, fy - 46, 5, 5);
   c.fillStyle = '#ffb300';
   c.fillRect(fx + 12, fy - 45, 2, 2);
 
-  // 6. Disassembled Floor Rugs (Center Crimson Rug & Bedroom Runner)
-  if (!drawInteriorPiece(c, 'crimsonRug', 432, 270, 96, 86)) {
-    c.fillStyle = '#991b1b';
-    c.fillRect(432, 270, 96, 86);
-  }
-  drawInteriorPiece(c, 'blueMat', 458, 392, 44, 26);
+  // 6. Center Crimson Living Room Rug + Indoor Bowl Mat (100% clean, no chair or tile bleed!)
+  drawInteriorPiece(c, 'crimsonRug', 438, 272, 84, 68);
+  drawInteriorPiece(c, 'blueMat', 462, 396, 36, 18);
 
-  // 7. Disassembled Bedroom & Study Nook Furniture (Placed Around Perimeter)
-  // Top-Left Library Nook: Bookshelf + Nightstand + Potted Plant
-  drawInteriorPiece(c, 'bookshelf', 228, 172, 42, 66);
-  drawInteriorPiece(c, 'nightstand', 276, 194, 28, 32);
-  drawInteriorPiece(c, 'pottedPlant', 416, 168, 26, 48);
+  // 7. Proportionally Scaled Furniture Arranged by Room Zone:
+  // Zone A (Top-Left Library Nook): Tall Bookshelf + Solid Nightstand + Potted Plant
+  drawInteriorPiece(c, 'bookshelf', 222, 152, 30, 52);
+  drawInteriorPiece(c, 'nightstand', 256, 182, 20, 22);
+  drawInteriorPiece(c, 'pottedPlant', 426, 160, 18, 34);
 
-  // Top-Right Bedroom Nook: Cozy Checkered Bed + Nightstand + Window Curtains + Plant
-  drawInteriorPiece(c, 'curtainsRed', 606, 134, 34, 46);
-  drawInteriorPiece(c, 'cozyBed', 646, 188, 76, 88);
-  drawInteriorPiece(c, 'pottedPlant', 716, 284, 26, 48);
+  // Zone B (Top-Right Bedroom Nook): Single Whole Checkered Bed + Solid Nightstand + Potted Plant
+  drawInteriorPiece(c, 'nightstand', 620, 182, 20, 22);
+  drawInteriorPiece(c, 'cozyBed', 644, 174, 48, 58);
+  drawInteriorPiece(c, 'pottedPlant', 710, 166, 18, 34);
 
-  // Left Living Room Lounge: Plush Red Sofa + Cozy Armchairs
-  drawInteriorPiece(c, 'sofaFront', 306, 258, 74, 54);
-  drawInteriorPiece(c, 'armchairRight', 246, 284, 38, 48);
-  drawInteriorPiece(c, 'armchairLeft', 392, 284, 38, 48);
+  // Zone C (Left Living Room Lounge): Plush Red Sofa + 2 Armchairs + Solid Wooden Coffee Table
+  drawInteriorPiece(c, 'sofaFront', 312, 260, 54, 38);
+  drawInteriorPiece(c, 'armchairRight', 274, 276, 26, 32);
+  drawInteriorPiece(c, 'armchairLeft', 376, 276, 26, 32);
+  drawInteriorPiece(c, 'coffeeTable', 316, 306, 46, 26);
+  drawInteriorPiece(c, 'booksOnFloor', 330, 310, 18, 10);
 
-  // Bottom-Right Study Nook: Wooden Study Desk & Chair
-  drawInteriorPiece(c, 'studyDesk', 616, 346, 68, 62);
-  drawInteriorPiece(c, 'armchairBack', 634, 386, 34, 42);
+  // Zone D (Bottom-Right Study Nook): Solid Wooden Study Desk + Chair + Reading Lamp + Plant
+  drawInteriorPiece(c, 'studyDesk', 628, 348, 52, 38);
+  drawInteriorPiece(c, 'armchairBack', 641, 368, 26, 32);
+  drawInteriorPiece(c, 'pottedPlant', 704, 346, 18, 34);
 
-  // Indoor Velvet Cat Cushion near Fireplace (x = 345, y = 375)
+  // Zone E (Bottom-Left Cat Lounge Cushion near Hearth)
   c.fillStyle = '#4c0519';
-  c.fillRect(321, 366, 48, 24);
+  c.fillRect(318, 372, 42, 22);
   c.fillStyle = '#be123c';
-  c.fillRect(324, 368, 42, 20);
+  c.fillRect(321, 374, 36, 18);
   c.fillStyle = '#fda4af';
-  c.fillRect(330, 372, 30, 12);
+  c.fillRect(326, 377, 26, 12);
 
   cottageStaticCache = off;
   return off;
+}
+
+function drawCottageWindowWithCurtains(c, wx, wy, time) {
+  const isNight = world.weather === 'NIGHT';
+  const isRain = world.weather === 'RAIN';
+
+  // Window Frame & Weather-Reactive Glass Pane (Sized to match curtainsRed!)
+  c.fillStyle = '#3b1d0a';
+  c.fillRect(wx, wy, 34, 36);
+  c.fillStyle = isNight ? '#0f172a' : isRain ? '#334155' : '#38bdf8';
+  c.fillRect(wx + 3, wy + 3, 28, 30);
+
+  if (isNight) {
+    c.fillStyle = '#fde047';
+    c.fillRect(wx + 8, wy + 8, 2, 2);
+    c.fillRect(wx + 22, wy + 12, 2, 2);
+  } else if (isRain) {
+    c.fillStyle = '#bae6fd';
+    for (let rx = wx + 7; rx < wx + 28; rx += 8) {
+      c.fillRect(rx, wy + 5 + ((Math.floor(time * 22) + rx) % 20), 1, 5);
+    }
+  } else {
+    c.fillStyle = '#fde047';
+    c.fillRect(wx + 20, wy + 7, 6, 6);
+  }
+
+  // Window Mullion Crossbars
+  c.fillStyle = '#3b1d0a';
+  c.fillRect(wx + 16, wy + 3, 2, 30);
+  c.fillRect(wx + 3, wy + 17, 28, 2);
+
+  // Drape Red Curtains Directly Over the Window!
+  drawInteriorPiece(c, 'curtainsRed', wx - 2, wy - 2, 38, 42);
 }
 
 function drawCottageInteriorScenery(c, time) {
@@ -2446,35 +2515,14 @@ function drawCottageInteriorScenery(c, time) {
   c.fillStyle = '#1c120c';
   c.fillRect(viewLeft, viewTop, viewRight - viewLeft, viewBottom - viewTop);
 
-  // Blit entire pre-rendered Cottage room & furniture in 1 drawImage call!
   const cache = ensureCottageStaticCache();
   c.drawImage(cache, 180, 110);
 
-  // Weather-Reactive Cottage Window Pane (x = 530..596, y = 136..172)
-  const isNight = world.weather === 'NIGHT';
-  const isRain = world.weather === 'RAIN';
-  c.fillStyle = '#3b1d0a';
-  c.fillRect(526, 132, 74, 44);
-  c.fillStyle = isNight ? '#0f172a' : isRain ? '#334155' : '#38bdf8';
-  c.fillRect(530, 136, 66, 36);
-  if (isNight) {
-    c.fillStyle = '#fde047';
-    c.fillRect(540, 142, 3, 3);
-    c.fillRect(578, 146, 2, 2);
-  } else if (isRain) {
-    c.fillStyle = '#bae6fd';
-    for (let rx = 536; rx < 590; rx += 12) {
-      c.fillRect(rx, 138 + ((Math.floor(time * 24) + rx) % 24), 1, 6);
-    }
-  } else {
-    c.fillStyle = '#fde047';
-    c.fillRect(576, 140, 10, 10);
-  }
-  c.fillStyle = '#3b1d0a';
-  c.fillRect(562, 136, 2, 36);
-  c.fillRect(530, 153, 66, 2);
+  // Two Matching Curtained Windows on Left & Right Back Wall
+  drawCottageWindowWithCurtains(c, 272, 132, time);
+  drawCottageWindowWithCurtains(c, 556, 132, time);
 
-  // Animated Crackling Hearth Fire & Warm Pre-Rendered Glow
+  // Animated Crackling Hearth Fire & Warm Glow
   const fx = COTTAGE_SPOTS.hearth.x;
   const fy = 190;
   drawLoadedSprite(c, 'campfireActive', fx - 16, fy - 30, 32, 32, time);
@@ -2670,12 +2718,10 @@ function handleCanvasTap(clientX, clientY, isTouch = false) {
   }
 
   if (world.scene === 'COTTAGE') {
-    // Tapping the Fireplace Mantle (COTTAGE_SPOTS.hearth, x: 350, y: 165, radius 38)
-    if (Math.hypot(pt.x - 350, pt.y - 165) <= 38 * touchMult) {
+    if (Math.hypot(pt.x - COTTAGE_SPOTS.hearth.x, pt.y - 165) <= 38 * touchMult) {
       openModal('tribute-modal');
       return;
     }
-    // Tapping Indoor Ceramic Bowl (COTTAGE_SPOTS.bowl)
     if (Math.hypot(pt.x - COTTAGE_SPOTS.bowl.x, pt.y - COTTAGE_SPOTS.bowl.y) <= COTTAGE_SPOTS.bowl.radius * touchMult) {
       world.feedBowl();
       return;

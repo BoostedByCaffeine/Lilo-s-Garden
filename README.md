@@ -2,7 +2,7 @@
 
 A single-file HTML5 Canvas, CSS3, and Vanilla JavaScript cozy virtual pet garden sandbox tribute inspired by a minimalist Stardew Valley aesthetic, honoring **Lilo the pure white cat** and **Cheeto the orange tabby**.
 
-Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-tier live local weather, client-side `localStorage` persistence, PWA offline installability, **Cozy Cottage Interior**, and **5 Authentic Android Home Screen Widgets**.
+Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-tier live local weather, client-side `localStorage` persistence, PWA offline installability, **Cozy Cottage Interior**, **8-Bit Customizable Caretaker**, and **5 Authentic Android Home Screen Widgets**.
 
 ---
 
@@ -12,12 +12,32 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-t
 - **Global Solid Pixel Font**:
   - Imported solid pixel font (`Stardew_Valley.ttf` & `.otf`) applied uniformly across the web application and all 5 Android home screen widgets.
   - Specially tuned typography sizes across the HUD, dialogue badges, and polaroid tribute frames for razor-sharp readability on all screen densities.
-- **PWA v7 Offline Cache**:
-  - Service worker precaching updated to `'lilos-garden-pwa-v7'` bundling all core assets, solid typography, and interior sprites (`interiors_demo.png` and `tiles and items.png`) for full offline playability.
+- **PWA v9 Offline Cache**:
+  - Service worker precaching updated to `'lilos-garden-pwa-v9'` bundling all core assets, solid typography, and interior sprites (`interiors_demo.png` and `tiles and items.png`) for instant offline playability.
+- **60 FPS Offscreen Canvas Caching**:
+  - Pre-renders static scenes (`ensureGardenStaticCache`, `ensureCottageStaticCache`) and dynamic lighting glow sprites (`getFireGlowSprite`, `getLanternGlowSprite`) into offscreen canvases, minimizing draw calls and guaranteeing locked 60 FPS performance on mobile devices.
+  - Dirty-checks DOM ticker text updates to completely prevent layout thrashing and reflows.
 
 ---
 
-### 2. Authentic Procedural Pixel Art Cats
+### 2. 8-Bit Customizable Caretaker Character
+- **Living Pixel Caretaker**:
+  - A customizable 8-bit character (rendered at proportional `1.35x` scale) living alongside Lilo and Cheeto in both the Garden and Cottage.
+  - Interactive cuddles: Tapping the Caretaker in the scene calls the cats over for cuddles and purrs.
+  - Cozy animated activities:
+    - **Reading**: Holding a cozy red storybook.
+    - **Coffee**: Sipping a warm steaming ceramic mug.
+    - **Coding**: Typing on a miniature pixel laptop.
+    - **Auto**: Autonomously wanders between room zones (plush sofa, study desk, crimson rug, hearth, and outdoor campfire log).
+- **In-Depth Caretaker Customizer (`#modalCaretaker`)**:
+  - Accessible via the **"Me"** button on the bottom dock.
+  - Real-time animated 8-bit preview canvas with background matching the current scene.
+  - Customizable Name, Skin Tones (6 shades), Hairstyles (Short, Long, Spiky, Cozy Bun), Hair Colors (6 swatches), Outfit/Hoodie Colors (8 palette styles), and Accessories (Glasses, Cat Ears, Sun Hat, or None).
+  - Saved directly to `localStorage` and serialized with garden data.
+
+---
+
+### 3. Authentic Procedural Pixel Art Cats
 - **Signature Resident Brothers**:
   - **Lilo**: Pure white coat, twin sky-blue eyes (`#29b6f6`), pink nose, signature royal blue collar (`#1e88e5`), and golden bell (`#fde047`).
   - **Cheeto**: Warm white coat, signature heterochromia eyes (left sky-blue `#29b6f6`, right amber `#ffb300`), pink nose.
@@ -33,7 +53,7 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-t
 
 ---
 
-### 3. Vibrant Tileset & Living Garden Environment
+### 4. Vibrant Tileset & Living Garden Environment
 - **Vibrant Meadow Lawn**:
   - Seamlessly tiled garden ground rendered with crisp `32x32` tiles (`FieldsTile_38.png`) in a rich, warm meadow green (`#a6b04f`).
 - **Cozy Shade Tree**:
@@ -51,23 +71,26 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-t
 
 ---
 
-### 4. Cozy Cottage Interior Scene
-- **Seamless Indoor Sanctuary**:
-  - Tap the bottom dock's **Cottage** button (or click the top wooden gate/door) to step inside the warm, candlelit cottage interior.
-  - Rich honey-oak plank flooring (`#9c6234`), wainscoting paneling, and cream plaster walls.
-- **Brick Hearth Fireplace & Mantle Tribute**:
-  - Brick hearth with crackling fire flames (`campfireActive`) casting an animated flickering warmth glow across the room floor.
-  - Serves as the indoor memorial tribute mantle honoring Lilo and Cheeto.
-- **Weather-Reactive Cottage Window**:
-  - Windowpane reflects the phone's live exterior weather — bright sunny daylight, falling raindrops during showers, or deep starry night sky.
-- **Furnishing Showcase & Interactive Elements**:
-  - Showcases pixel interior decor cards (`assets/interior/interiors_demo.png` and `tiles and items.png`).
-  - Warm center braided rug (`LANDMARKS.rug`) and plush velvet cat lounge bed (`LANDMARKS.shelter`) where cats lounge, stretch, and loaf.
-  - Interactive wooden door: Tap or click at any time to step seamlessly back outside into the garden.
+### 5. Cozy Cottage Interior Scene & Perimeter Flood-Fill Extractor
+- **Strict Scene Separation**:
+  - Outdoor landmarks (Memorial Stone, Gazebo Deck/Roof, Garden Tree, butterflies, fireflies, and falling rain) are completely suppressed when inside the Cottage.
+- **Perimeter BFS Flood-Fill Furniture Extractor**:
+  - `getExtractedFurniturePiece()` flood-fills strictly from the outer boundaries inward and stops at dark pixel-art outlines. All interior brown wood (study desk, nightstand, checkered bed, coffee table, and tall bookshelf) stays 100% solid with zero hollow-out glitches.
+  - Calibrated crop slices (`INTERIOR_FURNITURE_SLICES`) guarantee zero neighbor sprite bleed across the entire room.
+- **Curtained Weather-Reactive Windows**:
+  - Matching back-wall windows framed directly with rich red curtains (`curtainsRed`), reacting in real time to sunny days, rain showers, and starry nights.
+- **Proportional Room Layout**:
+  - **Library Nook**: Tall Bookshelf, Nightstand, Potted Plant.
+  - **Bedroom Nook**: Single Checkered Bed, Nightstand, Plant.
+  - **Living Room Lounge**: Plush Red Sofa, Armchairs, Wooden Coffee Table, Books on Floor.
+  - **Study Nook**: Wooden Study Desk with reading chair and lamp.
+  - **Brick Hearth Mantle**: Crackling warm fireplace fire with twin mini Polaroids honoring Lilo and Cheeto.
+  - **Center Living Room Rug**: Crimson rug and indoor ceramic food bowl.
+- **Seamless Navigation**: Tap the bottom dock's **Cottage** button or the top wooden door to transition smoothly between indoor and outdoor sanctuaries.
 
 ---
 
-### 5. Cozy Animated Bonfire & Camp Nook
+### 6. Cozy Animated Bonfire & Camp Nook
 - **Weather-Reactive Campfire**:
   - **Sunny & Fair Weather**: Smooth 6-frame active burning flames strip (`campfireActive`) with an animated radial flickering warmth glow (`rgba(251, 146, 60, ...)`).
   - **Rainy Weather**: Automatically switches to the 6-frame extinguished smoldering smoke strip (`campfireSmoke`).
@@ -75,7 +98,7 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-t
 
 ---
 
-### 6. Twin Polaroid Tribute Frame System
+### 7. Twin Polaroid Tribute Frame System
 - **Side-by-Side Cozy Polaroid Frames**:
   - **Lilo's Polaroid**: Tilted `-2.5°`, titled `"Lilo 💙"`, captioned `"Blue Eyes & Blue Collar"`.
   - **Cheeto's Polaroid**: Tilted `+2.5°`, titled `"Cheeto 💙💛"`, captioned `"Blue & Amber Eyes"`.
@@ -87,7 +110,7 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-t
 
 ---
 
-### 7. 3-Tier Live Weather & Covered Gazebo Shelter
+### 8. 3-Tier Live Weather & Covered Gazebo Shelter
 - **3-Tier Live Weather Integration (Fast GPS -> Cached Coords -> Keyless IP Geolocation)**:
   - **Tier 1 (High-Accuracy GPS)**: Fast network geolocation with cached hardware positions.
   - **Tier 2 (Cached Local Coordinates)**: Instant startup restore from persistent cache avoiding network delays.
@@ -106,7 +129,7 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-t
 
 ---
 
-### 8. 5 Android Home Screen Widgets & 2-Layer Compositor Engine
+### 9. 5 Android Home Screen Widgets & 2-Layer Compositor Engine
 All widgets are powered by an animation engine with a **2-Layer Compositor Architecture**:
 - **Layer 1 (Underneath)**: A pixel-art `ViewFlipper` loop running `RGB_565` bitmaps for high performance and minimal memory footprint.
 - **Layer 2 (On Top)**: A single high-res `ARGB_8888` `ImageView` HUD overlay with solid `Stardew_Valley.ttf` typography. Clock and minute ticks update **only** the HUD overlay via `partiallyUpdateAppWidget`, resulting in zero flicker and never interrupting the animation loop.
@@ -143,7 +166,7 @@ All widgets are powered by an animation engine with a **2-Layer Compositor Archi
 
 ---
 
-### 9. Dynamic Camera, Zoom & Follow System
+### 10. Dynamic Camera, Zoom & Follow System
 - **Adaptive Viewport**:
   - Seamlessly scales between desktop monitors and smartphone screens (`100vw x 100dvh`) with zero letterboxing.
 - **Zoom Controls**:
@@ -154,7 +177,7 @@ All widgets are powered by an animation engine with a **2-Layer Compositor Archi
 
 ---
 
-### 10. Synthesized Audio Engine (`CozyAudio`)
+### 11. Synthesized Audio Engine (`CozyAudio`)
 - Web Audio API synthesizer with zero external sound files:
   - Deep modulated cat purr rumbling using carrier + LFO oscillators.
   - Calming ambient rain noise using filtered pink noise with smooth fade-in/fade-out.
@@ -167,10 +190,12 @@ All widgets are powered by an animation engine with a **2-Layer Compositor Archi
 | Action | Control | Shortcut |
 | :--- | :--- | :---: |
 | **Pet Cat** | Tap or click any cat | <kbd>P</kbd> |
+| **Call Cats to Caretaker** | Tap the Caretaker in the scene | — |
+| **Caretaker Customizer** | Tap **"Me"** on the bottom dock | — |
 | **Refill Food Bowl** | Tap the ceramic bowl or click **"Fill Bowl"** | <kbd>F</kbd> |
 | **Toggle Cottage / Garden** | Tap **"Cottage"** or tap cottage door | — |
-| **Twin Polaroid Tribute** | Tap the Memorial Stone | — |
-| **Guide Cat / Call Over** | Tap or click any open patch of grass | — |
+| **Twin Polaroid Tribute** | Tap Memorial Stone (Garden) or Hearth Mantle (Cottage) | — |
+| **Guide Cat / Call Over** | Tap or click any open patch of ground | — |
 | **Cycle Weather Mode** | Tap the Weather Badge | <kbd>W</kbd> |
 | **Camera Zoom** | Tap **"Zoom In / Out"** or pinch touchscreen | <kbd>Z</kbd> |
 | **Follow Lilo** | Tap **"Follow Lilo"** on the bottom dock | — |
@@ -186,11 +211,11 @@ All widgets are powered by an animation engine with a **2-Layer Compositor Archi
    ```bash
    git add .
    git commit -m "Deploy Lilo's Garden"
-   git push origin main
+   git push origin remastered
    ```
 2. In your repository settings on GitHub, navigate to **Settings** → **Pages**.
 3. Under **Build and deployment** → **Source**, select **"Deploy from a branch"**.
-4. Set branch to `main` (or `master`) and directory to `/ (root)`, then click **Save**.
+4. Set branch to `remastered` (or `main`) and directory to `/ (root)`, then click **Save**.
 5. Your sanctuary will be live at:
    ```
    https://<your-username>.github.io/<repo-name>/
