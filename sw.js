@@ -1,5 +1,4 @@
-const CACHE_NAME = 'lilos-garden-pwa-v9';
-
+const CACHE_NAME = 'lilos-garden-pwa-v10';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -13,19 +12,39 @@ const CORE_ASSETS = [
   './assets/icon-512.png',
   './assets/fonts/Stardew_Valley.ttf',
   './assets/fonts/Stardew_Valley.otf',
-  './assets/interior/interiors_demo.png',
-  './assets/interior/tiles and items.png'
+  './assets/interior/Individual/Bedside Table.png',
+  './assets/interior/Individual/Book.png',
+  './assets/interior/Individual/bookcase.png',
+  './assets/interior/Individual/Box.png',
+  './assets/interior/Individual/Box2.png',
+  './assets/interior/Individual/carpet.png',
+  './assets/interior/Individual/Chair1side.png',
+  './assets/interior/Individual/Chair2side.png',
+  './assets/interior/Individual/ChairBside.png',
+  './assets/interior/Individual/ChairF.png',
+  './assets/interior/Individual/coat stand.png',
+  './assets/interior/Individual/DoubleBed.png',
+  './assets/interior/Individual/Lamp.png',
+  './assets/interior/Individual/Lampoff.png',
+  './assets/interior/Individual/minidecoflower.png',
+  './assets/interior/Individual/mirror.png',
+  './assets/interior/Individual/sofa 1side.png',
+  './assets/interior/Individual/sofa 2side.png',
+  './assets/interior/Individual/Table.png',
+  './assets/interior/Individual/tablebig.png',
+  './assets/interior/Individual/vaseflower.png',
+  './assets/interior/Individual/wardrobe.png',
+  './assets/interior/Individual/window.png'
 ];
 
-// Install: Pre-cache core files and optional assets safely
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
       await Promise.allSettled(
         CORE_ASSETS.map((url) =>
-          fetch(url).then((response) => {
+          fetch(encodeURI(url)).then((response) => {
             if (response.ok) {
-              return cache.put(url, response);
+              return cache.put(encodeURI(url), response);
             }
           })
         )
@@ -35,7 +54,6 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Activate: Clean up old caches (such as broken v1/v2 caches)
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -49,14 +67,11 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch: Network-first for live weather API; Stale-While-Revalidate for app assets
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
-
   const url = new URL(request.url);
 
-  // Live Open-Meteo API: try network first, fallback gracefully if offline
   if (url.hostname.includes('open-meteo.com')) {
     event.respondWith(
       fetch(request).catch(
@@ -69,7 +84,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // App shell & assets: Stale-While-Revalidate
   event.respondWith(
     caches.match(request).then((cachedResponse) => {
       const networkFetch = fetch(request)

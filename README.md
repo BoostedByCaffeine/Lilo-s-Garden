@@ -12,8 +12,8 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-t
 - **Global Solid Pixel Font**:
   - Imported solid pixel font (`Stardew_Valley.ttf` & `.otf`) applied uniformly across the web application and all 5 Android home screen widgets.
   - Specially tuned typography sizes across the HUD, dialogue badges, and polaroid tribute frames for razor-sharp readability on all screen densities.
-- **PWA v9 Offline Cache**:
-  - Service worker precaching updated to `'lilos-garden-pwa-v9'` bundling all core assets, solid typography, and interior sprites (`interiors_demo.png` and `tiles and items.png`) for instant offline playability.
+- **PWA v10 Offline Cache**:
+  - Service worker precaching updated to `'lilos-garden-pwa-v10'` bundling all core assets, solid typography, and individual interior furniture sprites (`assets/interior/Individual/*.png`) for instant offline playability.
 - **60 FPS Offscreen Canvas Caching**:
   - Pre-renders static scenes (`ensureGardenStaticCache`, `ensureCottageStaticCache`) and dynamic lighting glow sprites (`getFireGlowSprite`, `getLanternGlowSprite`) into offscreen canvases, minimizing draw calls and guaranteeing locked 60 FPS performance on mobile devices.
   - Dirty-checks DOM ticker text updates to completely prevent layout thrashing and reflows.
@@ -71,22 +71,24 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-t
 
 ---
 
-### 5. Cozy Cottage Interior Scene & Perimeter Flood-Fill Extractor
-- **Strict Scene Separation**:
-  - Outdoor landmarks (Memorial Stone, Gazebo Deck/Roof, Garden Tree, butterflies, fireflies, and falling rain) are completely suppressed when inside the Cottage.
-- **Perimeter BFS Flood-Fill Furniture Extractor**:
-  - `getExtractedFurniturePiece()` flood-fills strictly from the outer boundaries inward and stops at dark pixel-art outlines. All interior brown wood (study desk, nightstand, checkered bed, coffee table, and tall bookshelf) stays 100% solid with zero hollow-out glitches.
-  - Calibrated crop slices (`INTERIOR_FURNITURE_SLICES`) guarantee zero neighbor sprite bleed across the entire room.
-- **Curtained Weather-Reactive Windows**:
-  - Matching back-wall windows framed directly with rich red curtains (`curtainsRed`), reacting in real time to sunny days, rain showers, and starry nights.
-- **Proportional Room Layout**:
-  - **Library Nook**: Tall Bookshelf, Nightstand, Potted Plant.
-  - **Bedroom Nook**: Single Checkered Bed, Nightstand, Plant.
-  - **Living Room Lounge**: Plush Red Sofa, Armchairs, Wooden Coffee Table, Books on Floor.
-  - **Study Nook**: Wooden Study Desk with reading chair and lamp.
-  - **Brick Hearth Mantle**: Crackling warm fireplace fire with twin mini Polaroids honoring Lilo and Cheeto.
-  - **Center Living Room Rug**: Crimson rug and indoor ceramic food bowl.
-- **Seamless Navigation**: Tap the bottom dock's **Cottage** button or the top wooden door to transition smoothly between indoor and outdoor sanctuaries.
+### 5. Cozy Cottage Top-Down Roguelike Room Island
+- **Roguelike Room Island Architecture**:
+  - Rendered as an authentic top-down pixel-art room island enveloped by a dark void (`#1d1a1f`), featuring a bottom-center entrance alcove (`hallX = 436..524, y = 414..458`) with dithered shadow threshold fade.
+  - Vertical wooden plank floor (`#9a5025`) with staggered authentic joint notches and dithered diamond wallpaper trim.
+- **Individual Furniture Sprites (`assets/interior/Individual/`)**:
+  - Auto-trimmed pixel-perfect furniture loader (`getTrimmedSprite`, `drawIndividualFurniture`) rendering standalone furniture assets at 1.35x scale.
+  - Layout matches `preview_room.png` customized with **only 1 bed (`DoubleBed.png` + 1 `carpet.png`)**:
+    - **Top-Left**: Carved Wardrobe (`wardrobe.png`).
+    - **Bedroom Nook**: Single Double Bed (`DoubleBed.png`) centered over ornate crimson carpet (`carpet.png`), flanked by Nightstand (`Bedside Table.png`) with animated glowing night lamp (`Lamp.png` / `Lampoff.png`).
+    - **Memorial Tribute Nook**: Bookcase (`bookcase.png`) and Stack of Books (`Book.png`) serving as the indoor memorial tribute album for Lilo & Cheeto.
+    - **Study Nook**: Wooden Study Desk (`Table.png`) with potted mini succulent (`minidecoflower.png`) and back-wall window.
+    - **Dining Set**: Large Wooden Dining Table (`tablebig.png`) with 4-way chairs (`ChairF.png`, `Chair1side.png`, `Chair2side.png`, `ChairBside.png`).
+    - **Living Lounge**: Cream Sofa (`sofa 1side.png` / `sofa 2side.png`) and tall flower vase (`vaseflower.png`).
+    - **Entrance & Storage**: Coat stand (`coat stand.png`) by the entrance hallway, and rustic wooden chest (`Box.png`) & barrel (`Box2.png`).
+- **Depth-Sorted Living Scene & Boundary-Constrained Wandering**:
+  - All room furniture depth-sorts dynamically alongside the Caretaker, Lilo, and Cheeto so characters seamlessly walk in front of and behind objects.
+  - Indoor wandering constrained strictly to room floor bounds (`COTTAGE_BOUNDS`), with indoor bowl feeding and bedside carpet napping.
+- **Seamless Navigation**: Tap the bottom entrance hallway (or the bottom dock's **Cottage** button) to step smoothly between indoor and outdoor sanctuaries.
 
 ---
 
@@ -193,8 +195,8 @@ All widgets are powered by an animation engine with a **2-Layer Compositor Archi
 | **Call Cats to Caretaker** | Tap the Caretaker in the scene | — |
 | **Caretaker Customizer** | Tap **"Me"** on the bottom dock | — |
 | **Refill Food Bowl** | Tap the ceramic bowl or click **"Fill Bowl"** | <kbd>F</kbd> |
-| **Toggle Cottage / Garden** | Tap **"Cottage"** or tap cottage door | — |
-| **Twin Polaroid Tribute** | Tap Memorial Stone (Garden) or Hearth Mantle (Cottage) | — |
+| **Toggle Cottage / Garden** | Tap **"Cottage"** or entrance hallway / gate | — |
+| **Twin Polaroid Tribute** | Tap Memorial Stone (Garden) or Bookcase (Cottage) | — |
 | **Guide Cat / Call Over** | Tap or click any open patch of ground | — |
 | **Cycle Weather Mode** | Tap the Weather Badge | <kbd>W</kbd> |
 | **Camera Zoom** | Tap **"Zoom In / Out"** or pinch touchscreen | <kbd>Z</kbd> |

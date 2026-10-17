@@ -98,13 +98,22 @@ const DEFAULT_CARETAKER = Object.freeze({
   activity: 'AUTO'        // 'AUTO' | 'READ' | 'COFFEE' | 'CODE'
 });
 
+const COTTAGE_BOUNDS = {
+  minX: 395,
+  maxX: 585,
+  minY: 262,
+  maxY: 396
+};
+
 const COTTAGE_SPOTS = {
-  hearth: { x: 380, y: 198, radius: 34, label: 'Fireplace Mantle Tribute' },
-  sofa:   { x: 340, y: 286, radius: 28, label: 'Plush Red Sofa' },
-  bed:    { x: 668, y: 228, radius: 28, label: 'Cozy Checkered Bed' },
-  desk:   { x: 654, y: 376, radius: 26, label: 'Wooden Study Desk' },
-  rug:    { x: 480, y: 308, radius: 34, label: 'Crimson Living Room Rug' },
-  bowl:   { x: 480, y: 406, radius: 22, label: 'Indoor Ceramic Bowl' }
+  hearth: { x: 544, y: 224, radius: 32, label: 'Memorial Bookcase & Tribute' },
+  sofa:   { x: 600, y: 324, radius: 28, label: 'Cozy Cream Sofa' },
+  bed:    { x: 476, y: 245, radius: 30, label: 'Cozy Yellow Quilt Bed' },
+  desk:   { x: 604, y: 244, radius: 26, label: 'Wooden Study Desk' },
+  rug:    { x: 476, y: 264, radius: 32, label: 'Warm Crimson Bedside Rug' },
+  table:  { x: 368, y: 306, radius: 28, label: 'Dining Table' },
+  bowl:   { x: 480, y: 364, radius: 22, label: 'Indoor Ceramic Bowl' },
+  door:   { x: 480, y: 436, radius: 34, label: 'Cottage Entrance Hallway' }
 };
 
 const DEFAULT_LILO = Object.freeze({
@@ -999,18 +1008,31 @@ const world = {
   feedBowl() {
     this.bowlLevel = 3;
     sound.playFeedSound();
-    this.spawnHeart(LANDMARKS.bowl.x, LANDMARKS.bowl.y - 4, 'sparkle');
+    const activeBowl = this.scene === 'COTTAGE' ? COTTAGE_SPOTS.bowl : LANDMARKS.bowl;
+    this.spawnHeart(activeBowl.x, activeBowl.y - 4, 'sparkle');
     this.cats.forEach((cat, idx) => {
       cat.state = 'SEEK_FOOD';
       cat.pose = 'sit';
-      cat.targetX = LANDMARKS.bowl.x + (idx * 16 - 12);
-      cat.targetY = LANDMARKS.bowl.y + 2;
+      cat.targetX = activeBowl.x + (idx * 16 - 12);
+      cat.targetY = activeBowl.y + 2;
     });
     showToast('Ceramic bowl filled with crunchy kibble!', 'fish', '#fbbf24');
     this.save();
   },
 
   pickRandomGardenPoint() {
+    if (this.scene === 'COTTAGE') {
+      if (Math.random() < 0.38) {
+        return {
+          x: COTTAGE_SPOTS.rug.x + (Math.random() * 24 - 12),
+          y: COTTAGE_SPOTS.rug.y + (Math.random() * 14 - 7)
+        };
+      }
+      return {
+        x: COTTAGE_BOUNDS.minX + Math.random() * (COTTAGE_BOUNDS.maxX - COTTAGE_BOUNDS.minX),
+        y: COTTAGE_BOUNDS.minY + Math.random() * (COTTAGE_BOUNDS.maxY - COTTAGE_BOUNDS.minY)
+      };
+    }
     if (Math.random() < 0.28) {
       return {
         x: LANDMARKS.rug.x + (Math.random() * 22 - 11),
@@ -1085,10 +1107,12 @@ const world = {
 
       switch (cat.state) {
         case 'IDLE': {
+          const activeBowl = this.scene === 'COTTAGE' ? COTTAGE_SPOTS.bowl : LANDMARKS.bowl;
+          const activeRug = this.scene === 'COTTAGE' ? COTTAGE_SPOTS.rug : LANDMARKS.rug;
           if (this.bowlLevel > 0 && Math.random() < dt * 0.08) {
             cat.state = 'SEEK_FOOD';
-            cat.targetX = LANDMARKS.bowl.x + (Math.random() * 16 - 8);
-            cat.targetY = LANDMARKS.bowl.y + (Math.random() * 6 - 2);
+            cat.targetX = activeBowl.x + (Math.random() * 16 - 8);
+            cat.targetY = activeBowl.y + (Math.random() * 6 - 2);
             break;
           }
           if (cat.stateTimer <= 0) {
@@ -1104,6 +1128,8 @@ const world = {
         case 'WANDER':
         case 'SEEK_FOOD':
         case 'SEEK_SHELTER': {
+          const activeBowl = this.scene === 'COTTAGE' ? COTTAGE_SPOTS.bowl : LANDMARKS.bowl;
+          const activeRug = this.scene === 'COTTAGE' ? COTTAGE_SPOTS.rug : LANDMARKS.rug;
           const dx = cat.targetX - cat.x;
           const dy = cat.targetY - cat.y;
           const dist = Math.hypot(dx, dy);
@@ -1111,7 +1137,7 @@ const world = {
             if (cat.state === 'SEEK_FOOD' && this.bowlLevel > 0) {
               cat.state = 'EATING';
               cat.stateTimer = 3.5;
-              cat.facing = LANDMARKS.bowl.x >= cat.x ? 1 : -1;
+              cat.facing = activeBowl.x >= cat.x ? 1 : -1;
               sound.playMunchPop();
             } else if (cat.state === 'SEEK_SHELTER') {
               cat.state = 'SHELTERED';
@@ -1119,7 +1145,7 @@ const world = {
               cat.stateTimer = 6;
             } else {
               cat.state = 'IDLE';
-              const onRug = Math.hypot(cat.x - LANDMARKS.rug.x, cat.y - LANDMARKS.rug.y) < 24;
+              const onRug = Math.hypot(cat.x - activeRug.x, cat.y - activeRug.y) < 24;
               cat.pose = onRug || Math.random() < 0.32 ? 'sleep' : 'sit';
               cat.stateTimer = 4 + Math.random() * 5;
             }
@@ -1230,10 +1256,10 @@ const world = {
         ct.state = 'WANDER';
         if (this.scene === 'COTTAGE') {
           const spots = [
-            { x: COTTAGE_SPOTS.sofa.x, y: COTTAGE_SPOTS.sofa.y + 4 }, // Sitting on Plush Red Sofa
-            { x: COTTAGE_SPOTS.desk.x, y: COTTAGE_SPOTS.desk.y + 6 }, // Sitting at Study Desk
-            { x: COTTAGE_SPOTS.rug.x,  y: COTTAGE_SPOTS.rug.y + 4 },  // Lounging on Crimson Rug
-            { x: COTTAGE_SPOTS.hearth.x, y: COTTAGE_SPOTS.hearth.y + 22 } // Warming by Hearth
+            { x: COTTAGE_SPOTS.sofa.x - 4, y: COTTAGE_SPOTS.sofa.y + 4 }, // Lounging on Right Sofa
+            { x: COTTAGE_SPOTS.desk.x,     y: COTTAGE_SPOTS.desk.y + 6 }, // Working at Top-Right Desk
+            { x: COTTAGE_SPOTS.rug.x,      y: COTTAGE_SPOTS.rug.y + 8 },  // Sitting on Bedside Carpet
+            { x: 412,                      y: 304 }                       // Standing by Dining Table
           ];
           const pick = spots[Math.floor(Math.random() * spots.length)];
           ct.targetX = pick.x;
@@ -1438,13 +1464,34 @@ const SPRITE_BANK = {
   campfireActive: './assets/sprites/tileSprite/3 Animated Objects/2 Campfire/2.png',
   campfireSmoke: './assets/sprites/tileSprite/3 Animated Objects/2 Campfire/1.png',
 
-  // Cozy Cottage Interior Sprite Sheets
-  interiorDemo: './assets/interior/interiors_demo.png',
-  interiorTiles: './assets/interior/tiles and items.png'
+  // New Top-Down Cozy Cottage Individual Furniture Sprites
+  intWardrobe: './assets/interior/Individual/wardrobe.png',
+  intMirror: './assets/interior/Individual/mirror.png',
+  intBedsideTable: './assets/interior/Individual/Bedside Table.png',
+  intLampOn: './assets/interior/Individual/Lamp.png',
+  intLampOff: './assets/interior/Individual/Lampoff.png',
+  intWindow: './assets/interior/Individual/window.png',
+  intDoubleBed: './assets/interior/Individual/DoubleBed.png',
+  intCarpet: './assets/interior/Individual/carpet.png',
+  intBookcase: './assets/interior/Individual/bookcase.png',
+  intBook: './assets/interior/Individual/Book.png',
+  intStudyDesk: './assets/interior/Individual/Table.png',
+  intMiniFlower: './assets/interior/Individual/minidecoflower.png',
+  intDiningTable: './assets/interior/Individual/tablebig.png',
+  intChairTop: './assets/interior/Individual/ChairF.png',
+  intChairSide1: './assets/interior/Individual/Chair1side.png',
+  intChairSide2: './assets/interior/Individual/Chair2side.png',
+  intChairBottom: './assets/interior/Individual/ChairBside.png',
+  intCoatStand: './assets/interior/Individual/coat stand.png',
+  intVaseFlower: './assets/interior/Individual/vaseflower.png',
+  intSofaSide1: './assets/interior/Individual/sofa 1side.png',
+  intSofaSide2: './assets/interior/Individual/sofa 2side.png',
+  intBoxChest: './assets/interior/Individual/Box.png',
+  intBoxBarrel: './assets/interior/Individual/Box2.png'
 };
 
 const loadedSprites = {};
-const extractedFurnitureCache = {};
+const trimmedSpriteCache = {};
 let gardenStaticCache = null;
 let cottageStaticCache = null;
 let fireGlowSprite = null;
@@ -1453,7 +1500,7 @@ let lanternGlowSprite = null;
 function invalidateSceneCaches() {
   gardenStaticCache = null;
   cottageStaticCache = null;
-  Object.keys(extractedFurnitureCache).forEach((k) => delete extractedFurnitureCache[k]);
+  Object.keys(trimmedSpriteCache).forEach((k) => delete trimmedSpriteCache[k]);
 }
 
 (function preloadGardenSprites() {
@@ -1467,135 +1514,100 @@ function invalidateSceneCaches() {
   });
 })();
 
-// Calibrated Exact Single-Object Crop Coordinates (Normalized 9x8 Grid on interiors_demo.png)
-// Verified to exclude all neighboring sprites and stray lines.
-const INTERIOR_FURNITURE_SLICES = {
-  blueWallPanel:  { gx: 0.06, gy: 0.06, gw: 1.48, gh: 1.84, keepBg: true },
-  stoneBrickWall: { gx: 1.66, gy: 0.06, gw: 1.48, gh: 1.84, keepBg: true },
-  armchairFront:  { gx: 4.66, gy: 0.08, gw: 0.92, gh: 1.28 },
-  armchairRight:  { gx: 5.72, gy: 0.08, gw: 0.80, gh: 1.28 },
-  armchairBack:   { gx: 6.84, gy: 0.08, gw: 0.90, gh: 1.28 },
-  armchairLeft:   { gx: 7.90, gy: 0.08, gw: 0.80, gh: 1.28 },
-  coffeeTable:    { gx: 0.14, gy: 2.04, gw: 1.76, gh: 1.08 },
-  blueMat:        { gx: 2.84, gy: 2.26, gw: 1.08, gh: 0.68, keepBg: true },
-  nightstand:     { gx: 4.02, gy: 2.38, gw: 0.68, gh: 0.72 },
-  cozyBed:        { gx: 6.16, gy: 1.58, gw: 1.52, gh: 2.38 },
-  wallFrame:      { gx: 0.22, gy: 4.18, gw: 0.92, gh: 1.32 },
-  crimsonRug:     { gx: 2.84, gy: 3.72, gw: 1.36, gh: 1.58, keepBg: true },
-  greenChair:     { gx: 4.30, gy: 4.20, gw: 0.58, gh: 1.08 },
-  curtainsRed:    { gx: 6.84, gy: 4.42, gw: 0.92, gh: 1.30 },
-  pottedPlant:    { gx: 7.80, gy: 4.44, gw: 0.54, gh: 1.34 },
-  sofaFront:      { gx: 0.10, gy: 6.00, gw: 1.44, gh: 1.36 },
-  sofaBack:       { gx: 2.66, gy: 6.02, gw: 1.44, gh: 1.34 },
-  booksOnFloor:   { gx: 3.92, gy: 7.36, gw: 0.95, gh: 0.52 },
-  bookshelf:      { gx: 5.76, gy: 6.04, gw: 0.92, gh: 1.80 },
-  studyDesk:      { gx: 6.86, gy: 6.24, gw: 1.42, gh: 1.52 }
-};
+// Automatically crops transparent padding around any Individual/*.png sprite
+// so every piece renders at its exact 1:1 pixel ratio and position!
+function getTrimmedSprite(key) {
+  if (trimmedSpriteCache[key]) return trimmedSpriteCache[key];
+  const img = loadedSprites[key];
+  if (!img || !img.complete || !img.naturalWidth) return null;
 
-// Perimeter BFS Flood-Fill Extractor:
-// Removes ONLY the exterior background brown from the edges of each cropped sprite,
-// stopping at the dark pixel-art outline so interior brown wood (desk, nightstand, bed, table) stays 100% solid!
-function getExtractedFurniturePiece(pieceKey) {
-  if (extractedFurnitureCache[pieceKey]) return extractedFurnitureCache[pieceKey];
-  const img = loadedSprites.interiorDemo;
-  const spec = INTERIOR_FURNITURE_SLICES[pieceKey];
-  if (!img || !img.complete || !img.naturalWidth || !spec) return null;
-
-  const sw = img.naturalWidth;
-  const sh = img.naturalHeight;
-  const cellW = sw / 9;
-  const cellH = sh / 8;
-
-  const sx = Math.max(0, Math.round(spec.gx * cellW));
-  const sy = Math.max(0, Math.round(spec.gy * cellH));
-  const cw = Math.min(sw - sx, Math.max(1, Math.round(spec.gw * cellW)));
-  const ch = Math.min(sh - sy, Math.max(1, Math.round(spec.gh * cellH)));
-
+  const w = img.naturalWidth;
+  const h = img.naturalHeight;
   const off = document.createElement('canvas');
-  off.width = cw;
-  off.height = ch;
+  off.width = w;
+  off.height = h;
   const octx = off.getContext('2d');
   octx.imageSmoothingEnabled = false;
-  octx.drawImage(img, sx, sy, cw, ch, 0, 0, cw, ch);
-
-  if (spec.keepBg) {
-    extractedFurnitureCache[pieceKey] = off;
-    return off;
-  }
+  octx.drawImage(img, 0, 0);
 
   try {
-    // Sample known background brown from open floor at (0.41, 0.25) of full sheet
-    const fullCanvas = document.createElement('canvas');
-    fullCanvas.width = 1;
-    fullCanvas.height = 1;
-    const fctx = fullCanvas.getContext('2d');
-    fctx.drawImage(img, Math.floor(sw * 0.41), Math.floor(sh * 0.25), 1, 1, 0, 0, 1, 1);
-    const bgPixel = fctx.getImageData(0, 0, 1, 1).data;
-    const bgR = bgPixel[0];
-    const bgG = bgPixel[1];
-    const bgB = bgPixel[2];
+    const d = octx.getImageData(0, 0, w, h).data;
+    let minX = w, minY = h, maxX = -1, maxY = -1;
+    let leftHalfOpaque = 0;
+    let rightHalfOpaque = 0;
 
-    const imgData = octx.getImageData(0, 0, cw, ch);
-    const d = imgData.data;
-
-    const isExteriorBg = (r, g, b) => {
-      // Never cross dark pixel-art outlines
-      if (r < 92 && g < 60 && b < 45) return false;
-      return (
-        (Math.abs(r - bgR) <= 16 && Math.abs(g - bgG) <= 16 && Math.abs(b - bgB) <= 16) ||
-        (Math.abs(r - 122) <= 14 && Math.abs(g - 72) <= 14 && Math.abs(b - 41) <= 14)
-      );
-    };
-
-    // Flood-fill ONLY from the 4 outer borders of this cropped piece
-    const visited = new Uint8Array(cw * ch);
-    const queue = new Int32Array(cw * ch);
-    let head = 0;
-    let tail = 0;
-
-    const pushIfBg = (x, y) => {
-      if (x < 0 || x >= cw || y < 0 || y >= ch) return;
-      const idx = y * cw + x;
-      if (visited[idx]) return;
-      const p = idx * 4;
-      if (isExteriorBg(d[p], d[p + 1], d[p + 2])) {
-        visited[idx] = 1;
-        queue[tail++] = idx;
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const a = d[(y * w + x) * 4 + 3];
+        if (a > 16) {
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
       }
+    }
+
+    if (maxX < minX || maxY < minY) return null;
+
+    const tw = maxX - minX + 1;
+    const th = maxY - minY + 1;
+    for (let y = minY; y <= maxY; y++) {
+      for (let x = minX; x <= maxX; x++) {
+        if (d[(y * w + x) * 4 + 3] > 80) {
+          if (x - minX < tw / 2) leftHalfOpaque++;
+          else rightHalfOpaque++;
+        }
+      }
+    }
+
+    const cropped = document.createElement('canvas');
+    cropped.width = tw;
+    cropped.height = th;
+    const cctx = cropped.getContext('2d');
+    cctx.imageSmoothingEnabled = false;
+    cctx.drawImage(off, minX, minY, tw, th, 0, 0, tw, th);
+
+    const entry = {
+      canvas: cropped,
+      w: tw,
+      h: th,
+      backrestOnRight: rightHalfOpaque >= leftHalfOpaque
     };
-
-    for (let x = 0; x < cw; x++) {
-      pushIfBg(x, 0);
-      pushIfBg(x, ch - 1);
-    }
-    for (let y = 0; y < ch; y++) {
-      pushIfBg(0, y);
-      pushIfBg(cw - 1, y);
-    }
-
-    while (head < tail) {
-      const idx = queue[head++];
-      d[idx * 4 + 3] = 0;
-      const x = idx % cw;
-      const y = (idx / cw) | 0;
-      pushIfBg(x - 1, y);
-      pushIfBg(x + 1, y);
-      pushIfBg(x, y - 1);
-      pushIfBg(x, y + 1);
-    }
-
-    octx.putImageData(imgData, 0, 0);
-  } catch (e) {}
-
-  extractedFurnitureCache[pieceKey] = off;
-  return off;
+    trimmedSpriteCache[key] = entry;
+    return entry;
+  } catch (e) {
+    const fallback = { canvas: img, w, h, backrestOnRight: true };
+    trimmedSpriteCache[key] = fallback;
+    return fallback;
+  }
 }
 
-function drawInteriorPiece(c, pieceKey, dx, dy, dw, dh) {
-  const piece = getExtractedFurniturePiece(pieceKey);
-  if (!piece) return false;
-  c.drawImage(piece, Math.round(dx), Math.round(dy), Math.round(dw), Math.round(dh));
+// Draws an individual furniture sprite at a uniform pixel scale (default 1.35x)
+// anchored at (cx = horizontal center, by = bottom floor contact Y) or top-left (x, y)
+function drawIndividualFurniture(c, key, x, y, scale = 1.35, anchorBottomCenter = false) {
+  const item = getTrimmedSprite(key);
+  if (!item) return false;
+  const dw = Math.round(item.w * scale);
+  const dh = Math.round(item.h * scale);
+  const dx = anchorBottomCenter ? Math.round(x - dw / 2) : Math.round(x);
+  const dy = anchorBottomCenter ? Math.round(y - dh) : Math.round(y);
+  c.drawImage(item.canvas, dx, dy, dw, dh);
   return true;
+}
+
+function getLeftFacingSofaKey() {
+  const s1 = getTrimmedSprite('intSofaSide1');
+  const s2 = getTrimmedSprite('intSofaSide2');
+  if (s1 && s2) return s1.backrestOnRight ? 'intSofaSide1' : 'intSofaSide2';
+  return 'intSofaSide1';
+}
+
+function getLeftFacingChairKey() {
+  const c1 = getTrimmedSprite('intChairSide1');
+  const c2 = getTrimmedSprite('intChairSide2');
+  if (c1 && c2) return c1.backrestOnRight ? 'intChairSide1' : 'intChairSide2';
+  return 'intChairSide1';
 }
 
 function getFireGlowSprite() {
@@ -2351,156 +2363,125 @@ function drawFoodBowl(c, bowlLevel, hovered) {
 function ensureCottageStaticCache() {
   if (cottageStaticCache) return cottageStaticCache;
   const off = document.createElement('canvas');
-  off.width = 600;
-  off.height = 380;
+  off.width = 400;
+  off.height = 340;
   const c = off.getContext('2d');
   c.imageSmoothingEnabled = false;
-  c.translate(-180, -110);
+  c.translate(-280, -140);
 
-  // 1. Outer Carved Cottage Border & Warm Honey-Oak Plank Floor (x = 210..750, y = 128..466)
-  c.fillStyle = '#3b1d0a';
-  c.fillRect(202, 120, 556, 354);
-  c.fillStyle = '#9c6234';
-  c.fillRect(210, 190, 540, 276);
-  c.fillStyle = '#855027';
-  for (let py = 190; py < 466; py += 16) {
-    c.fillRect(210, py, 540, 2);
+  const rx = 320;
+  const ry = 160;
+  const rw = 320;
+  const rh = 256;
+  const hallX = 436;
+  const hallW = 88;
+  const hallH = 44;
+
+  // 1. OUTER DOUBLE-BORDERED TOP-DOWN ROGUELIKE WALL CASING (Matches preview_room.png!)
+  c.fillStyle = '#0c0604';
+  c.fillRect(rx - 6, ry - 6, rw + 12, rh + 12);
+  c.fillRect(hallX - 6, ry + rh, hallW + 12, hallH + 6);
+
+  c.fillStyle = '#6e3b17';
+  c.fillRect(rx - 4, ry - 4, rw + 8, rh + 8);
+  c.fillRect(hallX - 4, ry + rh - 2, hallW + 8, hallH + 6);
+
+  c.fillStyle = '#8c5228';
+  c.fillRect(rx - 3, ry - 3, rw + 6, 2);
+  c.fillStyle = '#1a0c06';
+  c.fillRect(rx - 1, ry - 1, rw + 2, rh + 2);
+  c.fillRect(hallX - 1, ry + rh - 1, hallW + 2, hallH + 2);
+
+  // 2. VERTICAL WOODEN PLANK FLOOR (Main Room + Bottom Entrance Alcove)
+  c.fillStyle = '#9a5025';
+  c.fillRect(rx, ry + 56, rw, rh - 56);
+  c.fillRect(hallX, ry + rh - 2, hallW, hallH + 2);
+
+  // Vertical 16px Floorboard Columns & Seams
+  for (let px = rx; px <= rx + rw; px += 16) {
+    const inHall = px >= hallX && px <= hallX + hallW;
+    const colBottom = inHall ? ry + rh + hallH : ry + rh;
+    c.fillStyle = '#361708';
+    c.fillRect(px, ry + 56, 1, colBottom - (ry + 56));
+    if (px + 1 < rx + rw) {
+      c.fillStyle = '#ab5d30';
+      c.fillRect(px + 1, ry + 56, 1, colBottom - (ry + 56));
+    }
   }
-  for (let px = 210; px < 750; px += 48) {
-    c.fillRect(px, 190, 1, 276);
+
+  // Staggered Horizontal Plank Notches & Wood Grain Ticks (Authentic preview_room.png style)
+  let jointSeed = 9102;
+  const nextRand = () => {
+    jointSeed = (jointSeed * 16807) % 2147483647;
+    return (jointSeed - 1) / 2147483646;
+  };
+  for (let col = 0; col < rw / 16; col++) {
+    const cx = rx + col * 16;
+    const inHall = cx >= hallX && cx < hallX + hallW;
+    const maxY = inHall ? ry + rh + hallH - 8 : ry + rh - 6;
+    let py = ry + 68 + Math.floor(nextRand() * 22);
+    while (py < maxY) {
+      c.fillStyle = '#2a1106';
+      c.fillRect(cx, py, 16, 2);
+      c.fillStyle = '#6e3516';
+      c.fillRect(cx + 3, py - 2, 2, 1);
+      c.fillRect(cx + 10, py + 2, 3, 1);
+      py += 26 + Math.floor(nextRand() * 24);
+    }
   }
 
-  // 2. Back Wall Cream Plaster & Wood Wainscoting (y = 128..190)
-  c.fillStyle = '#f3dfc1';
-  c.fillRect(210, 128, 540, 42);
-  c.fillStyle = '#6e4223';
-  c.fillRect(210, 168, 540, 22);
-  for (let wx = 214; wx < 746; wx += 16) {
-    c.fillStyle = '#532e16';
-    c.fillRect(wx, 170, 2, 18);
+  // Dithered Threshold Shadow Fade at Bottom of Entrance Alcove (y = 432..460)
+  for (let dy = ry + rh + 14; dy < ry + rh + hallH; dy++) {
+    const progress = (dy - (ry + rh + 14)) / (hallH - 14);
+    c.fillStyle = progress > 0.65 ? '#261107' : progress > 0.35 ? '#4d2410' : '#6e3516';
+    for (let dx = hallX + 1; dx < hallX + hallW - 1; dx += 2) {
+      if ((dx + dy) % 2 === 0 || progress > 0.72) {
+        c.fillRect(dx, dy, 1, 1);
+      }
+    }
   }
-  c.fillStyle = '#3b1d0a';
-  c.fillRect(210, 167, 540, 3);
-  c.fillRect(210, 189, 540, 3);
 
-  // 3. Clean Blue Striped Accent Wallpaper Panels on Left & Right Corners (No brick bleed!)
-  drawInteriorPiece(c, 'blueWallPanel', 214, 130, 44, 37);
-  drawInteriorPiece(c, 'blueWallPanel', 702, 130, 44, 37);
-  drawInteriorPiece(c, 'wallFrame', 318, 134, 22, 28);
+  // 3. CREAM WALLPAPER WITH DITHERED DIAMOND TRIM & WOOD BASEBOARD (y = 160..216)
+  c.fillStyle = '#e8cfa6';
+  c.fillRect(rx, ry, rw, 48);
 
-  // 4. Center Cottage Door (x = 458..502, y = 130..190) + Clean Blue Doormat
-  c.fillStyle = '#3b1d0a';
-  c.fillRect(458, 130, 44, 60);
-  c.fillStyle = '#78431e';
-  c.fillRect(462, 134, 36, 56);
-  c.fillStyle = '#532e16';
-  c.fillRect(467, 139, 26, 20);
-  c.fillRect(467, 163, 26, 22);
-  c.fillStyle = '#fde047';
-  c.fillRect(491, 162, 3, 3);
-  drawInteriorPiece(c, 'blueMat', 462, 193, 36, 18);
+  // Top & Bottom Dithered Wallpaper Borders
+  c.fillStyle = '#cda97b';
+  for (let wx = rx; wx < rx + rw; wx += 2) {
+    c.fillRect(wx, ry + 2, 1, 1);
+    c.fillRect(wx + 1, ry + 4, 1, 1);
+    c.fillRect(wx, ry + 6, 1, 1);
 
-  // 5. Brick Hearth Fireplace & Twin Polaroid Tribute Mantle (x = 380, y = 190)
-  const fx = COTTAGE_SPOTS.hearth.x;
-  const fy = 190;
-  c.fillStyle = '#7f1d1d';
-  c.fillRect(fx - 28, fy - 58, 56, 60);
-  c.fillStyle = '#991b1b';
-  c.fillRect(fx - 25, fy - 55, 50, 55);
-  c.fillStyle = '#532e16';
-  c.fillRect(fx - 32, fy - 62, 64, 7);
-  c.fillStyle = '#1e1b18';
-  c.fillRect(fx - 16, fy - 28, 32, 28);
+    c.fillRect(wx, ry + 40, 1, 1);
+    c.fillRect(wx + 1, ry + 42, 1, 1);
+    c.fillRect(wx, ry + 44, 1, 1);
+  }
 
-  // Twin Mini Polaroids of Lilo & Cheeto on the Fireplace Mantle
-  c.fillStyle = '#fffdf7';
-  c.fillRect(fx - 21, fy - 52, 15, 17);
-  c.fillStyle = '#0f172a';
-  c.fillRect(fx - 19, fy - 50, 11, 10);
-  c.fillStyle = '#ffffff';
-  c.fillRect(fx - 16, fy - 46, 5, 5);
-  c.fillStyle = '#29b6f6';
-  c.fillRect(fx - 15, fy - 45, 2, 2);
+  // Baseboard Molding (y = 208..216)
+  c.fillStyle = '#261107';
+  c.fillRect(rx, ry + 48, rw, 1);
+  c.fillStyle = '#7c431e';
+  c.fillRect(rx, ry + 49, rw, 7);
+  c.fillStyle = '#261107';
+  c.fillRect(rx, ry + 56, rw, 1);
+  for (let bx = rx + 16; bx < rx + rw; bx += 16) {
+    c.fillStyle = '#45220d';
+    c.fillRect(bx, ry + 49, 1, 7);
+  }
 
-  c.fillStyle = '#fffdf7';
-  c.fillRect(fx + 6, fy - 52, 15, 17);
-  c.fillStyle = '#451a03';
-  c.fillRect(fx + 8, fy - 50, 11, 10);
-  c.fillStyle = '#ffffff';
-  c.fillRect(fx + 11, fy - 46, 5, 5);
-  c.fillStyle = '#ffb300';
-  c.fillRect(fx + 12, fy - 45, 2, 2);
-
-  // 6. Center Crimson Living Room Rug + Indoor Bowl Mat (100% clean, no chair or tile bleed!)
-  drawInteriorPiece(c, 'crimsonRug', 438, 272, 84, 68);
-  drawInteriorPiece(c, 'blueMat', 462, 396, 36, 18);
-
-  // 7. Proportionally Scaled Furniture Arranged by Room Zone:
-  // Zone A (Top-Left Library Nook): Tall Bookshelf + Solid Nightstand + Potted Plant
-  drawInteriorPiece(c, 'bookshelf', 222, 152, 30, 52);
-  drawInteriorPiece(c, 'nightstand', 256, 182, 20, 22);
-  drawInteriorPiece(c, 'pottedPlant', 426, 160, 18, 34);
-
-  // Zone B (Top-Right Bedroom Nook): Single Whole Checkered Bed + Solid Nightstand + Potted Plant
-  drawInteriorPiece(c, 'nightstand', 620, 182, 20, 22);
-  drawInteriorPiece(c, 'cozyBed', 644, 174, 48, 58);
-  drawInteriorPiece(c, 'pottedPlant', 710, 166, 18, 34);
-
-  // Zone C (Left Living Room Lounge): Plush Red Sofa + 2 Armchairs + Solid Wooden Coffee Table
-  drawInteriorPiece(c, 'sofaFront', 312, 260, 54, 38);
-  drawInteriorPiece(c, 'armchairRight', 274, 276, 26, 32);
-  drawInteriorPiece(c, 'armchairLeft', 376, 276, 26, 32);
-  drawInteriorPiece(c, 'coffeeTable', 316, 306, 46, 26);
-  drawInteriorPiece(c, 'booksOnFloor', 330, 310, 18, 10);
-
-  // Zone D (Bottom-Right Study Nook): Solid Wooden Study Desk + Chair + Reading Lamp + Plant
-  drawInteriorPiece(c, 'studyDesk', 628, 348, 52, 38);
-  drawInteriorPiece(c, 'armchairBack', 641, 368, 26, 32);
-  drawInteriorPiece(c, 'pottedPlant', 704, 346, 18, 34);
-
-  // Zone E (Bottom-Left Cat Lounge Cushion near Hearth)
-  c.fillStyle = '#4c0519';
-  c.fillRect(318, 372, 42, 22);
-  c.fillStyle = '#be123c';
-  c.fillRect(321, 374, 36, 18);
-  c.fillStyle = '#fda4af';
-  c.fillRect(326, 377, 26, 12);
+  // 4. WALL-MOUNTED DECOR & FLOOR CARPET (Background Pass)
+  // Oval Mirror on Left Back Wall
+  drawIndividualFurniture(c, 'intMirror', 392, 206, 1.35, true);
+  // Twin Windows Above the 1 Double Bed
+  drawIndividualFurniture(c, 'intWindow', 456, 200, 1.35, true);
+  drawIndividualFurniture(c, 'intWindow', 494, 200, 1.35, true);
+  // Single Window Above Right Study Desk
+  drawIndividualFurniture(c, 'intWindow', 604, 200, 1.35, true);
+  // Single Ornate Red Carpet Under the 1 Double Bed
+  drawIndividualFurniture(c, 'intCarpet', 476, 276, 1.38, true);
 
   cottageStaticCache = off;
   return off;
-}
-
-function drawCottageWindowWithCurtains(c, wx, wy, time) {
-  const isNight = world.weather === 'NIGHT';
-  const isRain = world.weather === 'RAIN';
-
-  // Window Frame & Weather-Reactive Glass Pane (Sized to match curtainsRed!)
-  c.fillStyle = '#3b1d0a';
-  c.fillRect(wx, wy, 34, 36);
-  c.fillStyle = isNight ? '#0f172a' : isRain ? '#334155' : '#38bdf8';
-  c.fillRect(wx + 3, wy + 3, 28, 30);
-
-  if (isNight) {
-    c.fillStyle = '#fde047';
-    c.fillRect(wx + 8, wy + 8, 2, 2);
-    c.fillRect(wx + 22, wy + 12, 2, 2);
-  } else if (isRain) {
-    c.fillStyle = '#bae6fd';
-    for (let rx = wx + 7; rx < wx + 28; rx += 8) {
-      c.fillRect(rx, wy + 5 + ((Math.floor(time * 22) + rx) % 20), 1, 5);
-    }
-  } else {
-    c.fillStyle = '#fde047';
-    c.fillRect(wx + 20, wy + 7, 6, 6);
-  }
-
-  // Window Mullion Crossbars
-  c.fillStyle = '#3b1d0a';
-  c.fillRect(wx + 16, wy + 3, 2, 30);
-  c.fillRect(wx + 3, wy + 17, 28, 2);
-
-  // Drape Red Curtains Directly Over the Window!
-  drawInteriorPiece(c, 'curtainsRed', wx - 2, wy - 2, 38, 42);
 }
 
 function drawCottageInteriorScenery(c, time) {
@@ -2512,40 +2493,111 @@ function drawCottageInteriorScenery(c, time) {
   const viewRight = Math.max(960, camera.x + halfViewW + 80);
   const viewBottom = Math.max(600, camera.y + halfViewH + 80);
 
-  c.fillStyle = '#1c120c';
+  // 1. Top-Down Roguelike Dark Void Surround (#1d1a1f)
+  c.fillStyle = '#1d1a1f';
   c.fillRect(viewLeft, viewTop, viewRight - viewLeft, viewBottom - viewTop);
 
+  // 2. Blit Pre-Rendered Cottage Room Island
   const cache = ensureCottageStaticCache();
-  c.drawImage(cache, 180, 110);
+  c.drawImage(cache, 280, 140);
+}
 
-  // Two Matching Curtained Windows on Left & Right Back Wall
-  drawCottageWindowWithCurtains(c, 272, 132, time);
-  drawCottageWindowWithCurtains(c, 556, 132, time);
+// Builds Depth-Sorted Furniture Renderables for the Cottage (Matches preview_room.png with 1 Bed!)
+function getCottageFurnitureRenderables(ctx, time) {
+  const isNightOrRain = world.weather === 'NIGHT' || world.weather === 'RAIN';
+  const lampKey = isNightOrRain ? 'intLampOn' : 'intLampOff';
+  const sofaKey = getLeftFacingSofaKey();
+  const sideChairKey = getLeftFacingChairKey();
 
-  // Animated Crackling Hearth Fire & Warm Glow
-  const fx = COTTAGE_SPOTS.hearth.x;
-  const fy = 190;
-  drawLoadedSprite(c, 'campfireActive', fx - 16, fy - 30, 32, 32, time);
-  c.save();
-  c.globalAlpha = Math.sin(time * 7) * 0.05 + 0.26;
-  c.drawImage(getFireGlowSprite(), fx - 48, fy - 42, 96, 96);
-  c.restore();
-
-  if (world.pointer.hoveredEntity === 'shrine') {
-    c.font = 'bold 7px Quicksand, sans-serif';
-    c.textAlign = 'center';
-    c.fillStyle = 'rgba(24, 16, 10, 0.88)';
-    c.fillRect(fx - 46, fy - 76, 92, 11);
-    c.fillStyle = '#fde68a';
-    c.fillText('Lilo & Cheeto Mantle', fx, fy - 68);
-  }
+  return [
+    // 1. Top-Left Wardrobe
+    {
+      y: 224,
+      draw: () => drawIndividualFurniture(ctx, 'intWardrobe', 350, 224, 1.35, true)
+    },
+    // 2. Bedside Table + Lamp on Top (Lamp glows warmly at night/rain!)
+    {
+      y: 230,
+      draw: () => {
+        drawIndividualFurniture(ctx, 'intBedsideTable', 422, 230, 1.35, true);
+        drawIndividualFurniture(ctx, lampKey, 422, 214, 1.35, true);
+        if (isNightOrRain) {
+          ctx.save();
+          ctx.globalAlpha = Math.sin(time * 5) * 0.04 + 0.22;
+          ctx.drawImage(getLanternGlowSprite(), 422 - 36, 206 - 36, 72, 72);
+          ctx.restore();
+        }
+      }
+    },
+    // 3. The 1 Bed: DoubleBed Centered Over the Carpet
+    {
+      y: 254,
+      draw: () => drawIndividualFurniture(ctx, 'intDoubleBed', 476, 254, 1.35, true)
+    },
+    // 4. Bookcase + Stack of Books in Front-Right Corner
+    {
+      y: 232,
+      draw: () => {
+        drawIndividualFurniture(ctx, 'intBookcase', 544, 228, 1.35, true);
+        drawIndividualFurniture(ctx, 'intBook', 566, 240, 1.35, true);
+        if (world.pointer.hoveredEntity === 'shrine') {
+          ctx.font = 'bold 7px Quicksand, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = 'rgba(24, 16, 10, 0.88)';
+          ctx.fillRect(544 - 44, 164, 88, 11);
+          ctx.fillStyle = '#fde68a';
+          ctx.fillText('Lilo & Cheeto Album', 544, 172);
+        }
+      }
+    },
+    // 5. Top-Right Study Desk + Mini Deco Succulent on Top-Left Corner
+    {
+      y: 242,
+      draw: () => {
+        drawIndividualFurniture(ctx, 'intStudyDesk', 604, 240, 1.35, true);
+        drawIndividualFurniture(ctx, 'intMiniFlower', 588, 219, 1.35, true);
+      }
+    },
+    // 6. Left Dining Table Set (Top Chair & Right Chair behind table, Table, Bottom Chair in front)
+    {
+      y: 332,
+      draw: () => {
+        drawIndividualFurniture(ctx, 'intChairTop', 364, 286, 1.35, true);
+        drawIndividualFurniture(ctx, sideChairKey, 392, 316, 1.35, true);
+        drawIndividualFurniture(ctx, 'intDiningTable', 364, 326, 1.35, true);
+        drawIndividualFurniture(ctx, 'intChairBottom', 364, 340, 1.35, true);
+      }
+    },
+    // 7.Right Wall Flower Vase + Cream Sofa
+    {
+      y: 298,
+      draw: () => drawIndividualFurniture(ctx, 'intVaseFlower', 612, 294, 1.35, true)
+    },
+    {
+      y: 364,
+      draw: () => drawIndividualFurniture(ctx, sofaKey, 612, 364, 1.35, true)
+    },
+    // 8. Bottom-Left Coat Stand Near Entrance Hallway
+    {
+      y: 396,
+      draw: () => drawIndividualFurniture(ctx, 'intCoatStand', 406, 396, 1.35, true)
+    },
+    // 9. Bottom-Right Storage Box & Barrel
+    {
+      y: 398,
+      draw: () => {
+        drawIndividualFurniture(ctx, 'intBoxChest', 572, 398, 1.35, true);
+        drawIndividualFurniture(ctx, 'intBoxBarrel', 614, 398, 1.35, true);
+      }
+    }
+  ];
 }
 
 function drawGardenScene(time = 0) {
   if (!canvas || !ctx) return;
   ctx.imageSmoothingEnabled = false;
   const isCottage = world.scene === 'COTTAGE';
-  ctx.fillStyle = isCottage ? '#1c120c' : '#224426';
+  ctx.fillStyle = isCottage ? '#1d1a1f' : '#224426';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   const scale = camera.getEffectiveScale();
@@ -2583,8 +2635,9 @@ function drawGardenScene(time = 0) {
     }))
   ];
 
-  // Strictly include outdoor-only landmarks when in GARDEN mode!
-  if (!isCottage) {
+  if (isCottage) {
+    renderables.push(...getCottageFurnitureRenderables(ctx, time));
+  } else {
     renderables.push(
       {
         y: LANDMARKS.shrine.y,
@@ -2711,34 +2764,53 @@ function handleCanvasTap(clientX, clientY, isTouch = false) {
     return;
   }
 
-  // Tapping Caretaker calls the cats over
   if (world.caretaker && Math.hypot(pt.x - world.caretaker.x, pt.y - (world.caretaker.y - 12)) <= 20 * touchMult) {
     world.callCatsToCaretaker();
     return;
   }
 
   if (world.scene === 'COTTAGE') {
-    if (Math.hypot(pt.x - COTTAGE_SPOTS.hearth.x, pt.y - 165) <= 38 * touchMult) {
+    // Tapping Bookcase / Photo Album opens Tribute Modal
+    if (Math.hypot(pt.x - COTTAGE_SPOTS.hearth.x, pt.y - (COTTAGE_SPOTS.hearth.y - 18)) <= COTTAGE_SPOTS.hearth.radius * touchMult) {
       openModal('tribute-modal');
       return;
     }
+    // Tapping Indoor Ceramic Bowl refills food
     if (Math.hypot(pt.x - COTTAGE_SPOTS.bowl.x, pt.y - COTTAGE_SPOTS.bowl.y) <= COTTAGE_SPOTS.bowl.radius * touchMult) {
       world.feedBowl();
       return;
     }
-  } else {
-    if (Math.hypot(pt.x - LANDMARKS.shrine.x, pt.y - (LANDMARKS.shrine.y - 10)) <= LANDMARKS.shrine.radius * touchMult) {
-      openModal('tribute-modal');
+    // Tapping Bottom-Center Entrance Alcove steps back outside to the Garden
+    if (pt.x >= 432 && pt.x <= 528 && pt.y >= 408 && pt.y <= 466) {
+      world.toggleScene();
       return;
     }
-
-    if (Math.hypot(pt.x - LANDMARKS.bowl.x, pt.y - LANDMARKS.bowl.y) <= LANDMARKS.bowl.radius * touchMult) {
-      world.feedBowl();
-      return;
+    // Tapping open floor inside the Cottage guides a cat over
+    if (pt.x >= 340 && pt.x <= 620 && pt.y >= 232 && pt.y <= 408) {
+      const cat = world.cats[Math.floor(Math.random() * Math.min(2, world.cats.length))];
+      if (cat && cat.state !== 'EATING') {
+        cat.state = 'WANDER';
+        cat.pose = 'sit';
+        cat.targetX = Math.max(COTTAGE_BOUNDS.minX, Math.min(COTTAGE_BOUNDS.maxX, pt.x));
+        cat.targetY = Math.max(COTTAGE_BOUNDS.minY, Math.min(COTTAGE_BOUNDS.maxY, pt.y));
+        cat.labelAlpha = 1.4;
+        world.spawnHeart(pt.x, pt.y, 'sparkle');
+      }
     }
+    return;
   }
 
-  // Tapping the top Cottage Door / Gate transitions between Garden & Cottage
+  if (Math.hypot(pt.x - LANDMARKS.shrine.x, pt.y - (LANDMARKS.shrine.y - 10)) <= LANDMARKS.shrine.radius * touchMult) {
+    openModal('tribute-modal');
+    return;
+  }
+
+  if (Math.hypot(pt.x - LANDMARKS.bowl.x, pt.y - LANDMARKS.bowl.y) <= LANDMARKS.bowl.radius * touchMult) {
+    world.feedBowl();
+    return;
+  }
+
+  // Tapping the top Garden Gate steps inside the Cottage
   if (pt.x >= 450 && pt.x <= 510 && pt.y >= 110 && pt.y <= 195) {
     world.toggleScene();
     return;
