@@ -1,37 +1,98 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout android:background="@android:color/transparent" android:id="@+id/comp_widget_root" android:layout_height="match_parent" android:layout_width="match_parent" xmlns:android="http://schemas.android.com/apk/res/android">
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/comp_widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent">
 
-    <RelativeLayout android:layout_gravity="center" android:layout_height="154dp" android:layout_width="match_parent">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="154dp"
+        android:layout_gravity="center">
 
-        <!-- Hidden TextClock triggers launcher minute broadcasts while Canvas draws 100% pixel font -->
-        <TextClock android:alpha="0" android:id="@+id/comp_clock" android:layout_height="1dp" android:layout_width="1dp"/>
+        <TextClock
+            android:id="@+id/comp_clock"
+            android:layout_width="1dp"
+            android:layout_height="1dp"
+            android:alpha="0" />
 
-        <ViewFlipper android:autoStart="true" android:flipInterval="280" android:id="@+id/comp_flipper" android:layout_centerInParent="true" android:layout_height="match_parent" android:layout_width="match_parent">
+        <!-- LAYER 1: 64-Frame Pixel Animation Loop @ 4 FPS (250ms) -->
+        <ViewFlipper
+            android:id="@+id/comp_flipper"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true"
+            android:autoStart="true"
+            android:flipInterval="250" />
 
-            <ImageView android:id="@+id/comp_frame_0" android:layout_height="match_parent" android:layout_width="match_parent" android:scaleType="fitCenter"/>
+        <!-- LAYER 2: High-Res Solid Typography Overlay (Updated via partiallyUpdateAppWidget on minute ticks) -->
+        <ImageView
+            android:id="@+id/comp_hud_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true"
+            android:scaleType="fitCenter" />
 
-            <ImageView android:id="@+id/comp_frame_1" android:layout_height="match_parent" android:layout_width="match_parent" android:scaleType="fitCenter"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:weightSum="100">
 
-            <ImageView android:id="@+id/comp_frame_2" android:layout_height="match_parent" android:layout_width="match_parent" android:scaleType="fitCenter"/>
+            <FrameLayout
+                android:id="@+id/comp_left_frame"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="45"
+                android:background="@android:color/transparent" />
 
-            <ImageView android:id="@+id/comp_frame_3" android:layout_height="match_parent" android:layout_width="match_parent" android:scaleType="fitCenter"/>
-        </ViewFlipper>
+            <LinearLayout
+                android:id="@+id/comp_right_panel"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="55"
+                android:orientation="vertical"
+                android:paddingLeft="8dp"
+                android:paddingTop="32dp"
+                android:paddingRight="12dp"
+                android:paddingBottom="10dp"
+                android:weightSum="100">
 
-        <LinearLayout android:layout_height="match_parent" android:layout_width="match_parent" android:orientation="horizontal" android:weightSum="100">
+                <FrameLayout
+                    android:id="@+id/comp_clock_hotspot"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="66"
+                    android:background="@android:color/transparent" />
 
-            <FrameLayout android:background="@android:color/transparent" android:id="@+id/comp_left_frame" android:layout_height="match_parent" android:layout_weight="45" android:layout_width="0dp"/>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="34"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:weightSum="100">
 
-            <LinearLayout android:id="@+id/comp_right_panel" android:layout_height="match_parent" android:layout_weight="55" android:layout_width="0dp" android:orientation="vertical" android:paddingBottom="10dp" android:paddingLeft="8dp" android:paddingRight="12dp" android:paddingTop="32dp" android:weightSum="100">
+                    <FrameLayout
+                        android:id="@+id/comp_weather_hotspot"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="56"
+                        android:background="@android:color/transparent" />
 
-                <FrameLayout android:background="@android:color/transparent" android:id="@+id/comp_clock_hotspot" android:layout_height="0dp" android:layout_weight="66" android:layout_width="match_parent"/>
+                    <FrameLayout
+                        android:id="@+id/comp_btn_action"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="22"
+                        android:background="@android:color/transparent" />
 
-                <LinearLayout android:gravity="center_vertical" android:layout_height="0dp" android:layout_weight="34" android:layout_width="match_parent" android:orientation="horizontal" android:weightSum="100">
-
-                    <FrameLayout android:background="@android:color/transparent" android:id="@+id/comp_weather_hotspot" android:layout_height="match_parent" android:layout_weight="56" android:layout_width="0dp"/>
-
-                    <FrameLayout android:background="@android:color/transparent" android:id="@+id/comp_btn_action" android:layout_height="match_parent" android:layout_weight="22" android:layout_width="0dp"/>
-
-                    <FrameLayout android:background="@android:color/transparent" android:id="@+id/comp_btn_switch_cat" android:layout_height="match_parent" android:layout_weight="22" android:layout_width="0dp"/>
+                    <FrameLayout
+                        android:id="@+id/comp_btn_switch_cat"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="22"
+                        android:background="@android:color/transparent" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>

@@ -5,43 +5,22 @@
     android:layout_height="match_parent"
     android:background="@android:color/transparent">
 
-    <!-- Auto-cycling 4-frame VSCode-Pets Style Animator (280ms per frame) -->
+    <!-- LAYER 1: 64-Frame Garden Sandbox Animator @ 4 FPS (250ms per frame) -->
     <ViewFlipper
         android:id="@+id/widget_flipper"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_centerInParent="true"
         android:autoStart="true"
-        android:flipInterval="280">
+        android:flipInterval="250" />
 
-        <ImageView
-            android:id="@+id/widget_frame_0"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:contentDescription="@string/widget_name"
-            android:scaleType="fitCenter" />
-
-        <ImageView
-            android:id="@+id/widget_frame_1"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:contentDescription="@string/widget_name"
-            android:scaleType="fitCenter" />
-
-        <ImageView
-            android:id="@+id/widget_frame_2"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:contentDescription="@string/widget_name"
-            android:scaleType="fitCenter" />
-
-        <ImageView
-            android:id="@+id/widget_frame_3"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:contentDescription="@string/widget_name"
-            android:scaleType="fitCenter" />
-    </ViewFlipper>
+    <!-- LAYER 2: High-Res Solid Typography Overlay -->
+    <ImageView
+        android:id="@+id/widget_hud_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerInParent="true"
+        android:scaleType="fitCenter" />
 
     <!-- Bottom 4-Button Stardew Hotbar (Pet | Feed | Sky/Act | +Cat) -->
     <LinearLayout
@@ -79,5 +58,4 @@
             android:layout_weight="1"
             android:background="@android:color/transparent" />
     </LinearLayout>
-
 </RelativeLayout>

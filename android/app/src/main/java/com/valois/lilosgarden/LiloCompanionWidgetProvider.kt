@@ -25,6 +25,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import kotlin.math.sin
 
 class LiloCompanionWidgetProvider : AppWidgetProvider() {
 
@@ -33,8 +34,9 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
+        WeatherSyncHelper.syncIfStale(context)
         for (appWidgetId in appWidgetIds) {
-            updateCompanionWidget(context, appWidgetManager, appWidgetId)
+            updateCompanionWidget(context, appWidgetManager, appWidgetId, fullUpdate = true)
         }
         scheduleNextMinuteTick(context)
     }
@@ -46,7 +48,7 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
         newOptions: Bundle?
     ) {
         super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
-        updateCompanionWidget(context, appWidgetManager, appWidgetId)
+        updateCompanionWidget(context, appWidgetManager, appWidgetId, fullUpdate = true)
     }
 
     override fun onDisabled(context: Context) {
@@ -69,7 +71,7 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                 val cur = prefs.getString(key, "GROOM") ?: "GROOM"
                 val next = poses[(poses.indexOf(cur) + 1) % poses.size]
                 prefs.edit().putString(key, next).apply()
-                refreshAllCompanionWidgets(context)
+                refreshAllCompanionWidgets(context, fullUpdate = true)
             }
             ACTION_COMP_SWITCH_CAT -> {
                 val roster = getAvailableCats(prefs)
@@ -79,12 +81,13 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                     .putInt(key, nextIdx)
                     .remove("preferred_comp_cat_id")
                     .apply()
-                refreshAllCompanionWidgets(context)
+                refreshAllCompanionWidgets(context, fullUpdate = true)
             }
             ACTION_COMP_TICK,
             Intent.ACTION_TIME_CHANGED,
             Intent.ACTION_TIMEZONE_CHANGED -> {
-                refreshAllCompanionWidgets(context)
+                WeatherSyncHelper.syncIfStale(context)
+                refreshAllCompanionWidgets(context, fullUpdate = false)
                 scheduleNextMinuteTick(context)
             }
         }
@@ -94,6 +97,8 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
         const val ACTION_COMP_POSE = "com.valois.lilosgarden.ACTION_COMP_POSE"
         const val ACTION_COMP_SWITCH_CAT = "com.valois.lilosgarden.ACTION_COMP_SWITCH_CAT"
         const val ACTION_COMP_TICK = "com.valois.lilosgarden.ACTION_COMP_TICK"
+
+        private const val TOTAL_FRAMES = 64
 
         data class CatSpec(
             val id: String,
@@ -140,14 +145,14 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
             } catch (e: Exception) {}
         }
 
-        fun refreshAllCompanionWidgets(context: Context) {
+        fun refreshAllCompanionWidgets(context: Context, fullUpdate: Boolean = true) {
             try {
                 val manager = AppWidgetManager.getInstance(context)
                 val ids = manager.getAppWidgetIds(
                     ComponentName(context, LiloCompanionWidgetProvider::class.java)
                 )
                 for (id in ids) {
-                    updateCompanionWidget(context, manager, id)
+                    updateCompanionWidget(context, manager, id, fullUpdate)
                 }
             } catch (e: Exception) {}
         }
@@ -194,7 +199,7 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
             }
         }
 
-        private fun loadPixelTypeface(context: Context, allCaps: Boolean = false): Typeface {
+        private fun loadPixelTypeface(context: Context): Typeface {
             try {
                 return Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew_Valley.ttf")
             } catch (e: Exception) {}
@@ -210,7 +215,8 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
         fun updateCompanionWidget(
             context: Context,
             appWidgetManager: AppWidgetManager,
-            appWidgetId: Int
+            appWidgetId: Int,
+            fullUpdate: Boolean = true
         ) {
             try {
                 val views = RemoteViews(context.packageName, R.layout.lilo_companion_widget)
@@ -229,7 +235,7 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                 val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
                 val isNight = hour < 6 || hour >= 19
                 val weather = prefs.getString("weather", if (isNight) "NIGHT" else "SUNNY") ?: "SUNNY"
-                val tempC = prefs.getInt("tempC", if (isNight) 19 else 25)
+                val tempC = prefs.getInt("tempC", if (isNight) 24 else 29)
 
                 val nowDate = Date()
                 val is24Hour = DateFormat.is24HourFormat(context)
@@ -237,79 +243,85 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                 val timeStr = SimpleDateFormat(timePattern, Locale.getDefault()).format(nowDate).uppercase(Locale.getDefault())
                 val dateStr = SimpleDateFormat("EEE, MMM d", Locale.getDefault()).format(nowDate)
 
+                val pixelFont = loadPixelTypeface(context)
+
+                // LAYER 2: High-Res Solid Typography Overlay (440x224 ARGB_8888, 1 single bitmap)
+                val hudBmp = Bitmap.createBitmap(440, 224, Bitmap.Config.ARGB_8888)
+                val hudCanvas = Canvas(hudBmp)
+                val tp = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    typeface = pixelFont
+                    isFakeBoldText = true
+                }
+
+                val poseLabel = when (pose) {
+                    "GROOM" -> "Grooming"
+                    "SLEEP" -> "Sleeping"
+                    else -> "Lounging"
+                }
+
+                // 1. Top Scroll Banner Title
+                tp.textSize = 18f
+                tp.color = Color.parseColor("#3b1d0a")
+                tp.textAlign = Paint.Align.LEFT
+                hudCanvas.drawText("${cat.name} • $poseLabel", 232f, 40f, tp)
+
+                // 2. Solid Bold Pixel Clock Time & Date inside Parchment Plaque
+                tp.textSize = 31f
+                tp.color = Color.parseColor("#ffefc7")
+                hudCanvas.drawText(timeStr, 230f, 102f, tp)
+                tp.color = Color.parseColor("#3b1d0a")
+                hudCanvas.drawText(timeStr, 228f, 100f, tp)
+
+                tp.textSize = 17f
+                tp.color = Color.parseColor("#ffefc7")
+                hudCanvas.drawText(dateStr, 230f, 128f, tp)
+                tp.color = Color.parseColor("#6e3f1d")
+                hudCanvas.drawText(dateStr, 228f, 126f, tp)
+
+                // 3. Weather Badge inside Bottom-Left of Clock Plaque
+                val weatherShort = when (weather) {
+                    "RAIN" -> "Rain"
+                    "NIGHT" -> "Night"
+                    "CLOUDY" -> "Cloudy"
+                    else -> "Sunny"
+                }
+                tp.textSize = 16.5f
+                tp.color = Color.parseColor("#0369a1")
+                tp.textAlign = Paint.Align.LEFT
+                hudCanvas.drawText("${tempC}°C $weatherShort", 240f, 178f, tp)
+
+                views.setImageViewBitmap(R.id.comp_hud_overlay, hudBmp)
+
+                val lastSigKey = "comp_last_sig_$appWidgetId"
+                val curSig = "${cat.id}_${pose}_$weather"
+                val prevSig = prefs.getString(lastSigKey, "")
+
+                if (!fullUpdate && prevSig == curSig) {
+                    appWidgetManager.partiallyUpdateAppWidget(appWidgetId, views)
+                    return
+                }
+                prefs.edit().putString(lastSigKey, curSig).apply()
+
+                // LAYER 1: Build 64-Frame Animation Loop @ 286x146 RGB_565
                 val grassTileBmp = loadAssetBitmap(context, "assets/sprites/tileSprite/1 Tiles/FieldsTile_38.png")
                 val bushBmp = loadAssetBitmap(context, "assets/sprites/tileSprite/2 Objects/9 Bush/1.png")
                 val flowerBmp = loadAssetBitmap(context, "assets/sprites/tileSprite/2 Objects/6 Flower/3.png")
                 val stoneBmp = loadAssetBitmap(context, "assets/sprites/tileSprite/2 Objects/4 Stone/7.png")
 
-                val pixelCapsFont = loadPixelTypeface(context, allCaps = true)
-                val pixelRegFont = loadPixelTypeface(context, allCaps = false)
-
-                val frameIds = intArrayOf(
-                    R.id.comp_frame_0,
-                    R.id.comp_frame_1,
-                    R.id.comp_frame_2,
-                    R.id.comp_frame_3
-                )
-
-                for (f in 0..3) {
+                views.removeAllViews(R.id.comp_flipper)
+                for (f in 0 until TOTAL_FRAMES) {
                     val raw = drawStardewCompanionHudPixelPass(
                         f, cat, pose, weather,
                         grassTileBmp, bushBmp, flowerBmp, stoneBmp
                     )
-                    val scaledRaw = Bitmap.createScaledBitmap(raw, 440, 224, false)
-                    val scaled = (if (scaledRaw.isMutable) scaledRaw else scaledRaw.copy(Bitmap.Config.ARGB_8888, true)) ?: scaledRaw
+                    val scaled = Bitmap.createScaledBitmap(raw, 286, 146, false)
                     raw.recycle()
-                    if (scaledRaw != scaled) scaledRaw.recycle()
+                    val frameBmp = scaled.copy(Bitmap.Config.RGB_565, false) ?: scaled
+                    if (frameBmp != scaled) scaled.recycle()
 
-                    val hiCanvas = Canvas(scaled)
-                    val tp = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                        isFakeBoldText = true
-                    }
-
-                    val poseLabel = when (pose) {
-                        "GROOM" -> "Grooming"
-                        "SLEEP" -> "Sleeping"
-                        else -> "Lounging"
-                    }
-
-                    // 1. Top Scroll Banner Title
-                    tp.typeface = pixelRegFont
-                    tp.textSize = 18f
-                    tp.color = Color.parseColor("#3b1d0a")
-                    tp.textAlign = Paint.Align.LEFT
-                    hiCanvas.drawText("${cat.name} • $poseLabel", 232f, 40f, tp)
-
-                    // 2. Bold Pixel Clock Time & Date inside Parchment Plaque
-                    tp.typeface = pixelCapsFont
-                    tp.textSize = 31f
-                    tp.color = Color.parseColor("#ffefc7")
-                    hiCanvas.drawText(timeStr, 230f, 102f, tp)
-                    tp.color = Color.parseColor("#3b1d0a")
-                    hiCanvas.drawText(timeStr, 228f, 100f, tp)
-
-                    tp.typeface = pixelRegFont
-                    tp.textSize = 17f
-                    tp.color = Color.parseColor("#ffefc7")
-                    hiCanvas.drawText(dateStr, 230f, 128f, tp)
-                    tp.color = Color.parseColor("#6e3f1d")
-                    hiCanvas.drawText(dateStr, 228f, 126f, tp)
-
-                    // 3. Weather Badge inside Bottom-Left of Clock Plaque
-                    val weatherShort = when (weather) {
-                        "RAIN" -> "Rain"
-                        "NIGHT" -> "Night"
-                        "CLOUDY" -> "Cloudy"
-                        else -> "Sunny"
-                    }
-                    tp.textSize = 16.5f
-                    tp.color = Color.parseColor("#0369a1")
-                    tp.textAlign = Paint.Align.LEFT
-                    hiCanvas.drawText("${tempC}°C $weatherShort", 240f, 178f, tp)
-
-                    val safeBmp = scaled.copy(Bitmap.Config.RGB_565, false) ?: scaled
-                    if (safeBmp != scaled) scaled.recycle()
-                    views.setImageViewBitmap(frameIds[f], safeBmp)
+                    val frameViews = RemoteViews(context.packageName, R.layout.widget_flipper_frame)
+                    frameViews.setImageViewBitmap(R.id.frame_img, frameBmp)
+                    views.addView(R.id.comp_flipper, frameViews)
                 }
 
                 grassTileBmp?.recycle()
@@ -414,12 +426,15 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
             }
             px(nookX, nookY, nookW, 20, skyCol)
             if (isNight) {
-                px(nookX + 12, nookY + 4, 2, 2, if (frame % 2 == 0) "#fde047" else "#ffffff")
-                px(nookX + 44, nookY + 6, 1, 1, "#bae6fd")
+                val tw1 = (frame % 12) < 6
+                val tw2 = ((frame + 6) % 12) < 6
+                px(nookX + 12, nookY + 4, if (tw1) 2 else 1, if (tw1) 2 else 1, "#fde047")
+                px(nookX + 44, nookY + 6, if (tw2) 2 else 1, if (tw2) 2 else 1, "#bae6fd")
                 drawPixelMoonIcon(c, p, nookX + 70, nookY + 4, "#fde047")
             } else if (!isRain) {
                 drawPixelSunIcon(c, p, nookX + 70, nookY + 4, "#fde047")
-                px(nookX + 16 + frame, nookY + 6, 10, 3, "#e0f2fe")
+                val cloudX = nookX + ((frame * 2) % 96) - 12
+                px(cloudX.coerceIn(nookX, nookX + nookW - 10), nookY + 6, 10, 3, "#e0f2fe")
             }
 
             px(nookX, nookY + 16, nookW, 10, "#2d5c2b")
@@ -459,6 +474,17 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                 c.drawBitmap(stoneBmp, null, Rect(nookX + 68, nookY + 50, nookX + 80, nookY + 60), p)
             }
 
+            // Passing Butterfly or Firefly in the Nook Lawn
+            if (!isRain) {
+                val crX = nookX + 14 + ((frame * 2) % 64)
+                val crY = nookY + 42 + (sin(frame * 0.3).toFloat() * 4f).toInt()
+                if (isNight) {
+                    if (frame % 3 != 0) px(crX, crY, 2, 2, "#fde047")
+                } else {
+                    px(crX, crY, if (frame % 2 == 0) 3 else 1, 2, "#f472b6")
+                }
+            }
+
             // Cozy Gazebo Cedar Deck in Foreground
             px(nookX, nookY + 64, nookW, 3, "#3b1d0a")
             px(nookX, nookY + 67, nookW, 29, "#78431e")
@@ -469,28 +495,30 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
             // Post-Free Pixel Lantern Sitting on the Cedar Deck Beside the Cat Bed
             val lanX = nookX + 10
             val lanY = nookY + 68
-            px(lanX + 2, lanY - 2, 4, 2, "#3b1d0a") // Lantern top handle ring
-            px(lanX, lanY, 8, 2, "#1e1e24")         // Lantern iron roof cap
-            px(lanX + 1, lanY + 2, 6, 7, "#1e1e24") // Lantern frame
-            px(lanX + 2, lanY + 3, 4, 5, if (frame % 2 == 0) "#fef08a" else "#fde047") // Warm glowing core
-            px(lanX, lanY + 9, 8, 2, "#1e1e24")     // Lantern iron base
+            px(lanX + 2, lanY - 2, 4, 2, "#3b1d0a")
+            px(lanX, lanY, 8, 2, "#1e1e24")
+            px(lanX + 1, lanY + 2, 6, 7, "#1e1e24")
+            px(lanX + 2, lanY + 3, 4, 5, if ((frame / 2) % 2 == 0) "#fef08a" else "#fde047")
+            px(lanX, lanY + 9, 8, 2, "#1e1e24")
 
+            val glowRadius = 17f + sin(frame * 0.4).toFloat() * 2f
             val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG)
             glowPaint.shader = RadialGradient(
-                (lanX + 4).toFloat(), (lanY + 5).toFloat(), 18f,
+                (lanX + 4).toFloat(), (lanY + 5).toFloat(), glowRadius,
                 Color.argb(95, 253, 224, 71), Color.argb(0, 253, 224, 71),
                 Shader.TileMode.CLAMP
             )
-            c.drawCircle((lanX + 4).toFloat(), (lanY + 5).toFloat(), 18f, glowPaint)
+            c.drawCircle((lanX + 4).toFloat(), (lanY + 5).toFloat(), glowRadius, glowPaint)
 
             if (flowerBmp != null) {
-                c.drawBitmap(flowerBmp, null, Rect(nookX + 72, nookY + 38, nookX + 82, nookY + 48), p)
-                c.drawBitmap(flowerBmp, null, Rect(nookX + 20, nookY + 48, nookX + 28, nookY + 56), p)
+                val bob = if ((frame / 4) % 2 == 0) 0 else -1
+                c.drawBitmap(flowerBmp, null, Rect(nookX + 72, nookY + 38 + bob, nookX + 82, nookY + 48 + bob), p)
+                c.drawBitmap(flowerBmp, null, Rect(nookX + 20, nookY + 48 - bob, nookX + 28, nookY + 56 - bob), p)
             }
 
             if (isRain) {
                 for (rx in (nookX + 8) until (nookX + nookW - 6) step 14) {
-                    val ry = nookY + 8 + ((frame * 7 + rx) % 45)
+                    val ry = nookY + 8 + ((frame * 6 + rx) % 45)
                     px(rx, ry, 1, 5, "#bae6fd")
                 }
             }
@@ -511,8 +539,10 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
 
             drawRefinedCatOnBed(c, p, bedX, bedY - 2, frame, cat, pose)
 
-            val floatY = 44 - (frame * 2)
-            drawPixelHeart(c, p, 34, floatY, if (cat.id == "cheeto") "#ffb300" else "#fb7185")
+            val floatY = 48 - ((frame % 16) * 1)
+            if (pose != "SLEEP" && (frame % 16) < 12) {
+                drawPixelHeart(c, p, 34, floatY, if (cat.id == "cheeto") "#ffb300" else "#fb7185")
+            }
 
             // 3. CENTER CARVED WOODEN DIVIDER
             px(96, 6, 5, h - 12, "#3b1d0a")
@@ -594,7 +624,7 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
             }
 
             if (pose == "SLEEP") {
-                val breath = if (frame % 2 == 0) 0 else 1
+                val breath = if ((frame / 4) % 2 == 0) 0 else 1
                 r(-7, -6 + breath, 14, 6, cat.coat)
                 r(-6, -7 + breath, 12, 2, cat.coat)
                 r(-7, -2, 14, 2, cat.shade)
@@ -614,7 +644,7 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                     r(0, -4 + breath, 3, 1, cat.collar)
                     r(2, -3 + breath, 1, 1, "#fde047")
                 }
-                val zy = -13 - frame
+                val zy = -13 - ((frame % 16) / 2)
                 r(7, zy, 3, 1, "#bae6fd")
                 r(8, zy + 1, 1, 1, "#bae6fd")
                 r(7, zy + 2, 3, 1, "#bae6fd")
@@ -623,8 +653,8 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
             }
 
             val isGroom = pose == "GROOM"
-            val headDip = if (isGroom && (frame == 1 || frame == 2)) 1 else 0
-            val tailWagY = if (frame == 0) -1 else if (frame == 2) 1 else 0
+            val headDip = if (isGroom && (frame % 8 in 2..5)) 1 else 0
+            val tailWagY = if (frame % 8 in 0..1) -1 else if (frame % 8 in 4..5) 1 else 0
 
             r(-8, -7, 2, 3, cat.coat)
             r(-9, -10 + tailWagY, 2, 4, cat.coat)
@@ -651,7 +681,7 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
             r(-2, -2, 2, 2, cat.coat)
             r(1, -2, 2, 2, cat.shade)
             if (isGroom) {
-                val pawY = if (frame == 1 || frame == 2) -8 else -6
+                val pawY = if (frame % 8 in 2..5) -8 else -6
                 r(6, pawY, 2, 2, cat.coat)
                 r(7, pawY, 1, 1, "#ff9ebb")
             } else {
@@ -667,7 +697,8 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
             r(1, hy - 2, 1, 1, "#ff9ebb")
             r(6, hy - 2, 1, 1, "#ff9ebb")
 
-            if (frame == 3 || (isGroom && (frame == 1 || frame == 2))) {
+            val isBlinking = (frame % 16 in 6..7) || (isGroom && frame % 8 in 2..5)
+            if (isBlinking) {
                 r(2, hy + 2, 2, 1, "#334155")
                 r(5, hy + 2, 2, 1, "#334155")
             } else {
@@ -677,7 +708,7 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                 r(5, hy + 1, 1, 1, "#ffffff")
             }
             r(4, hy + 3, 1, 1, "#ff9ebb")
-            if (isGroom && frame == 2) {
+            if (isGroom && frame % 8 in 3..4) {
                 r(5, hy + 4, 1, 1, "#fb7185")
             }
 
@@ -735,4 +766,4 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
             c.drawRect((x + 4).toFloat(), (y + 3).toFloat(), (x + 5).toFloat(), (y + 5).toFloat(), p)
         }
     }
-}
+}

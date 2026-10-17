@@ -1,5 +1,6 @@
 package com.valois.lilosgarden
 
+import android.app.AlarmManager
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
@@ -13,10 +14,12 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.Typeface
+import android.os.Bundle
 import android.widget.RemoteViews
 import androidx.core.content.res.ResourcesCompat
 import org.json.JSONObject
 import java.util.Calendar
+import kotlin.math.sin
 
 class LiloWidgetProvider : AppWidgetProvider() {
 
@@ -25,9 +28,26 @@ class LiloWidgetProvider : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
+        WeatherSyncHelper.syncIfStale(context)
         for (appWidgetId in appWidgetIds) {
-            updateAppWidget(context, appWidgetManager, appWidgetId)
+            updateAppWidget(context, appWidgetManager, appWidgetId, fullUpdate = true)
         }
+        scheduleNextMinuteTick(context)
+    }
+
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetId: Int,
+        newOptions: Bundle?
+    ) {
+        super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
+        updateAppWidget(context, appWidgetManager, appWidgetId, fullUpdate = true)
+    }
+
+    override fun onDisabled(context: Context) {
+        super.onDisabled(context)
+        cancelMinuteTick(context)
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -45,14 +65,14 @@ class LiloWidgetProvider : AppWidgetProvider() {
                     .putInt("blooms", blooms)
                     .putInt("step_tick", step)
                     .apply()
-                refreshAllWidgets(context)
+                refreshAllWidgets(context, fullUpdate = true)
             }
             ACTION_FEED -> {
                 prefs.edit()
                     .putString("mode", "EAT")
                     .putInt("step_tick", step)
                     .apply()
-                refreshAllWidgets(context)
+                refreshAllWidgets(context, fullUpdate = true)
             }
             ACTION_WEATHER -> {
                 val weathers = arrayOf("AUTO", "SUNNY", "CLOUDY", "RAIN", "NIGHT")
@@ -68,7 +88,7 @@ class LiloWidgetProvider : AppWidgetProvider() {
                     .putString("mode", nextM)
                     .putInt("step_tick", step)
                     .apply()
-                refreshAllWidgets(context)
+                refreshAllWidgets(context, fullUpdate = true)
             }
             ACTION_ADD_CAT -> {
                 val extraCats = (prefs.getInt("extra_cats", 0) + 1) % 5
@@ -77,7 +97,14 @@ class LiloWidgetProvider : AppWidgetProvider() {
                     .putString("mode", "WALK")
                     .putInt("step_tick", step)
                     .apply()
-                refreshAllWidgets(context)
+                refreshAllWidgets(context, fullUpdate = true)
+            }
+            ACTION_WIDGET_TICK,
+            Intent.ACTION_TIME_CHANGED,
+            Intent.ACTION_TIMEZONE_CHANGED -> {
+                WeatherSyncHelper.syncIfStale(context)
+                refreshAllWidgets(context, fullUpdate = false)
+                scheduleNextMinuteTick(context)
             }
         }
     }
@@ -87,6 +114,9 @@ class LiloWidgetProvider : AppWidgetProvider() {
         const val ACTION_FEED = "com.valois.lilosgarden.ACTION_WIDGET_FEED"
         const val ACTION_WEATHER = "com.valois.lilosgarden.ACTION_WIDGET_WEATHER"
         const val ACTION_ADD_CAT = "com.valois.lilosgarden.ACTION_WIDGET_ADD_CAT"
+        const val ACTION_WIDGET_TICK = "com.valois.lilosgarden.ACTION_WIDGET_TICK"
+
+        private const val TOTAL_FRAMES = 64
 
         data class WidgetCat(
             val name: String,
@@ -136,6 +166,40 @@ class LiloWidgetProvider : AppWidgetProvider() {
             WidgetCat("Bambi", "#7c98b3", "#536b82", "#c084fc", "#c084fc", null, "solid", 130, 56, "SLEEP")
         )
 
+        fun scheduleNextMinuteTick(context: Context) {
+            try {
+                val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                val intent = Intent(context, LiloWidgetProvider::class.java).apply {
+                    action = ACTION_WIDGET_TICK
+                }
+                val pi = PendingIntent.getBroadcast(
+                    context,
+                    9601,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                val now = System.currentTimeMillis()
+                val nextMinute = ((now / 60000L) + 1L) * 60000L + 500L
+                am.set(AlarmManager.RTC, nextMinute, pi)
+            } catch (e: Exception) {}
+        }
+
+        fun cancelMinuteTick(context: Context) {
+            try {
+                val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                val intent = Intent(context, LiloWidgetProvider::class.java).apply {
+                    action = ACTION_WIDGET_TICK
+                }
+                val pi = PendingIntent.getBroadcast(
+                    context,
+                    9601,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                am.cancel(pi)
+            } catch (e: Exception) {}
+        }
+
         private fun loadAssetBitmap(context: Context, relPath: String): Bitmap? {
             return try {
                 context.assets.open("www/$relPath").use { stream ->
@@ -146,20 +210,34 @@ class LiloWidgetProvider : AppWidgetProvider() {
             }
         }
 
-        fun refreshAllWidgets(context: Context) {
+        fun refreshAllWidgets(context: Context, fullUpdate: Boolean = true) {
             try {
                 val manager = AppWidgetManager.getInstance(context)
                 val ids = manager.getAppWidgetIds(ComponentName(context, LiloWidgetProvider::class.java))
                 for (id in ids) {
-                    updateAppWidget(context, manager, id)
+                    updateAppWidget(context, manager, id, fullUpdate)
                 }
             } catch (e: Exception) {}
+        }
+
+        private fun loadPixelTypeface(context: Context): Typeface {
+            try {
+                return Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew_Valley.ttf")
+            } catch (e: Exception) {}
+            try {
+                return Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew_Valley.otf")
+            } catch (e: Exception) {}
+            try {
+                ResourcesCompat.getFont(context, R.font.press_start_2p)?.let { return it }
+            } catch (e: Exception) {}
+            return Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
         }
 
         fun updateAppWidget(
             context: Context,
             appWidgetManager: AppWidgetManager,
-            appWidgetId: Int
+            appWidgetId: Int,
+            fullUpdate: Boolean = true
         ) {
             try {
                 val views = RemoteViews(context.packageName, R.layout.lilo_widget)
@@ -175,6 +253,53 @@ class LiloWidgetProvider : AppWidgetProvider() {
                 val activeWeather = resolveWeather(weatherOverride, syncedWeather)
                 val cats = buildCatRoster(prefs, mode, activeWeather, stepTick, extraCatsCount)
 
+                val pixelTypeface = loadPixelTypeface(context)
+
+                // LAYER 2: High-Res Solid Typography Overlay (440x246 ARGB_8888)
+                val hudBmp = Bitmap.createBitmap(440, 246, Bitmap.Config.ARGB_8888)
+                val hiCanvas = Canvas(hudBmp)
+                val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    typeface = pixelTypeface
+                    isFakeBoldText = true
+                    textAlign = Paint.Align.CENTER
+                    textSize = 17f
+                }
+
+                val bannerText = when {
+                    activeWeather == "RAIN" -> "Cozy Rain • ${cats.size} Cats"
+                    mode == "PET" -> "Purring • $blooms/24 Blooms"
+                    mode == "EAT" -> "Munching • ${cats.size} Cats"
+                    mode == "SLEEP" -> "Napping (zZz) • ${cats.size} Cats"
+                    mode == "YARN" -> "Playing Yarn • ${cats.size} Cats"
+                    else -> "${cats.size} Cats • $activeWeather Sky"
+                }
+                textPaint.color = Color.parseColor("#3b1d0a")
+                hiCanvas.drawText(bannerText, 220f, 30f, textPaint)
+
+                textPaint.textSize = 16f
+                val btnTextY = 225f
+                textPaint.color = Color.parseColor("#3b1d0a")
+                hiCanvas.drawText("Pet", 69f, btnTextY, textPaint)
+                textPaint.color = Color.parseColor("#ffffff")
+                hiCanvas.drawText("Feed", 178f, btnTextY, textPaint)
+                textPaint.color = Color.parseColor("#0c4a6e")
+                hiCanvas.drawText("Sky", 280f, btnTextY, textPaint)
+                textPaint.color = Color.parseColor("#3b1d0a")
+                hiCanvas.drawText("Cat(${cats.size})", 384f, btnTextY, textPaint)
+
+                views.setImageViewBitmap(R.id.widget_hud_overlay, hudBmp)
+
+                val lastSigKey = "widget_last_sig_$appWidgetId"
+                val curSig = "${mode}_${activeWeather}_${blooms}_${cats.size}"
+                val prevSig = prefs.getString(lastSigKey, "")
+
+                if (!fullUpdate && prevSig == curSig) {
+                    appWidgetManager.partiallyUpdateAppWidget(appWidgetId, views)
+                    return
+                }
+                prefs.edit().putString(lastSigKey, curSig).apply()
+
+                // LAYER 1: 64-Frame Garden Sandbox Loop @ 280x156 RGB_565
                 val sprites = GardenSprites(
                     grassTile = loadAssetBitmap(context, "assets/sprites/tileSprite/1 Tiles/FieldsTile_38.png"),
                     tree1 = loadAssetBitmap(context, "assets/sprites/tileSprite/2 Objects/7 Decor/Tree1.png"),
@@ -189,68 +314,17 @@ class LiloWidgetProvider : AppWidgetProvider() {
                     campfireSmoke = loadAssetBitmap(context, "assets/sprites/tileSprite/3 Animated Objects/2 Campfire/1.png")
                 )
 
-                val pixelTypeface = try {
-                    Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew_Valley.ttf")
-                } catch (e: Exception) {
-                    try {
-                        Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew_Valley.otf")
-                    } catch (e2: Exception) {
-                        try {
-                            ResourcesCompat.getFont(context, R.font.press_start_2p)
-                                ?: Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
-                        } catch (e3: Exception) {
-                            Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
-                        }
-                    }
-                }
-
-                val frameIds = intArrayOf(
-                    R.id.widget_frame_0,
-                    R.id.widget_frame_1,
-                    R.id.widget_frame_2,
-                    R.id.widget_frame_3
-                )
-
-                for (frameIdx in 0..3) {
+                views.removeAllViews(R.id.widget_flipper)
+                for (frameIdx in 0 until TOTAL_FRAMES) {
                     val raw = drawStardewGardenFrame(frameIdx, mode, activeWeather, blooms, stepTick, cats, sprites)
-                    val scaledRaw = Bitmap.createScaledBitmap(raw, 440, 246, false)
-                    val scaled = (if (scaledRaw.isMutable) scaledRaw else scaledRaw.copy(Bitmap.Config.ARGB_8888, true)) ?: scaledRaw
+                    val scaled = Bitmap.createScaledBitmap(raw, 280, 156, false)
                     raw.recycle()
-                    if (scaledRaw != scaled) scaledRaw.recycle()
+                    val frameBmp = scaled.copy(Bitmap.Config.RGB_565, false) ?: scaled
+                    if (frameBmp != scaled) scaled.recycle()
 
-                    val hiCanvas = Canvas(scaled)
-                    val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                        typeface = pixelTypeface
-                        isFakeBoldText = true
-                        textAlign = Paint.Align.CENTER
-                        textSize = 17f
-                    }
-
-                    val bannerText = when {
-                        activeWeather == "RAIN" -> "Cozy Rain • ${cats.size} Cats"
-                        mode == "PET" -> "Purring • $blooms/24 Blooms"
-                        mode == "EAT" -> "Munching • ${cats.size} Cats"
-                        mode == "SLEEP" -> "Napping (zZz) • ${cats.size} Cats"
-                        mode == "YARN" -> "Playing Yarn • ${cats.size} Cats"
-                        else -> "${cats.size} Cats • $activeWeather Sky"
-                    }
-                    textPaint.color = Color.parseColor("#3b1d0a")
-                    hiCanvas.drawText(bannerText, 220f, 30f, textPaint)
-
-                    textPaint.textSize = 16f
-                    val btnTextY = 225f
-                    textPaint.color = Color.parseColor("#3b1d0a")
-                    hiCanvas.drawText("Pet", 69f, btnTextY, textPaint)
-                    textPaint.color = Color.parseColor("#ffffff")
-                    hiCanvas.drawText("Feed", 178f, btnTextY, textPaint)
-                    textPaint.color = Color.parseColor("#0c4a6e")
-                    hiCanvas.drawText("Sky", 280f, btnTextY, textPaint)
-                    textPaint.color = Color.parseColor("#3b1d0a")
-                    hiCanvas.drawText("Cat(${cats.size})", 384f, btnTextY, textPaint)
-
-                    val safeBmp = scaled.copy(Bitmap.Config.RGB_565, false) ?: scaled
-                    if (safeBmp != scaled) scaled.recycle()
-                    views.setImageViewBitmap(frameIds[frameIdx], safeBmp)
+                    val frameViews = RemoteViews(context.packageName, R.layout.widget_flipper_frame)
+                    frameViews.setImageViewBitmap(R.id.frame_img, frameBmp)
+                    views.addView(R.id.widget_flipper, frameViews)
                 }
 
                 sprites.recycleAll()
@@ -504,7 +578,7 @@ class LiloWidgetProvider : AppWidgetProvider() {
             px(pdX - 8, pdY - 6, 16, 11, "#78716c")
             px(pdX - 7, pdY - 4, 14, 8, "#0284c7")
             px(pdX - 6, pdY - 3, 12, 6, "#38bdf8")
-            px(pdX - 3 + (frame % 2), pdY - 1, 4, 1, "#bae6fd")
+            px(pdX - 3 + ((frame / 2) % 2), pdY - 1, 4, 1, "#bae6fd")
             if (sprites.stone7 != null) {
                 c.drawBitmap(sprites.stone7, null, Rect(pdX - 12, pdY - 7, pdX - 4, pdY), p)
             }
@@ -516,7 +590,7 @@ class LiloWidgetProvider : AppWidgetProvider() {
                 px(rx + 3, 65, 2, 2, "#f59e0b")
             }
 
-            // 8. Western Garden Shade Tree (Moved Left) & Memorial Stone + Shrine Lamp (Separated Cleanly)
+            // 8. Western Garden Shade Tree & Memorial Stone + Shrine Lamp
             if (sprites.tree1 != null) {
                 c.drawBitmap(sprites.tree1, null, Rect(2, 26, 25, 58), p)
             }
@@ -538,7 +612,7 @@ class LiloWidgetProvider : AppWidgetProvider() {
             val visibleFlowers = (blooms / 3).coerceIn(3, flowerOffsets.size)
             for (i in 0 until visibleFlowers) {
                 val (ox, oy) = flowerOffsets[i]
-                val bob = if ((frame + i) % 2 == 0) 0 else -1
+                val bob = if (((frame / 2) + i) % 2 == 0) 0 else -1
                 px(msX + ox - 1, msY + oy + bob, 3, 2, "#38bdf8")
                 px(msX + ox, msY + oy + bob, 1, 1, "#fef08a")
             }
@@ -577,7 +651,7 @@ class LiloWidgetProvider : AppWidgetProvider() {
             px(bwX - 6, bwY - 1, 12, 4, "#38bdf8")
             px(bwX - 4, bwY - 2, 8, 3, "#d97706")
 
-            val yarnX = if (mode == "YARN") 84 + (frame * 5) else 74
+            val yarnX = if (mode == "YARN") 74 + ((frame * 2) % 32) else 74
             val yarnY = 72 + (if (frame % 2 == 0) 0 else -1)
             px(yarnX - 3, yarnY - 3, 5, 5, "#1e88e5")
             px(yarnX - 2, yarnY - 2, 3, 2, "#60a5fa")
@@ -587,7 +661,7 @@ class LiloWidgetProvider : AppWidgetProvider() {
             for ((idx, cat) in sortedCats.withIndex()) {
                 val walkDir = if ((idx + stepTick) % 2 == 0) 1 else -1
                 val animX = when (cat.activity) {
-                    "WALK" -> (cat.baseX + walkDir * (frame * 5)).coerceIn(28, w - 24)
+                    "WALK" -> (cat.baseX + walkDir * ((frame * 2) % 24)).coerceIn(28, w - 24)
                     "YARN" -> if (idx == 0) yarnX - 10 else yarnX + 12
                     else -> cat.baseX
                 }
@@ -610,7 +684,7 @@ class LiloWidgetProvider : AppWidgetProvider() {
             // 13. Weather Particles & Atmospheric Tint (Matching app.js)
             if (isRain) {
                 for (rx in 18 until w - 18 step 20) {
-                    val ry = 34 + ((rx * 3 + frame * 11) % 48)
+                    val ry = 34 + ((rx * 3 + frame * 6) % 48)
                     px(rx, ry, 1, 5, "#bae6fd")
                 }
                 p.color = Color.argb(65, 30, 41, 59)
@@ -618,15 +692,16 @@ class LiloWidgetProvider : AppWidgetProvider() {
             } else if (isNight) {
                 p.color = Color.argb(95, 15, 23, 42)
                 c.drawRect(0f, 22f, w.toFloat(), (h - 20).toFloat(), p)
-                val fy = 44 + (frame % 2) * 3
-                px(56, fy, 2, 2, "#fde047")
-                px(140, 48 - (frame % 2) * 3, 2, 2, "#fde047")
+                val fy1 = 44 + (sin(frame * 0.25).toFloat() * 4f).toInt()
+                val fy2 = 52 + (sin((frame + 8) * 0.25).toFloat() * 4f).toInt()
+                if (frame % 4 != 0) px(56 + ((frame * 2) % 40), fy1, 2, 2, "#fde047")
+                if ((frame + 2) % 4 != 0) px(140 - ((frame * 2) % 40), fy2, 2, 2, "#fde047")
             } else if (isCloudy) {
                 p.color = Color.argb(32, 148, 163, 184)
                 c.drawRect(0f, 22f, w.toFloat(), (h - 20).toFloat(), p)
             } else {
-                val bfX = 58 + (frame * 4)
-                val bfY = 42 + (if (frame % 2 == 0) -2 else 1)
+                val bfX = 36 + ((frame * 2) % 128)
+                val bfY = 42 + (sin(frame * 0.35).toFloat() * 3f).toInt()
                 px(bfX, bfY, if (frame % 2 == 0) 3 else 1, 2, "#f472b6")
             }
 

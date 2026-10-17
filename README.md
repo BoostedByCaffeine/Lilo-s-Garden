@@ -2,13 +2,22 @@
 
 A single-file HTML5 Canvas, CSS3, and Vanilla JavaScript cozy virtual pet garden sandbox tribute inspired by a minimalist Stardew Valley aesthetic, honoring **Lilo the pure white cat** and **Cheeto the orange tabby**.
 
-Hosted for free on **GitHub Pages** with zero external runtime dependencies, keyless live local weather, client-side `localStorage` persistence, PWA offline installability, and an authentic **Android Companion Widget**.
+Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-tier live local weather, client-side `localStorage` persistence, PWA offline installability, and **3 Authentic Android Home Screen Widgets**.
 
 ---
 
 ## ✨ Features & Polish
 
-### 1. Authentic Procedural Pixel Art Cats
+### 1. Solid Pixel Typography & Authentic Stardew Styling
+- **Global Solid Pixel Font**:
+  - Imported solid pixel font (`Stardew_Valley.ttf` & `.otf`) applied uniformly across the web application and all 3 Android home screen widgets.
+  - Specially tuned typography sizes across the HUD, dialogue badges, and polaroid tribute frames for razor-sharp readability on all screen densities.
+- **PWA v6 Offline Cache**:
+  - Service worker precaching updated to `'lilos-garden-pwa-v6'` bundling all core assets and solid typography for full offline playability.
+
+---
+
+### 2. Authentic Procedural Pixel Art Cats
 - **Signature Resident Brothers**:
   - **Lilo**: Pure white coat, twin sky-blue eyes (`#29b6f6`), pink nose, signature royal blue collar (`#1e88e5`), and golden bell (`#fde047`).
   - **Cheeto**: Warm white coat, signature heterochromia eyes (left sky-blue `#29b6f6`, right amber `#ffb300`), pink nose.
@@ -24,7 +33,7 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, key
 
 ---
 
-### 2. Vibrant Tileset & Living Garden Environment
+### 3. Vibrant Tileset & Living Garden Environment
 - **Vibrant Meadow Lawn**:
   - Seamlessly tiled garden ground rendered with crisp `32x32` tiles (`FieldsTile_38.png`) in a rich, warm meadow green (`#a6b04f`).
 - **Cozy Shade Tree**:
@@ -42,7 +51,7 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, key
 
 ---
 
-### 3. Cozy Animated Bonfire & Camp Nook
+### 4. Cozy Animated Bonfire & Camp Nook
 - **Weather-Reactive Campfire**:
   - **Sunny & Fair Weather**: Smooth 6-frame active burning flames strip (`campfireActive`) with an animated radial flickering warmth glow (`rgba(251, 146, 60, ...)`).
   - **Rainy Weather**: Automatically switches to the 6-frame extinguished smoldering smoke strip (`campfireSmoke`).
@@ -50,7 +59,7 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, key
 
 ---
 
-### 4. Twin Polaroid Tribute Frame System
+### 5. Twin Polaroid Tribute Frame System
 - **Side-by-Side Cozy Polaroid Frames**:
   - **Lilo's Polaroid**: Tilted `-2.5°`, titled `"Lilo 💙"`, captioned `"Blue Eyes & Blue Collar"`.
   - **Cheeto's Polaroid**: Tilted `+2.5°`, titled `"Cheeto 💙💛"`, captioned `"Blue & Amber Eyes"`.
@@ -62,13 +71,16 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, key
 
 ---
 
-### 5. Live Weather & Covered Gazebo Shelter
-- **Keyless Live Local Weather (Open-Meteo GPS)**:
-  - Queries the free, keyless Open-Meteo API using browser geolocation:
+### 6. 3-Tier Live Weather & Covered Gazebo Shelter
+- **3-Tier Live Weather Integration (Fast GPS -> Cached Coords -> Keyless IP Geolocation)**:
+  - **Tier 1 (High-Accuracy GPS)**: Fast network geolocation with cached hardware positions.
+  - **Tier 2 (Cached Local Coordinates)**: Instant startup restore from persistent cache avoiding network delays.
+  - **Tier 3 (Keyless IP Geolocation Fallback)**: Multi-provider IP lookups (`geojs.io` and `ipwho.is`) with automatic fallback to Open-Meteo.
+  - Real-time Open-Meteo conditions:
     ```
-    https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day
+    https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day,precipitation,rain,showers,cloud_cover&timezone=auto
     ```
-  - Maps WMO codes to `SUNNY`, `CLOUDY`, `RAIN`, and `NIGHT` with automatic clock fallback (`new Date().getHours()`).
+  - Maps WMO codes to `SUNNY`, `CLOUDY`, `RAIN`, and `NIGHT` while preserving real local temperatures.
 - **Covered Wooden Gazebo Shelter**:
   - Cedar plank decking with rich berry velvet cushion (`#9f1239`) and hanging overhead lantern.
   - Overhead cedar shingle roof depth-sorted so cats shelter comfortably out of the rain.
@@ -78,7 +90,32 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, key
 
 ---
 
-### 6. Dynamic Camera, Zoom & Follow System
+### 7. 3 Android Home Screen Widgets & 2-Layer Compositor Engine
+All 3 Android widgets are powered by a **64-Frame @ 4 FPS (`250ms` per frame = 16-second seamless cycle)** animation engine with a **2-Layer Compositor Architecture**:
+- **Layer 1 (Underneath)**: A 64-frame pixel-art `ViewFlipper` loop running `RGB_565` bitmaps for high performance and minimal memory footprint.
+- **Layer 2 (On Top)**: A single high-res `ARGB_8888` `ImageView` HUD overlay with solid `Stardew_Valley.ttf` typography. Clock and minute ticks update **only** the HUD overlay via `partiallyUpdateAppWidget`, resulting in zero flicker and never interrupting the 64-frame animation loop.
+- **Background Weather Sync (`WeatherSyncHelper.kt`)**: Automatically synchronizes local weather every 15+ minutes in the background and refreshes all active widgets.
+
+#### The 3 Home Screen Widgets:
+1. **Window Widget (`LiloWindowWidgetProvider.kt`)**:
+   - Carved wooden window frame looking out onto the garden with dynamic sky backdrops (Day, Sunset, Starry Night, Rain, Clouds).
+   - **Peeking Cat in Bottom-Left Corner** (`cx = 42` at `2.0f` scale) with a 4-stage 16-second routine:
+     - *Stage 1 (Frames 0–19)*: Curious looks left and right with ear twitches.
+     - *Stage 2 (Frames 20–35)*: Paw-lick grooming animation and blushing cheeks.
+     - *Stage 3 (Frames 36–51)*: Excited bobbing watching butterflies or fireflies with a floating heart.
+     - *Stage 4 (Frames 52–63)*: Cozy windowsill rest and slow peaceful blinking.
+   - **Seamless 224px Wrap-Around Clouds**: Perfect circular wrap domain (`(20 + frame * 7 / 2) % 224`) eliminating sawtooth animation jumps.
+   - Interactive hotspots: Pet cat, switch active cat, toggle weather override, and open app.
+2. **Stardew Companion Widget (`LiloCompanionWidgetProvider.kt`)**:
+   - Split-panel Stardew HUD: Left patio sanctuary with velvet cat bed, post-free glowing lantern, and garden bushes; right parchment HUD with live bold clock, date, and weather badge.
+   - Cat pose switcher (<kbd>Grooming</kbd> / <kbd>Sleeping</kbd> / <kbd>Lounging</kbd>) and cat roster carousel.
+3. **Garden Sandbox Widget (`LiloWidgetProvider.kt`)**:
+   - Miniature living garden sandbox on your home screen with animated walking cats, active campfire/smoke, birdbath ripples, swaying wildflowers, and fluttering butterflies/fireflies.
+   - Bottom 4-Button Stardew RPG Hotbar: **Pet**, **Feed**, **Sky / Weather Override**, and **+Cat** to spawn companion friends directly from the launcher.
+
+---
+
+### 8. Dynamic Camera, Zoom & Follow System
 - **Adaptive Viewport**:
   - Seamlessly scales between desktop monitors and smartphone screens (`100vw x 100dvh`) with zero letterboxing.
 - **Zoom Controls**:
@@ -89,20 +126,7 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, key
 
 ---
 
-### 7. Android App, Stardew Companion Widget & GitHub Actions CI/CD
-- **Full Android APK Build**:
-  - Gradle-based Android project in `android/` with WebView wrapper, native bridge, and offline bundled assets.
-- **Automated GitHub Actions CI/CD (`.github/workflows/build-apk.yml`)**:
-  - Automatically compiles `lilos-garden.apk` on pushes to `remastered`, `main`, or `master`.
-  - Publishes direct 1-tap downloadable release assets to GitHub Releases (`releases/latest/download/lilos-garden.apk`) without requiring GitHub login or unzipping.
-- **Stardew Valley Carved Wooden Companion Widget**:
-  - 4-frame animated ViewFlipper HUD with transparent overlays.
-  - Real-time clock, date, live weather status, and current cat activity tracker.
-  - Direct touch hotspots to jump into the sanctuary or interact with the cats from the Android home screen.
-
----
-
-### 8. Synthesized Audio Engine (`CozyAudio`)
+### 9. Synthesized Audio Engine (`CozyAudio`)
 - Web Audio API synthesizer with zero external sound files:
   - Deep modulated cat purr rumbling using carrier + LFO oscillators.
   - Calming ambient rain noise using filtered pink noise with smooth fade-in/fade-out.

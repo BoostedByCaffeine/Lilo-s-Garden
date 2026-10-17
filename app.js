@@ -386,46 +386,183 @@ function showToast(message, icon = 'heart-solid', iconColor = '') {
 }
 
 /********************************************************************
- * 4. OPEN-METEO LIVE WEATHER INTEGRATION
+ * 4. ENHANCED OPEN-METEO LIVE WEATHER INTEGRATION (GPS + IP FALLBACK)
  ********************************************************************/
+const WEATHER_CACHE_KEY = 'lilos_garden_weather_cache_v1';
+
+function loadCachedWeather() {
+  try {
+    const raw = localStorage.getItem(WEATHER_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function saveCachedWeather(lat, lon, tempC, weather, skyDesc) {
+  try {
+    localStorage.setItem(
+      WEATHER_CACHE_KEY,
+      JSON.stringify({
+        lat,
+        lon,
+        tempC,
+        weather,
+        skyDesc,
+        updatedAt: Date.now()
+      })
+    );
+  } catch (e) {}
+}
+
+function getDeviceCoordinates() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('Geolocation not supported'));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude, source: 'GPS' }),
+      () => {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude, source: 'GPS' }),
+          (err) => reject(err),
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 600000 }
+        );
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 }
+    );
+  });
+}
+
+async function getIpCoordinatesFallback() {
+  try {
+    const res = await fetch('https://get.geojs.io/v1/ip/geo.json');
+    if (res.ok) {
+      const data = await res.json();
+      const lat = parseFloat(data.latitude);
+      const lon = parseFloat(data.longitude);
+      if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
+        return { lat, lon, source: 'IP' };
+      }
+    }
+  } catch (e) {}
+
+  try {
+    const res = await fetch('https://ipwho.is/');
+    if (res.ok) {
+      const data = await res.json();
+      const lat = parseFloat(data.latitude);
+      const lon = parseFloat(data.longitude);
+      if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
+        return { lat, lon, source: 'IP' };
+      }
+    }
+  } catch (e) {}
+
+  const cached = loadCachedWeather();
+  if (cached && typeof cached.lat === 'number' && typeof cached.lon === 'number') {
+    return { lat: cached.lat, lon: cached.lon, source: 'CACHE' };
+  }
+  throw new Error('All location providers failed');
+}
+
+async function fetchOpenMeteoForCoords(w, lat, lon) {
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day,precipitation,rain,showers,cloud_cover&timezone=auto`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Open-Meteo HTTP error');
+  const data = await res.json();
+  const cur = data.current;
+  if (!cur) throw new Error('Missing current weather payload');
+
+  w.lat = lat;
+  w.lon = lon;
+  w.tempC = Math.round(cur.temperature_2m);
+
+  const code = Number(cur.weather_code);
+  const isDay = Number(cur.is_day) === 1;
+  const precip = Number(cur.precipitation || 0) + Number(cur.rain || 0) + Number(cur.showers || 0);
+  const cloudCover = Number(cur.cloud_cover || 0);
+
+  const isRainCode = [
+    51, 53, 55, 56, 57,
+    61, 63, 65, 66, 67,
+    80, 81, 82,
+    95, 96, 99
+  ].includes(code);
+
+  const isCloudyCode = [2, 3, 45, 48].includes(code) || cloudCover >= 65;
+
+  if (isRainCode || precip > 0.05) {
+    w.weather = 'RAIN';
+    w.skyDesc = [95, 96, 99].includes(code) ? 'Thunderstorm' : 'Rain Shower';
+  } else if (!isDay) {
+    w.weather = 'NIGHT';
+    w.skyDesc = isCloudyCode ? 'Cloudy Night' : 'Starry Night';
+  } else if (isCloudyCode) {
+    w.weather = 'CLOUDY';
+    w.skyDesc = code === 3 ? 'Overcast Sky' : 'Cloudy Sky';
+  } else {
+    w.weather = 'SUNNY';
+    w.skyDesc = code === 1 ? 'Mostly Sunny' : 'Sunny Sky';
+  }
+
+  saveCachedWeather(lat, lon, w.tempC, w.weather, w.skyDesc);
+  w.onWeatherUpdated();
+}
+
 async function syncLiveWeather(w) {
   if (w.weatherMode !== 'AUTO') return;
-  if (!navigator.geolocation) {
-    w.applyClockFallback();
-    return;
+
+  const cached = loadCachedWeather();
+  if (cached && typeof cached.tempC === 'number') {
+    w.tempC = cached.tempC;
+    w.lat = cached.lat;
+    w.lon = cached.lon;
+    const hour = new Date().getHours();
+    const isNightNow = hour < 6 || hour >= 18;
+    if (cached.weather === 'RAIN') {
+      w.weather = 'RAIN';
+      w.skyDesc = cached.skyDesc || 'Rain Shower';
+    } else if (isNightNow) {
+      w.weather = 'NIGHT';
+      w.skyDesc = 'Starry Night';
+    } else {
+      w.weather = cached.weather === 'NIGHT' ? 'SUNNY' : (cached.weather || 'SUNNY');
+      w.skyDesc = cached.skyDesc || 'Sunny Sky';
+    }
+    w.syncUI();
   }
-  navigator.geolocation.getCurrentPosition(
-    async (pos) => {
-      try {
-        const { latitude, longitude } = pos.coords;
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code,is_day`;
-        const res = await fetch(url);
-        const data = await res.json();
-        const cur = data.current;
-        w.tempC = Math.round(cur.temperature_2m);
-        const code = cur.weather_code;
-        if ([51, 53, 55, 61, 63, 65, 80, 81, 82, 95].includes(code)) {
-          w.weather = 'RAIN';
-          w.skyDesc = 'Rain Shower';
-        } else if (cur.is_day === 0) {
-          w.weather = 'NIGHT';
-          w.skyDesc = 'Starry Night';
-        } else if ([2, 3, 45, 48].includes(code)) {
-          w.weather = 'CLOUDY';
-          w.skyDesc = 'Cloudy Sky';
-        } else {
-          w.weather = 'SUNNY';
-          w.skyDesc = 'Sunny Sky';
-        }
-        w.onWeatherUpdated();
-      } catch (e) {
-        w.applyClockFallback();
-      }
-    },
-    () => w.applyClockFallback(),
-    { timeout: 6000 }
-  );
+
+  if (cached && typeof cached.lat === 'number' && typeof cached.lon === 'number') {
+    fetchOpenMeteoForCoords(w, cached.lat, cached.lon).catch(() => {});
+  }
+
+  try {
+    const loc = await getDeviceCoordinates();
+    await fetchOpenMeteoForCoords(w, loc.lat, loc.lon);
+  } catch (gpsErr) {
+    try {
+      const ipLoc = await getIpCoordinatesFallback();
+      await fetchOpenMeteoForCoords(w, ipLoc.lat, ipLoc.lon);
+    } catch (ipErr) {
+      w.applyClockFallback();
+    }
+  }
 }
+
+setInterval(() => {
+  if (typeof world !== 'undefined' && world.weatherMode === 'AUTO') {
+    syncLiveWeather(world);
+  }
+}, 15 * 60 * 1000);
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && typeof world !== 'undefined' && world.weatherMode === 'AUTO') {
+    syncLiveWeather(world);
+  }
+});
+
 
 /********************************************************************
  * 5. WORLD ENGINE & FINITE STATE MACHINE
@@ -455,15 +592,16 @@ const world = {
   },
 
   applyClockFallback() {
+    const cached = loadCachedWeather();
     const hour = new Date().getHours();
-    if (hour < 6 || hour >= 19) {
+    if (hour < 6 || hour >= 18) {
       this.weather = 'NIGHT';
       this.skyDesc = 'Firefly Night';
-      this.tempC = 18;
+      this.tempC = cached && typeof cached.tempC === 'number' ? cached.tempC : 26;
     } else {
       this.weather = 'SUNNY';
       this.skyDesc = 'Sunny Sky';
-      this.tempC = 25;
+      this.tempC = cached && typeof cached.tempC === 'number' ? cached.tempC : 30;
     }
     this.onWeatherUpdated();
   },
@@ -612,6 +750,8 @@ const world = {
     return {
       version: 4,
       updatedAt: new Date().toISOString(),
+      lat: this.lat || null,
+      lon: this.lon || null,
       stats: this.stats,
       petProgress: this.petProgress,
       blooms: this.blooms,

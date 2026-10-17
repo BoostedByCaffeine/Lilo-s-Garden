@@ -197,6 +197,11 @@ class MainActivity : AppCompatActivity() {
                 if (obj.has("blooms")) editor.putInt("blooms", obj.optInt("blooms", 8))
                 if (obj.has("weather")) editor.putString("weather", obj.optString("weather", "SUNNY"))
                 if (obj.has("tempC")) editor.putInt("tempC", obj.optInt("tempC", 24))
+                if (!obj.isNull("lat") && !obj.isNull("lon")) {
+                    editor.putFloat("lat", obj.optDouble("lat").toFloat())
+                    editor.putFloat("lon", obj.optDouble("lon").toFloat())
+                    editor.putLong("weather_updated_at", System.currentTimeMillis())
+                }
                 val stats = obj.optJSONObject("stats")
                 if (stats != null) {
                     editor.putInt("pets", stats.optInt("pets", 8))
