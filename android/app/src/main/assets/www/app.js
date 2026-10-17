@@ -25,8 +25,9 @@ const WORLD_CENTER = { x: 480, y: 310 };
 
 const LANDMARKS = {
   shrine: { x: 340, y: 240, radius: 28, label: "Memorial Stone for Lilo & Cheeto" },
-  bowl: { x: 480, y: 370, radius: 22, label: "Ceramic Cat Bowl" },
+  bowl: { x: 480, y: 374, radius: 22, label: "Ceramic Cat Bowl" },
   shelter: { x: 620, y: 240, radius: 30, label: "Covered Gazebo Shelter" },
+  porch: { x: 676, y: 378, radius: 26, label: "Covered Campfire Porch" },
   pond: { x: 330, y: 380, radius: 24, label: "Birdbath Pond" },
   rug: { x: 550, y: 340, radius: 24, label: "Sunny Nap Rug" }
 };
@@ -99,22 +100,63 @@ const DEFAULT_CARETAKER = Object.freeze({
 });
 
 const COTTAGE_BOUNDS = {
-  minX: 395,
-  maxX: 585,
-  minY: 262,
-  maxY: 396
+  minX: 405,
+  maxX: 575,
+  minY: 268,
+  maxY: 392
 };
 
 const COTTAGE_SPOTS = {
   hearth: { x: 544, y: 224, radius: 32, label: 'Memorial Bookcase & Tribute' },
-  sofa:   { x: 600, y: 324, radius: 28, label: 'Cozy Cream Sofa' },
-  bed:    { x: 476, y: 245, radius: 30, label: 'Cozy Yellow Quilt Bed' },
-  desk:   { x: 604, y: 244, radius: 26, label: 'Wooden Study Desk' },
-  rug:    { x: 476, y: 264, radius: 32, label: 'Warm Crimson Bedside Rug' },
-  table:  { x: 368, y: 306, radius: 28, label: 'Dining Table' },
-  bowl:   { x: 480, y: 364, radius: 22, label: 'Indoor Ceramic Bowl' },
+  sofa:   { x: 608, y: 334, radius: 30, label: 'Cozy Cream Sofa' },
+  bed:    { x: 476, y: 232, radius: 32, label: 'Cozy Yellow Quilt Bed' },
+  desk:   { x: 598, y: 248, radius: 26, label: 'Wooden Study Desk' },
+  rug:    { x: 476, y: 266, radius: 28, label: 'Warm Crimson Bedside Rug' },
+  table:  { x: 364, y: 312, radius: 32, label: 'Dining Table' },
+  bowl:   { x: 480, y: 368, radius: 24, label: 'Indoor Ceramic Bowls' },
   door:   { x: 480, y: 436, radius: 34, label: 'Cottage Entrance Hallway' }
 };
+
+// Furniture collision bounding boxes inside the Cottage so cats & Caretaker never step on furniture
+const COTTAGE_OBSTACLES = [
+  { minX: 320, maxX: 382, minY: 160, maxY: 232 }, // Top-Left Wardrobe
+  { minX: 404, maxX: 440, minY: 160, maxY: 236 }, // Bedside Table
+  { minX: 442, maxX: 510, minY: 160, maxY: 256 }, // Double Bed Frame
+  { minX: 518, maxX: 576, minY: 160, maxY: 244 }, // Bookcase & Books
+  { minX: 576, maxX: 640, minY: 160, maxY: 254 }, // Top-Right Study Desk
+  { minX: 330, maxX: 402, minY: 274, maxY: 346 }, // Left Dining Table & Chairs
+  { minX: 390, maxX: 422, minY: 348, maxY: 402 }, // Bottom-Left Coat Stand
+  { minX: 590, maxX: 640, minY: 266, maxY: 370 }, // Right Vase & Cream Sofa
+  { minX: 550, maxX: 640, minY: 372, maxY: 412 }  // Bottom-Right Chest & Barrel
+];
+
+function isCottagePointWalkable(x, y) {
+  if (x < 336 || x > 618 || y < 234 || y > 404) return false;
+  for (let i = 0; i < COTTAGE_OBSTACLES.length; i++) {
+    const b = COTTAGE_OBSTACLES[i];
+    if (x >= b.minX && x <= b.maxX && y >= b.minY && y <= b.maxY) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// Dynamic Exclusive Bowl Position for Each Cat (index 0..N-1)
+function getCatBowlPos(catIndex, totalCats, scene) {
+  const count = Math.max(1, totalCats);
+  const maxPerRow = 4;
+  const row = Math.floor(catIndex / maxPerRow);
+  const col = catIndex % maxPerRow;
+  const colsInThisRow = Math.min(maxPerRow, count - row * maxPerRow);
+  const spacingX = scene === 'COTTAGE' ? 24 : 26;
+  const spacingY = 16;
+  const base = scene === 'COTTAGE' ? COTTAGE_SPOTS.bowl : LANDMARKS.bowl;
+  const startX = base.x - ((colsInThisRow - 1) * spacingX) / 2;
+  return {
+    x: Math.round(startX + col * spacingX),
+    y: Math.round(base.y + row * spacingY)
+  };
+}
 
 const DEFAULT_LILO = Object.freeze({
   id: 'lilo',
@@ -667,30 +709,130 @@ const world = {
     });
     showToast(`${this.caretaker.name} called Lilo & Cheeto over for cuddles!`, 'heart-solid', '#fb7185');
   },
+
+  tablePopupOpen: false,
+
+  showTableEatPopup(screenX, screenY) {
+    const btn = document.getElementById('tableEatBtn');
+    if (!btn) return;
+    this.tablePopupOpen = true;
+    btn.style.left = `${Math.round(screenX)}px`;
+    btn.style.top = `${Math.round(screenY - 14)}px`;
+    btn.classList.remove('hidden');
+  },
+
+  hideTableEatPopup() {
+    const btn = document.getElementById('tableEatBtn');
+    if (btn) btn.classList.add('hidden');
+    this.tablePopupOpen = false;
+  },
+
+  toggleCaretakerBedSleep() {
+    this.hideTableEatPopup();
+    const ct = this.caretaker;
+    if (ct.state === 'SLEEPING_BED') {
+      this.wakeCaretaker(false);
+    } else {
+      ct.state = 'SLEEPING_BED';
+      ct.x = COTTAGE_SPOTS.bed.x;
+      ct.y = COTTAGE_SPOTS.bed.y;
+      ct.targetX = ct.x;
+      ct.targetY = ct.y;
+      ct.sleepStartedHour = new Date().getHours();
+      ct.sleepStartedNight = this.weather === 'NIGHT';
+      ct.labelAlpha = 1.8;
+      this.spawnSleepZ(ct.x, ct.y - 6);
+      showToast(`${ct.name} tucked into bed for a sleep! (Tap bed to wake)`, 'moon', '#a78bfa');
+    }
+  },
+
+  wakeCaretaker(isAutoMorning = false) {
+    const ct = this.caretaker;
+    if (ct.state !== 'SLEEPING_BED' && ct.state !== 'NAPPING_COUCH') return;
+    const wasBed = ct.state === 'SLEEPING_BED';
+    ct.state = 'IDLE';
+    ct.stateTimer = 6;
+    if (wasBed) {
+      ct.x = COTTAGE_SPOTS.rug.x;
+      ct.y = COTTAGE_SPOTS.rug.y + 6;
+    } else {
+      ct.x = 574;
+      ct.y = 334;
+    }
+    ct.targetX = ct.x;
+    ct.targetY = ct.y;
+    ct.labelAlpha = 1.8;
+    this.spawnHeart(ct.x, ct.y - 14, 'sparkle');
+    showToast(
+      isAutoMorning
+        ? `Good morning! ${ct.name} woke up refreshed!`
+        : `${ct.name} woke up refreshed!`,
+      'sun',
+      '#fbbf24'
+    );
+  },
+
+  toggleCaretakerCouchNap() {
+    this.hideTableEatPopup();
+    const ct = this.caretaker;
+    if (ct.state === 'NAPPING_COUCH') {
+      this.wakeCaretaker(false);
+    } else {
+      ct.state = 'NAPPING_COUCH';
+      ct.x = COTTAGE_SPOTS.sofa.x;
+      ct.y = COTTAGE_SPOTS.sofa.y;
+      ct.targetX = ct.x;
+      ct.targetY = ct.y;
+      ct.facing = -1;
+      ct.labelAlpha = 1.8;
+      this.spawnSleepZ(ct.x, ct.y - 8);
+      showToast(`${ct.name} curled up on the couch for a cozy nap!`, 'heart-solid', '#f43f5e');
+    }
+  },
+
+  startCaretakerTableMeal() {
+    this.hideTableEatPopup();
+    const ct = this.caretaker;
+    ct.state = 'SEEK_TABLE_MEAL';
+    ct.targetX = 364;
+    ct.targetY = 290; // Front-facing chair at top of dining table
+    ct.labelAlpha = 1.8;
+    showToast(`${ct.name} is sitting down at the table to eat!`, 'fish', '#fbbf24');
+  },
+
   toggleScene() {
+    this.hideTableEatPopup();
     this.scene = this.scene === 'COTTAGE' ? 'GARDEN' : 'COTTAGE';
     safeText('sceneBtnText', this.scene === 'COTTAGE' ? 'Garden' : 'Cottage');
-    if (this.scene === 'COTTAGE') {
-      this.caretaker.x = COTTAGE_SPOTS.sofa.x;
-      this.caretaker.y = COTTAGE_SPOTS.sofa.y + 4;
-      this.caretaker.targetX = this.caretaker.x;
-      this.caretaker.targetY = this.caretaker.y;
-      this.caretaker.state = 'IDLE';
-      this.cats.forEach((c, i) => {
-        c.state = 'IDLE';
-        c.pose = i % 2 === 0 ? 'sleep' : 'sit';
-        c.x = 462 + ((i * 26) % 64);
-        c.y = 302 + ((i * 16) % 40);
-        c.targetX = c.x;
-        c.targetY = c.y;
-      });
-    } else {
-      this.caretaker.x = 665;
-      this.caretaker.y = 382;
-      this.caretaker.targetX = 665;
-      this.caretaker.targetY = 382;
-      this.caretaker.state = 'IDLE';
+    const ct = this.caretaker;
+    if (ct.state !== 'SLEEPING_BED') {
+      if (this.scene === 'COTTAGE') {
+        ct.x = 598;
+        ct.y = 248;
+        ct.targetX = 598;
+        ct.targetY = 248;
+        ct.state = 'IDLE';
+      } else {
+        ct.x = LANDMARKS.porch.x;
+        ct.y = LANDMARKS.porch.y;
+        ct.targetX = LANDMARKS.porch.x;
+        ct.targetY = LANDMARKS.porch.y;
+        ct.state = this.weather === 'RAIN' ? 'PORCH_SHELTERED' : 'IDLE';
+      }
     }
+    this.cats.forEach((c, i) => {
+      c.state = 'IDLE';
+      c.pose = i % 2 === 0 ? 'sleep' : 'sit';
+      if (this.scene === 'COTTAGE') {
+        c.x = 456 + ((i * 22) % 64);
+        c.y = 290 + ((i * 18) % 50);
+      } else {
+        c.x = 455 + ((i * 28) % 90);
+        c.y = 310 + ((i * 18) % 50);
+      }
+      c.targetX = c.x;
+      c.targetY = c.y;
+    });
     camera.x = 480;
     camera.y = 310;
     clampCamera();
@@ -794,7 +936,8 @@ const world = {
       playTimer: 0,
       seed: Math.random() * 100,
       labelAlpha: 1.4,
-      socialCooldown: 0
+      socialCooldown: 0,
+      bowlLevel: typeof spec.bowlLevel === 'number' ? spec.bowlLevel : 3
     };
   },
 
@@ -1008,30 +1151,40 @@ const world = {
   feedBowl() {
     this.bowlLevel = 3;
     sound.playFeedSound();
-    const activeBowl = this.scene === 'COTTAGE' ? COTTAGE_SPOTS.bowl : LANDMARKS.bowl;
-    this.spawnHeart(activeBowl.x, activeBowl.y - 4, 'sparkle');
+    const total = this.cats.length;
     this.cats.forEach((cat, idx) => {
+      cat.bowlLevel = 3;
+      const bPos = getCatBowlPos(idx, total, this.scene);
+      this.spawnHeart(bPos.x, bPos.y - 4, 'sparkle');
       cat.state = 'SEEK_FOOD';
       cat.pose = 'sit';
-      cat.targetX = activeBowl.x + (idx * 16 - 12);
-      cat.targetY = activeBowl.y + 2;
+      cat.targetX = bPos.x;
+      cat.targetY = bPos.y + 3;
     });
-    showToast('Ceramic bowl filled with crunchy kibble!', 'fish', '#fbbf24');
+    showToast(
+      total > 1
+        ? `Filled all ${total} exclusive cat bowls with crunchy kibble!`
+        : 'Ceramic bowl filled with crunchy kibble!',
+      'fish',
+      '#fbbf24'
+    );
     this.save();
   },
 
   pickRandomGardenPoint() {
     if (this.scene === 'COTTAGE') {
-      if (Math.random() < 0.38) {
+      if (Math.random() < 0.35) {
         return {
-          x: COTTAGE_SPOTS.rug.x + (Math.random() * 24 - 12),
-          y: COTTAGE_SPOTS.rug.y + (Math.random() * 14 - 7)
+          x: COTTAGE_SPOTS.rug.x + (Math.random() * 20 - 10),
+          y: COTTAGE_SPOTS.rug.y + (Math.random() * 10 - 5)
         };
       }
-      return {
-        x: COTTAGE_BOUNDS.minX + Math.random() * (COTTAGE_BOUNDS.maxX - COTTAGE_BOUNDS.minX),
-        y: COTTAGE_BOUNDS.minY + Math.random() * (COTTAGE_BOUNDS.maxY - COTTAGE_BOUNDS.minY)
-      };
+      for (let t = 0; t < 15; t++) {
+        const tx = COTTAGE_BOUNDS.minX + Math.random() * (COTTAGE_BOUNDS.maxX - COTTAGE_BOUNDS.minX);
+        const ty = COTTAGE_BOUNDS.minY + Math.random() * (COTTAGE_BOUNDS.maxY - COTTAGE_BOUNDS.minY);
+        if (isCottagePointWalkable(tx, ty)) return { x: tx, y: ty };
+      }
+      return { x: 480, y: 315 };
     }
     if (Math.random() < 0.28) {
       return {
@@ -1107,12 +1260,13 @@ const world = {
 
       switch (cat.state) {
         case 'IDLE': {
-          const activeBowl = this.scene === 'COTTAGE' ? COTTAGE_SPOTS.bowl : LANDMARKS.bowl;
+          const catBowlLvl = typeof cat.bowlLevel === 'number' ? cat.bowlLevel : this.bowlLevel;
           const activeRug = this.scene === 'COTTAGE' ? COTTAGE_SPOTS.rug : LANDMARKS.rug;
-          if (this.bowlLevel > 0 && Math.random() < dt * 0.08) {
+          if (catBowlLvl > 0 && Math.random() < dt * 0.08) {
+            const myBowl = getCatBowlPos(i, this.cats.length, this.scene);
             cat.state = 'SEEK_FOOD';
-            cat.targetX = activeBowl.x + (Math.random() * 16 - 8);
-            cat.targetY = activeBowl.y + (Math.random() * 6 - 2);
+            cat.targetX = myBowl.x;
+            cat.targetY = myBowl.y + 3;
             break;
           }
           if (cat.stateTimer <= 0) {
@@ -1128,16 +1282,17 @@ const world = {
         case 'WANDER':
         case 'SEEK_FOOD':
         case 'SEEK_SHELTER': {
-          const activeBowl = this.scene === 'COTTAGE' ? COTTAGE_SPOTS.bowl : LANDMARKS.bowl;
+          const myBowl = getCatBowlPos(i, this.cats.length, this.scene);
           const activeRug = this.scene === 'COTTAGE' ? COTTAGE_SPOTS.rug : LANDMARKS.rug;
           const dx = cat.targetX - cat.x;
           const dy = cat.targetY - cat.y;
           const dist = Math.hypot(dx, dy);
           if (dist < 4) {
-            if (cat.state === 'SEEK_FOOD' && this.bowlLevel > 0) {
+            const catBowlLvl = typeof cat.bowlLevel === 'number' ? cat.bowlLevel : this.bowlLevel;
+            if (cat.state === 'SEEK_FOOD' && catBowlLvl > 0) {
               cat.state = 'EATING';
               cat.stateTimer = 3.5;
-              cat.facing = activeBowl.x >= cat.x ? 1 : -1;
+              cat.facing = myBowl.x >= cat.x ? 1 : -1;
               sound.playMunchPop();
             } else if (cat.state === 'SEEK_SHELTER') {
               cat.state = 'SHELTERED';
@@ -1178,8 +1333,10 @@ const world = {
             this.spawnHeart(cat.x, cat.y - 6, 'sparkle');
           }
           if (cat.stateTimer <= 0) {
-            if (this.bowlLevel > 0) {
-              this.bowlLevel = Math.max(0, this.bowlLevel - 1);
+            const catBowlLvl = typeof cat.bowlLevel === 'number' ? cat.bowlLevel : this.bowlLevel;
+            if (catBowlLvl > 0) {
+              cat.bowlLevel = Math.max(0, catBowlLvl - 1);
+              this.bowlLevel = Math.max(...this.cats.map((c) => c.bowlLevel ?? 0));
               this.stats.meals++;
               this.spawnHeart(cat.x, cat.y - 8, 'heart');
               sound.playPurr();
@@ -1233,48 +1390,119 @@ const world = {
       const ct = this.caretaker;
       if (ct.labelAlpha > 0) ct.labelAlpha = Math.max(0, ct.labelAlpha - dt * 0.25);
       ct.stateTimer -= dt;
-      if (ct.activity !== 'AUTO') {
-        ct.effectiveActivity = ct.activity;
-      }
-      if (ct.state === 'WANDER') {
+
+      // 1. Sleeping in Bed or Napping on Couch
+      if (ct.state === 'SLEEPING_BED' || ct.state === 'NAPPING_COUCH') {
+        if (Math.random() < dt * 0.65) {
+          this.spawnSleepZ(ct.x, ct.y - 8);
+        }
+        if (ct.state === 'SLEEPING_BED') {
+          const curHour = new Date().getHours();
+          const nightEnded = ct.sleepStartedNight && this.weather !== 'NIGHT';
+          const morningArrived = curHour >= 6 && curHour < 11 && ct.sleepStartedHour !== curHour && (ct.sleepStartedHour < 6 || ct.sleepStartedHour >= 18);
+          if (nightEnded || morningArrived) {
+            this.wakeCaretaker(true);
+          }
+        }
+      } else if (ct.state === 'SEEK_TABLE_MEAL') {
+        // 2. Walking to Front-Facing Chair at Dining Table to Eat
         const dx = ct.targetX - ct.x;
         const dy = ct.targetY - ct.y;
         const dist = Math.hypot(dx, dy);
-        if (dist < 4) {
-          ct.state = 'IDLE';
-          ct.stateTimer = 7 + Math.random() * 6;
-          if (ct.activity === 'AUTO') {
-            const acts = ['READ', 'COFFEE', 'CODE'];
-            ct.effectiveActivity = acts[Math.floor(Math.random() * acts.length)];
-          }
+        if (dist < 3) {
+          ct.x = 364;
+          ct.y = 290;
+          ct.facing = 1;
+          ct.state = 'EATING_TABLE';
+          ct.stateTimer = 8.0;
+          sound.playMunchPop();
         } else {
-          ct.x += (dx / dist) * 24 * dt;
-          ct.y += (dy / dist) * 24 * dt;
+          ct.x += (dx / dist) * 28 * dt;
+          ct.y += (dy / dist) * 28 * dt;
           if (Math.abs(dx) > 0.3) ct.facing = dx < 0 ? -1 : 1;
         }
-      } else if (ct.stateTimer <= 0 && ct.activity === 'AUTO') {
-        ct.state = 'WANDER';
-        if (this.scene === 'COTTAGE') {
-          const spots = [
-            { x: COTTAGE_SPOTS.sofa.x - 4, y: COTTAGE_SPOTS.sofa.y + 4 }, // Lounging on Right Sofa
-            { x: COTTAGE_SPOTS.desk.x,     y: COTTAGE_SPOTS.desk.y + 6 }, // Working at Top-Right Desk
-            { x: COTTAGE_SPOTS.rug.x,      y: COTTAGE_SPOTS.rug.y + 8 },  // Sitting on Bedside Carpet
-            { x: 412,                      y: 304 }                       // Standing by Dining Table
-          ];
-          const pick = spots[Math.floor(Math.random() * spots.length)];
-          ct.targetX = pick.x;
-          ct.targetY = pick.y;
-        } else {
-          const spots = [
-            { x: 665, y: 382 }, // Campfire Log
-            { x: 545, y: 340 }, // Picnic Rug
-            { x: 475, y: 285 }  // Garden Path
-          ];
-          const pick = spots[Math.floor(Math.random() * spots.length)];
-          ct.targetX = pick.x;
-          ct.targetY = pick.y;
+      } else if (ct.state === 'EATING_TABLE') {
+        // 3. Eating Meal at Dining Table
+        if (Math.random() < dt * 2.2) {
+          this.spawnHeart(ct.x, ct.y - 16, 'sparkle');
         }
-        ct.stateTimer = 6 + Math.random() * 5;
+        if (ct.stateTimer <= 0) {
+          ct.state = 'IDLE';
+          ct.stateTimer = 6;
+          this.spawnHeart(ct.x, ct.y - 18, 'heart');
+          showToast(`${ct.name} finished a delicious warm meal!`, 'heart-solid', '#fb7185');
+        }
+      } else if (this.scene === 'GARDEN' && this.weather === 'RAIN') {
+        // 4. Outdoor Rain Reaction: Use Umbrella & Seek Covered Campfire Porch!
+        const distToPorch = Math.hypot(ct.x - LANDMARKS.porch.x, ct.y - LANDMARKS.porch.y);
+        if (distToPorch > 5) {
+          ct.state = 'WANDER';
+          ct.targetX = LANDMARKS.porch.x;
+          ct.targetY = LANDMARKS.porch.y;
+          const dx = ct.targetX - ct.x;
+          const dy = ct.targetY - ct.y;
+          ct.x += (dx / distToPorch) * 28 * dt;
+          ct.y += (dy / distToPorch) * 28 * dt;
+          if (Math.abs(dx) > 0.3) ct.facing = dx < 0 ? -1 : 1;
+        } else {
+          ct.x = LANDMARKS.porch.x;
+          ct.y = LANDMARKS.porch.y;
+          ct.state = 'PORCH_SHELTERED';
+          ct.effectiveActivity = 'COFFEE';
+        }
+      } else {
+        // 5. Normal Indoor / Outdoor Autonomous Routine
+        if (ct.state === 'PORCH_SHELTERED' && (this.weather !== 'RAIN' || this.scene !== 'GARDEN')) {
+          ct.state = 'IDLE';
+          ct.stateTimer = 3;
+        }
+        if (ct.activity !== 'AUTO') {
+          ct.effectiveActivity = ct.activity;
+        }
+        if (ct.state === 'WANDER') {
+          const dx = ct.targetX - ct.x;
+          const dy = ct.targetY - ct.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist < 4) {
+            ct.x = ct.targetX;
+            ct.y = ct.targetY;
+            ct.state = 'IDLE';
+            ct.stateTimer = 7 + Math.random() * 6;
+            if (this.scene === 'COTTAGE' && Math.hypot(ct.x - COTTAGE_SPOTS.desk.x, ct.y - COTTAGE_SPOTS.desk.y) < 12) {
+              ct.effectiveActivity = ct.activity === 'CODE' ? 'CODE' : 'READ';
+            } else if (ct.activity === 'AUTO') {
+              const acts = ['READ', 'COFFEE', 'CODE'];
+              ct.effectiveActivity = acts[Math.floor(Math.random() * acts.length)];
+            }
+          } else {
+            ct.x += (dx / dist) * 24 * dt;
+            ct.y += (dy / dist) * 24 * dt;
+            if (Math.abs(dx) > 0.3) ct.facing = dx < 0 ? -1 : 1;
+          }
+        } else if (ct.stateTimer <= 0 && ct.activity === 'AUTO') {
+          ct.state = 'WANDER';
+          if (this.scene === 'COTTAGE') {
+            const spots = [
+              { x: COTTAGE_SPOTS.desk.x, y: COTTAGE_SPOTS.desk.y },     // Sitting on Front-Facing Chair at Study Desk
+              { x: COTTAGE_SPOTS.sofa.x, y: COTTAGE_SPOTS.sofa.y },     // Lounging on Cream Sofa (Overlays Sofa!)
+              { x: COTTAGE_SPOTS.rug.x,  y: COTTAGE_SPOTS.rug.y + 10 }, // Standing on Crimson Rug
+              { x: 480,                  y: 325 }                       // Open Center Floor
+            ];
+            const pick = spots[Math.floor(Math.random() * spots.length)];
+            ct.targetX = pick.x;
+            ct.targetY = pick.y;
+          } else {
+            const spots = [
+              { x: LANDMARKS.porch.x, y: LANDMARKS.porch.y }, // Covered Campfire Porch
+              { x: 545,               y: 340 },               // Picnic Rug
+              { x: 475,               y: 285 }                // Garden Path
+            ];
+            const pick = spots[Math.floor(Math.random() * spots.length)];
+            ct.targetX = pick.x;
+            ct.targetY = pick.y;
+          }
+          ct.stateTimer = 6 + Math.random() * 5;
+        }
       }
     }
 
@@ -1643,14 +1871,66 @@ function getLanternGlowSprite() {
 // 8-BIT CUSTOMIZABLE CARETAKER RENDERER (Scaled at 1.35x to match furniture & cats)
 function drawPixelCaretaker(c, caretaker, time) {
   if (!caretaker) return;
+  // Hide Caretaker in the outdoor Garden while sleeping in the Cottage bed!
+  if (world.scene !== 'COTTAGE' && caretaker.state === 'SLEEPING_BED') return;
+
   const x = Math.round(caretaker.x);
   const y = Math.round(caretaker.y);
-  const isWalking = caretaker.state === 'WANDER';
+  const isSleepingBed = caretaker.state === 'SLEEPING_BED';
+  const isNappingCouch = caretaker.state === 'NAPPING_COUCH';
+  const isEatingTable = caretaker.state === 'EATING_TABLE';
+  const isWalking = caretaker.state === 'WANDER' || caretaker.state === 'SEEK_TABLE_MEAL';
   const walkStep = isWalking ? Math.floor(time * 7) % 4 : 0;
   const bobY = isWalking ? (walkStep % 2 === 1 ? -1 : 0) : (Math.sin(time * 2.2) > 0.5 ? -1 : 0);
 
+  const skin = caretaker.skinColor || '#eab676';
+  const skinShade = caretaker.skinShade || '#c68b45';
+  const hair = caretaker.hairColor || '#1e1b18';
+  const outfit = caretaker.outfitColor || '#0284c7';
+  const pants = caretaker.pantsColor || '#1e293b';
+
+  const px = (rx, ry, rw, rh, col) => {
+    c.fillStyle = col;
+    c.fillRect(Math.round(rx), Math.round(ry), rw, rh);
+  };
+
+  // POSE A: Tucked into the Cottage Bed (SLEEPING_BED) or Napping on the Couch (NAPPING_COUCH)
+  if (isSleepingBed || isNappingCouch) {
+    const breath = Math.sin(time * 2.2) > 0 ? 1 : 0;
+    c.save();
+    c.translate(x, y);
+    c.scale(1.35, 1.35);
+
+    if (isSleepingBed) {
+      // Head resting on bed pillow + warm yellow quilt blanket pulled up over torso
+      px(-5, -14, 10, 8, skin);
+      px(-5, -16, 10, 3, hair);
+      px(-6, -15, 2, 4, hair);
+      px(4, -15, 2, 4, hair);
+      // Closed sleeping eyes
+      px(-3, -10, 2, 1, '#1e293b');
+      px(1, -10, 2, 1, '#1e293b');
+      // Blanket over body
+      px(-7, -7 + breath, 14, 9, '#eab308');
+      px(-7, -7 + breath, 14, 2, '#fef08a');
+    } else {
+      // Curled lounging nap on the right-wall cream sofa
+      px(-5, -6 + breath, 10, 6, outfit);
+      px(-6, -2, 8, 3, pants);
+      px(-5, -14 + breath, 10, 8, skin);
+      px(-5, -16 + breath, 10, 3, hair);
+      px(-3, -10 + breath, 2, 1, '#1e293b');
+      px(1, -10 + breath, 2, 1, '#1e293b');
+      px(-4, -9 + breath, 1, 1, '#fda4af');
+      px(3, -9 + breath, 1, 1, '#fda4af');
+    }
+    c.restore();
+    return;
+  }
+
   const act = caretaker.effectiveActivity || 'READ';
-  const isSitting = !isWalking && (act === 'READ' || act === 'COFFEE' || act === 'CODE');
+  const isSitting = !isWalking && (isEatingTable || act === 'READ' || act === 'COFFEE' || act === 'CODE');
+  const usesUmbrella = world.scene === 'GARDEN' && world.weather === 'RAIN' && caretaker.state !== 'PORCH_SHELTERED';
 
   c.save();
   c.translate(x, y);
@@ -1663,17 +1943,7 @@ function drawPixelCaretaker(c, caretaker, time) {
     c.scale(-1, 1);
   }
 
-  const px = (rx, ry, rw, rh, col) => {
-    c.fillStyle = col;
-    c.fillRect(Math.round(rx), Math.round(ry), rw, rh);
-  };
-
-  const skin = caretaker.skinColor || '#eab676';
-  const skinShade = caretaker.skinShade || '#c68b45';
-  const hair = caretaker.hairColor || '#1e1b18';
-  const outfit = caretaker.outfitColor || '#0284c7';
-  const pants = caretaker.pantsColor || '#1e293b';
-
+  // 1. Legs / Boots
   if (isSitting) {
     px(-5, -4, 10, 3, pants);
     px(-6, -2, 4, 2, '#3b1d0a');
@@ -1692,14 +1962,22 @@ function drawPixelCaretaker(c, caretaker, time) {
     px(1, -2, 3, 2, '#3b1d0a');
   }
 
-  const ty = -12 + bobY;
+  // 2. Torso & Arms
+  const eatDip = isEatingTable && Math.floor(time * 6) % 2 === 0 ? 1 : 0;
+  const ty = -12 + bobY + eatDip;
   px(-5, ty, 10, 7, outfit);
   px(-6, ty + 1, 2, 5, outfit);
   px(4, ty + 1, 2, 5, outfit);
   px(-6, ty + 5, 2, 2, skin);
   px(4, ty + 5, 2, 2, skin);
 
-  if (!isWalking) {
+  // Activity Props
+  if (isEatingTable) {
+    // Lifting fork/spoon with warm bite to mouth
+    const handY = eatDip ? ty + 1 : ty + 4;
+    px(2, handY, 2, 2, skin);
+    px(1, handY, 2, 1, '#cbd5e1');
+  } else if (!isWalking && !usesUmbrella) {
     if (act === 'READ') {
       px(-4, ty + 3, 8, 4, '#991b1b');
       px(-3, ty + 3, 6, 3, '#fef3c7');
@@ -1718,11 +1996,12 @@ function drawPixelCaretaker(c, caretaker, time) {
     }
   }
 
-  const hy = -20 + bobY;
+  // 3. Head & Face
+  const hy = -20 + bobY + eatDip;
   px(-5, hy, 10, 8, skin);
   px(-5, hy + 7, 10, 1, skinShade);
 
-  const isBlinking = Math.sin(time * 1.9) > 0.95;
+  const isBlinking = Math.sin(time * 1.9) > 0.95 || (isEatingTable && eatDip > 0);
   if (isBlinking) {
     px(-3, hy + 4, 2, 1, '#1e293b');
     px(1, hy + 4, 2, 1, '#1e293b');
@@ -1735,6 +2014,7 @@ function drawPixelCaretaker(c, caretaker, time) {
   px(-4, hy + 5, 1, 1, '#fda4af');
   px(3, hy + 5, 1, 1, '#fda4af');
 
+  // 4. Hairstyles
   const hs = caretaker.hairStyle || 'short';
   px(-5, hy - 2, 10, 3, hair);
   px(-6, hy - 1, 2, 4, hair);
@@ -1750,6 +2030,7 @@ function drawPixelCaretaker(c, caretaker, time) {
     px(-2, hy - 5, 4, 3, hair);
   }
 
+  // 5. Accessories
   const acc = caretaker.accessory || 'glasses';
   if (acc === 'glasses') {
     px(-4, hy + 3, 4, 2, '#fbbf24');
@@ -1765,6 +2046,15 @@ function drawPixelCaretaker(c, caretaker, time) {
     px(-7, hy - 2, 14, 2, '#d97706');
     px(-5, hy - 5, 10, 3, '#fbbf24');
     px(-5, hy - 3, 10, 1, '#b91c1c');
+  }
+
+  // 6. Rain Umbrella Overhead (When outdoors in RAIN and not under the porch roof!)
+  if (usesUmbrella) {
+    px(4, hy - 7, 1, 15, '#cbd5e1'); // Umbrella shaft
+    px(3, hy + 7, 2, 2, '#78350f');  // Curved handle
+    px(-5, hy - 9, 18, 3, '#e11d48'); // Red canopy
+    px(-3, hy - 11, 14, 2, '#f43f5e');
+    px(1, hy - 12, 6, 1, '#fda4af');
   }
 
   c.restore();
@@ -2152,8 +2442,8 @@ function ensureGardenStaticCache() {
   }
 
   drawLoadedSprite(c, 'lamp1', 304, 210, 20, 35);
-  drawLoadedSprite(c, 'log1', 668, 376, 34, 21);
   drawShelterDeck(c);
+  drawPorchDeck(c);
 
   gardenStaticCache = off;
   return off;
@@ -2269,6 +2559,41 @@ function drawShelterRoofOverhead(c, time) {
   c.fillRect(sx - 2, sy - 49, 4, 4);
 }
 
+function drawPorchDeck(c) {
+  const px = LANDMARKS.porch.x;
+  const py = LANDMARKS.porch.y;
+  c.fillStyle = 'rgba(15, 28, 17, 0.38)';
+  c.fillRect(px - 24, py - 8, 48, 24);
+  c.fillStyle = '#532e16';
+  c.fillRect(px - 22, py - 9, 44, 22);
+  c.fillStyle = '#78431e';
+  c.fillRect(px - 21, py - 10, 42, 21);
+  c.fillStyle = '#452310';
+  for (let y = py - 7; y < py + 10; y += 5) {
+    c.fillRect(px - 21, y, 42, 1);
+  }
+  drawLoadedSprite(c, 'log1', px - 16, py - 8, 32, 19);
+  c.fillStyle = '#532e16';
+  c.fillRect(px - 20, py - 26, 3, 18);
+  c.fillRect(px + 17, py - 26, 3, 18);
+}
+
+function drawPorchRoofOverhead(c, time) {
+  const px = LANDMARKS.porch.x;
+  const py = LANDMARKS.porch.y;
+  c.fillStyle = '#532e16';
+  c.fillRect(px - 20, py - 10, 3, 20);
+  c.fillRect(px + 17, py - 10, 3, 20);
+  c.fillStyle = '#452310';
+  c.fillRect(px - 25, py - 32, 50, 12);
+  c.fillStyle = '#6e3818';
+  c.fillRect(px - 23, py - 35, 46, 11);
+  c.fillStyle = '#8c4820';
+  c.fillRect(px - 19, py - 38, 38, 9);
+  c.fillStyle = '#a85828';
+  c.fillRect(px - 12, py - 41, 24, 6);
+}
+
 function drawMemorialStone(c, time, hovered) {
   const sx = LANDMARKS.shrine.x;
   const sy = LANDMARKS.shrine.y;
@@ -2321,42 +2646,37 @@ function drawMemorialStone(c, time, hovered) {
   }
 }
 
-function drawFoodBowl(c, bowlLevel, hovered) {
-  const bx = LANDMARKS.bowl.x;
-  const by = LANDMARKS.bowl.y;
+function drawCatPersonalBowl(c, bx, by, bowlLevel, cat, hovered) {
+  const accentColor = cat.id === 'lilo' ? '#0284c7' : cat.id === 'cheeto' ? '#d97706' : (cat.coatColor || '#0284c7');
   c.fillStyle = 'rgba(15, 28, 17, 0.3)';
-  c.fillRect(bx - 12, by - 4, 24, 10);
+  c.fillRect(bx - 10, by - 3, 20, 8);
   c.fillStyle = '#cbd5e1';
-  c.fillRect(bx - 11, by - 5, 22, 10);
-  c.fillStyle = '#94a3b8';
-  c.fillRect(bx - 10, by - 4, 20, 8);
-  c.fillStyle = '#0284c7';
-  c.fillRect(bx - 8, by - 3, 16, 7);
-  c.fillStyle = '#38bdf8';
-  c.fillRect(bx - 7, by - 4, 14, 6);
+  c.fillRect(bx - 9, by - 4, 18, 8);
+  c.fillStyle = accentColor;
+  c.fillRect(bx - 8, by - 3, 16, 6);
   c.fillStyle = '#e0f2fe';
-  c.fillRect(bx - 6, by - 3, 12, 4);
-
+  c.fillRect(bx - 6, by - 2, 12, 4);
   if (bowlLevel >= 1) {
     c.fillStyle = '#92400e';
-    c.fillRect(bx - 5, by - 3, 10, 2);
+    c.fillRect(bx - 5, by - 2, 10, 2);
   }
   if (bowlLevel >= 2) {
     c.fillStyle = '#b45309';
-    c.fillRect(bx - 6, by - 4, 12, 2);
+    c.fillRect(bx - 6, by - 3, 12, 2);
   }
   if (bowlLevel >= 3) {
     c.fillStyle = '#d97706';
-    c.fillRect(bx - 4, by - 5, 8, 2);
+    c.fillRect(bx - 4, by - 4, 8, 2);
   }
-
   if (hovered) {
-    c.font = 'bold 7px Quicksand, sans-serif';
+    c.font = 'bold 6.5px Quicksand, sans-serif';
     c.textAlign = 'center';
+    const label = `${cat.name}'s Bowl`;
+    const tw = c.measureText(label).width + 8;
     c.fillStyle = 'rgba(24, 16, 10, 0.88)';
-    c.fillRect(bx - 30, by - 17, 60, 9);
+    c.fillRect(bx - tw / 2, by - 15, tw, 9);
     c.fillStyle = '#fde68a';
-    c.fillText(bowlLevel > 0 ? 'Food Bowl' : 'Tap to Refill', bx, by - 10);
+    c.fillText(label, bx, by - 8);
   }
 }
 
@@ -2510,12 +2830,10 @@ function getCottageFurnitureRenderables(ctx, time) {
   const sideChairKey = getLeftFacingChairKey();
 
   return [
-    // 1. Top-Left Wardrobe
     {
       y: 224,
       draw: () => drawIndividualFurniture(ctx, 'intWardrobe', 350, 224, 1.35, true)
     },
-    // 2. Bedside Table + Lamp on Top (Lamp glows warmly at night/rain!)
     {
       y: 230,
       draw: () => {
@@ -2529,12 +2847,11 @@ function getCottageFurnitureRenderables(ctx, time) {
         }
       }
     },
-    // 3. The 1 Bed: DoubleBed Centered Over the Carpet
     {
-      y: 254,
+      // Bed frame at y=228 so sleeping Caretaker (y=232) renders on top of the mattress!
+      y: 228,
       draw: () => drawIndividualFurniture(ctx, 'intDoubleBed', 476, 254, 1.35, true)
     },
-    // 4. Bookcase + Stack of Books in Front-Right Corner
     {
       y: 232,
       draw: () => {
@@ -2550,39 +2867,56 @@ function getCottageFurnitureRenderables(ctx, time) {
         }
       }
     },
-    // 5. Top-Right Study Desk + Mini Deco Succulent on Top-Left Corner
+    // Top-Right Study Desk + Front-Facing Chair for Reading/Coding!
     {
-      y: 242,
+      y: 240,
       draw: () => {
         drawIndividualFurniture(ctx, 'intStudyDesk', 604, 240, 1.35, true);
         drawIndividualFurniture(ctx, 'intMiniFlower', 588, 219, 1.35, true);
       }
     },
-    // 6. Left Dining Table Set (Top Chair & Right Chair behind table, Table, Bottom Chair in front)
     {
-      y: 332,
+      // Front-facing chair at Study Desk (y=244) so Caretaker at y=248 sits ON TOP of the chair!
+      y: 244,
+      draw: () => drawIndividualFurniture(ctx, 'intChairTop', 598, 252, 1.25, true)
+    },
+    // Left Dining Table Set:
+    // 1. Front-facing chair at top of dining table (y=282) -> Caretaker (y=290) overlays this chair!
+    {
+      y: 282,
+      draw: () => drawIndividualFurniture(ctx, 'intChairTop', 364, 288, 1.35, true)
+    },
+    // 2. Dining Table (y=326) -> Overlays Caretaker's lower body while sitting at y=290!
+    {
+      y: 326,
       draw: () => {
-        drawIndividualFurniture(ctx, 'intChairTop', 364, 286, 1.35, true);
         drawIndividualFurniture(ctx, sideChairKey, 392, 316, 1.35, true);
         drawIndividualFurniture(ctx, 'intDiningTable', 364, 326, 1.35, true);
+        // Warm dinner plate when Caretaker is eating at the table!
+        if (world.caretaker && world.caretaker.state === 'EATING_TABLE') {
+          ctx.fillStyle = '#f8fafc';
+          ctx.fillRect(359, 286, 10, 6);
+          ctx.fillStyle = '#ea580c';
+          ctx.fillRect(361, 287, 6, 4);
+          ctx.fillStyle = '#fde047';
+          ctx.fillRect(362, 288, 3, 2);
+        }
         drawIndividualFurniture(ctx, 'intChairBottom', 364, 340, 1.35, true);
       }
     },
-    // 7.Right Wall Flower Vase + Cream Sofa
     {
-      y: 298,
+      y: 292,
       draw: () => drawIndividualFurniture(ctx, 'intVaseFlower', 612, 294, 1.35, true)
     },
     {
-      y: 364,
+      // Sofa depth-sorted at y=296 so Caretaker/Cats (y>=300) ALWAYS overlay the sofa!
+      y: 296,
       draw: () => drawIndividualFurniture(ctx, sofaKey, 612, 364, 1.35, true)
     },
-    // 8. Bottom-Left Coat Stand Near Entrance Hallway
     {
       y: 396,
       draw: () => drawIndividualFurniture(ctx, 'intCoatStand', 406, 396, 1.35, true)
     },
-    // 9. Bottom-Right Storage Box & Barrel
     {
       y: 398,
       draw: () => {
@@ -2612,19 +2946,23 @@ function drawGardenScene(time = 0) {
     drawGardenScenery(ctx, time);
   }
 
-  const bowlPos = isCottage ? COTTAGE_SPOTS.bowl : LANDMARKS.bowl;
+  const totalCats = world.cats.length;
   const renderables = [
-    {
-      y: bowlPos.y - 2,
-      draw: () => {
-        ctx.save();
-        if (isCottage) {
-          ctx.translate(COTTAGE_SPOTS.bowl.x - LANDMARKS.bowl.x, COTTAGE_SPOTS.bowl.y - LANDMARKS.bowl.y);
-        }
-        drawFoodBowl(ctx, world.bowlLevel, world.pointer.hoveredEntity === 'bowl');
-        ctx.restore();
-      }
-    },
+    ...world.cats.map((cat, idx) => {
+      const bPos = getCatBowlPos(idx, totalCats, world.scene);
+      return {
+        y: bPos.y - 2,
+        draw: () =>
+          drawCatPersonalBowl(
+            ctx,
+            bPos.x,
+            bPos.y,
+            typeof cat.bowlLevel === 'number' ? cat.bowlLevel : world.bowlLevel,
+            cat,
+            world.pointer.hoveredEntity === 'bowl'
+          )
+      };
+    }),
     {
       y: world.caretaker.y,
       draw: () => drawPixelCaretaker(ctx, world.caretaker, time)
@@ -2646,6 +2984,10 @@ function drawGardenScene(time = 0) {
       {
         y: 254,
         draw: () => drawShelterRoofOverhead(ctx, time)
+      },
+      {
+        y: 392,
+        draw: () => drawPorchRoofOverhead(ctx, time)
       },
       {
         y: 258,
@@ -2754,49 +3096,97 @@ function findCatAt(px, py, isTouch = false) {
   return null;
 }
 
+function worldToScreen(wx, wy) {
+  if (!canvas) return { x: wx, y: wy };
+  const rect = canvas.getBoundingClientRect();
+  const scale = camera.getEffectiveScale();
+  const cx = (wx - camera.x) * scale + canvas.width / 2;
+  const cy = (wy - camera.y) * scale + canvas.height / 2;
+  return {
+    x: rect.left + (cx * rect.width) / canvas.width,
+    y: rect.top + (cy * rect.height) / canvas.height
+  };
+}
+
+safeOn('tableEatBtn', 'click', (e) => {
+  e.stopPropagation();
+  world.startCaretakerTableMeal();
+});
+
 function handleCanvasTap(clientX, clientY, isTouch = false) {
   const touchMult = isTouch ? 1.45 : 1.0;
   const pt = screenToWorld(clientX, clientY);
 
   const hitCat = findCatAt(pt.x, pt.y, isTouch);
   if (hitCat) {
+    world.hideTableEatPopup();
     world.petCat(hitCat);
     return;
   }
 
-  if (world.caretaker && Math.hypot(pt.x - world.caretaker.x, pt.y - (world.caretaker.y - 12)) <= 20 * touchMult) {
-    world.callCatsToCaretaker();
-    return;
+  // Check if any cat's personal bowl was tapped
+  for (let i = 0; i < world.cats.length; i++) {
+    const bPos = getCatBowlPos(i, world.cats.length, world.scene);
+    if (Math.hypot(pt.x - bPos.x, pt.y - bPos.y) <= 18 * touchMult) {
+      world.hideTableEatPopup();
+      world.feedBowl();
+      return;
+    }
   }
 
   if (world.scene === 'COTTAGE') {
-    // Tapping Bookcase / Photo Album opens Tribute Modal
+    // 1. Tapping the Double Bed toggles Caretaker sleeping in bed!
+    if (pt.x >= 442 && pt.x <= 510 && pt.y >= 198 && pt.y <= 258) {
+      world.toggleCaretakerBedSleep();
+      return;
+    }
+    // 2. Tapping the Right-Wall Sofa toggles Caretaker Couch Nap!
+    if (pt.x >= 590 && pt.x <= 636 && pt.y >= 296 && pt.y <= 368) {
+      world.toggleCaretakerCouchNap();
+      return;
+    }
+    // 3. Tapping the Left Dining Table shows the floating "Eat" button!
+    if (pt.x >= 332 && pt.x <= 398 && pt.y >= 274 && pt.y <= 344) {
+      const scr = worldToScreen(364, 286);
+      world.showTableEatPopup(scr.x, scr.y);
+      return;
+    }
+    world.hideTableEatPopup();
+
+    // 4. Tapping Bookcase / Photo Album opens Tribute Modal
     if (Math.hypot(pt.x - COTTAGE_SPOTS.hearth.x, pt.y - (COTTAGE_SPOTS.hearth.y - 18)) <= COTTAGE_SPOTS.hearth.radius * touchMult) {
       openModal('tribute-modal');
       return;
     }
-    // Tapping Indoor Ceramic Bowl refills food
-    if (Math.hypot(pt.x - COTTAGE_SPOTS.bowl.x, pt.y - COTTAGE_SPOTS.bowl.y) <= COTTAGE_SPOTS.bowl.radius * touchMult) {
-      world.feedBowl();
+    // 5. Tapping Caretaker calls the cats over
+    if (world.caretaker && Math.hypot(pt.x - world.caretaker.x, pt.y - (world.caretaker.y - 12)) <= 20 * touchMult) {
+      world.callCatsToCaretaker();
       return;
     }
-    // Tapping Bottom-Center Entrance Alcove steps back outside to the Garden
+    // 6. Tapping Bottom-Center Entrance Alcove steps back outside to the Garden
     if (pt.x >= 432 && pt.x <= 528 && pt.y >= 408 && pt.y <= 466) {
       world.toggleScene();
       return;
     }
-    // Tapping open floor inside the Cottage guides a cat over
-    if (pt.x >= 340 && pt.x <= 620 && pt.y >= 232 && pt.y <= 408) {
+    // 7. Tapping walkable open floor inside the Cottage guides a cat over
+    if (isCottagePointWalkable(pt.x, pt.y)) {
       const cat = world.cats[Math.floor(Math.random() * Math.min(2, world.cats.length))];
       if (cat && cat.state !== 'EATING') {
         cat.state = 'WANDER';
         cat.pose = 'sit';
-        cat.targetX = Math.max(COTTAGE_BOUNDS.minX, Math.min(COTTAGE_BOUNDS.maxX, pt.x));
-        cat.targetY = Math.max(COTTAGE_BOUNDS.minY, Math.min(COTTAGE_BOUNDS.maxY, pt.y));
+        cat.targetX = pt.x;
+        cat.targetY = pt.y;
         cat.labelAlpha = 1.4;
         world.spawnHeart(pt.x, pt.y, 'sparkle');
       }
     }
+    return;
+  }
+
+  world.hideTableEatPopup();
+
+  if (world.caretaker && world.caretaker.state !== 'SLEEPING_BED' && Math.hypot(pt.x - world.caretaker.x, pt.y - (world.caretaker.y - 12)) <= 20 * touchMult) {
+    world.callCatsToCaretaker();
     return;
   }
 
@@ -2805,12 +3195,6 @@ function handleCanvasTap(clientX, clientY, isTouch = false) {
     return;
   }
 
-  if (Math.hypot(pt.x - LANDMARKS.bowl.x, pt.y - LANDMARKS.bowl.y) <= LANDMARKS.bowl.radius * touchMult) {
-    world.feedBowl();
-    return;
-  }
-
-  // Tapping the top Garden Gate steps inside the Cottage
   if (pt.x >= 450 && pt.x <= 510 && pt.y >= 110 && pt.y <= 195) {
     world.toggleScene();
     return;

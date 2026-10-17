@@ -12,8 +12,8 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-t
 - **Global Solid Pixel Font**:
   - Imported solid pixel font (`Stardew_Valley.ttf` & `.otf`) applied uniformly across the web application and all 5 Android home screen widgets.
   - Specially tuned typography sizes across the HUD, dialogue badges, and polaroid tribute frames for razor-sharp readability on all screen densities.
-- **PWA v10 Offline Cache**:
-  - Service worker precaching updated to `'lilos-garden-pwa-v10'` bundling all core assets, solid typography, and individual interior furniture sprites (`assets/interior/Individual/*.png`) for instant offline playability.
+- **PWA v11 Offline Cache**:
+  - Service worker precaching updated to `'lilos-garden-pwa-v11'` bundling all core assets, solid typography, floating dining table Eat button, and individual interior furniture sprites (`assets/interior/Individual/*.png`) for instant offline playability.
 - **60 FPS Offscreen Canvas Caching**:
   - Pre-renders static scenes (`ensureGardenStaticCache`, `ensureCottageStaticCache`) and dynamic lighting glow sprites (`getFireGlowSprite`, `getLanternGlowSprite`) into offscreen canvases, minimizing draw calls and guaranteeing locked 60 FPS performance on mobile devices.
   - Dirty-checks DOM ticker text updates to completely prevent layout thrashing and reflows.
@@ -24,11 +24,16 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-t
 - **Living Pixel Caretaker**:
   - A customizable 8-bit character (rendered at proportional `1.35x` scale) living alongside Lilo and Cheeto in both the Garden and Cottage.
   - Interactive cuddles: Tapping the Caretaker in the scene calls the cats over for cuddles and purrs.
+  - **Bed Sleep & Morning Wake**: Tapping the double bed tucks the Caretaker into bed (`SLEEPING_BED`) with warm yellow quilt and floating sleep Z's. Hidden when viewing the outdoor Garden, and automatically wakes up in the morning (at daybreak or when the clock reaches 6 AM).
+  - **Couch Nap**: Tapping the right-wall sofa curls the Caretaker up for a cozy couch nap (`NAPPING_COUCH`).
+  - **Dining Table Meal**: Tapping the dining table reveals a floating **"Eat"** button; clicking it seats the Caretaker at the table's front chair with a warm plate of food and eating animation.
+  - **Rain Reaction & Umbrella**: In rainy weather outdoors, the Caretaker holds a pixel umbrella while walking and seeks refuge under the covered campfire mini-porch roof.
+  - **Study Desk Sitting**: Caretaker sits directly on the front-facing chair (`intChairTop`) when reading or coding at the study desk.
   - Cozy animated activities:
-    - **Reading**: Holding a cozy red storybook.
-    - **Coffee**: Sipping a warm steaming ceramic mug.
-    - **Coding**: Typing on a miniature pixel laptop.
-    - **Auto**: Autonomously wanders between room zones (plush sofa, study desk, crimson rug, hearth, and outdoor campfire log).
+    - **Reading**: Holding a cozy red storybook while seated at the desk or rug.
+    - **Coffee**: Sipping a warm steaming ceramic mug under the porch or indoors.
+    - **Coding**: Typing on a miniature pixel laptop at the study desk.
+    - **Auto**: Autonomously wanders between room zones, seeking shelter when it rains and sleeping when bedtime arrives.
 - **In-Depth Caretaker Customizer (`#modalCaretaker`)**:
   - Accessible via the **"Me"** button on the bottom dock.
   - Real-time animated 8-bit preview canvas with background matching the current scene.
@@ -85,18 +90,25 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-t
     - **Dining Set**: Large Wooden Dining Table (`tablebig.png`) with 4-way chairs (`ChairF.png`, `Chair1side.png`, `Chair2side.png`, `ChairBside.png`).
     - **Living Lounge**: Cream Sofa (`sofa 1side.png` / `sofa 2side.png`) and tall flower vase (`vaseflower.png`).
     - **Entrance & Storage**: Coat stand (`coat stand.png`) by the entrance hallway, and rustic wooden chest (`Box.png`) & barrel (`Box2.png`).
-- **Depth-Sorted Living Scene & Boundary-Constrained Wandering**:
+- **Depth-Sorted Living Scene, Obstacle Collisions & Exclusive Cat Bowls**:
   - All room furniture depth-sorts dynamically alongside the Caretaker, Lilo, and Cheeto so characters seamlessly walk in front of and behind objects.
-  - Indoor wandering constrained strictly to room floor bounds (`COTTAGE_BOUNDS`), with indoor bowl feeding and bedside carpet napping.
+  - **Furniture Obstacle Collision Avoidance (`COTTAGE_OBSTACLES`)**: Prevents characters from clipping or stepping on furniture.
+  - **Dynamic Exclusive Cat Bowls**: Each cat has its own dedicated, color-coded ceramic bowl in both the Garden and Cottage; cats walk exclusively to their assigned bowl to dine.
+  - **Dining Table Set & Floating "Eat" Button**: Front-facing dining chair renders behind Caretaker while the table renders in front with a warm dinner plate. Tapping the table pops up the floating **"Eat"** button.
+  - **Sofa Depth-Sorting**: Depth-sorted at `y = 296` so cats and Caretaker lounging or napping on the cream sofa always overlay the cushion naturally.
+  - Indoor wandering constrained strictly to walkable floor areas (`isCottagePointWalkable`), with indoor bowl feeding and bedside carpet napping.
 - **Seamless Navigation**: Tap the bottom entrance hallway (or the bottom dock's **Cottage** button) to step smoothly between indoor and outdoor sanctuaries.
 
 ---
 
-### 6. Cozy Animated Bonfire & Camp Nook
+### 6. Cozy Animated Bonfire, Covered Campfire Porch & Camp Nook
+- **Covered Campfire Porch**:
+  - A cozy hand-carved wooden mini-porch deck and overhead cedar roof sheltering the campfire log (`LANDMARKS.porch`).
+  - In rainy weather, the Caretaker shelters under the porch roof while sipping coffee.
 - **Weather-Reactive Campfire**:
   - **Sunny & Fair Weather**: Smooth 6-frame active burning flames strip (`campfireActive`) with an animated radial flickering warmth glow (`rgba(251, 146, 60, ...)`).
   - **Rainy Weather**: Automatically switches to the 6-frame extinguished smoldering smoke strip (`campfireSmoke`).
-- **Fallen Camp Log**: Hand-carved wooden seating log (`log1`) nestled right beside the fire pit.
+- **Fallen Camp Log**: Hand-carved wooden seating log (`log1`) nestled right beside the fire pit under the porch roof.
 
 ---
 
@@ -194,10 +206,13 @@ All widgets are powered by an animation engine with a **2-Layer Compositor Archi
 | **Pet Cat** | Tap or click any cat | <kbd>P</kbd> |
 | **Call Cats to Caretaker** | Tap the Caretaker in the scene | — |
 | **Caretaker Customizer** | Tap **"Me"** on the bottom dock | — |
-| **Refill Food Bowl** | Tap the ceramic bowl or click **"Fill Bowl"** | <kbd>F</kbd> |
+| **Bed Sleep / Wake** | Tap the Double Bed in the Cottage | — |
+| **Couch Nap** | Tap the Cream Sofa in the Cottage | — |
+| **Dining Table Meal** | Tap Dining Table → Tap floating **"Eat"** | — |
+| **Refill Food Bowls** | Tap any personal cat bowl or **"Fill Bowl"** | <kbd>F</kbd> |
 | **Toggle Cottage / Garden** | Tap **"Cottage"** or entrance hallway / gate | — |
 | **Twin Polaroid Tribute** | Tap Memorial Stone (Garden) or Bookcase (Cottage) | — |
-| **Guide Cat / Call Over** | Tap or click any open patch of ground | — |
+| **Guide Cat / Call Over** | Tap or click any open walkable floor or lawn | — |
 | **Cycle Weather Mode** | Tap the Weather Badge | <kbd>W</kbd> |
 | **Camera Zoom** | Tap **"Zoom In / Out"** or pinch touchscreen | <kbd>Z</kbd> |
 | **Follow Lilo** | Tap **"Follow Lilo"** on the bottom dock | — |
