@@ -17,7 +17,6 @@
 }
 
 :root {
-  /* Authentic Stardew Valley Wooden & Golden Parchment Palette */
   --sv-border-dark: #3b1d0a;
   --sv-wood-Shadow: #5e2c11;
   --sv-wood-main: #8f4d22;
@@ -45,12 +44,11 @@
   -webkit-user-select: none;
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
-  margin: 0;
-  padding: 0;
 }
 
-body,
-html {
+body, html {
+  margin: 0;
+  padding: 0;
   width: 100%;
   height: 100%;
   height: 100dvh;
@@ -127,10 +125,9 @@ canvas#garden-canvas:active {
 .whisper-container,
 #cozy-dock,
 .cozy-card,
-#toastBox>div {
+#toastBox > div {
   background-color: var(--sv-parchment) !important;
-  background-image:
-    radial-gradient(rgba(200, 125, 59, 0.08) 1px, transparent 0) !important;
+  background-image: radial-gradient(rgba(200, 125, 59, 0.08) 1px, transparent 0) !important;
   background-size: 8px 8px !important;
   border: 4px solid var(--sv-border-dark) !important;
   border-radius: 6px !important;
@@ -145,7 +142,7 @@ canvas#garden-canvas:active {
   color: var(--sv-ink) !important;
 }
 
-/* ==================== INTRO OVERLAY (STARDEW TITLE DIALOGUE) ==================== */
+/* ==================== INTRO OVERLAY ==================== */
 #intro-overlay {
   position: fixed;
   inset: 0;
@@ -206,7 +203,8 @@ canvas#garden-canvas:active {
   box-shadow: inset 0 -2px 0 var(--sv-parchment-dark);
   color: var(--sv-ink);
   font-family: 'StardewValleyCaps', 'Press Start 2P', monospace;
-  font-size: 11px; letter-spacing: 0.04em;
+  font-size: 11px;
+  letter-spacing: 0.04em;
   margin-bottom: 8px;
 }
 
@@ -304,7 +302,7 @@ canvas#garden-canvas:active {
 }
 
 .whisper-container {
-  padding: 9px 14px !important;
+  padding: 10px 14px !important;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -349,7 +347,7 @@ canvas#garden-canvas:active {
   color: var(--sv-ink);
   font-weight: 700;
   white-space: nowrap;
-  max-width: 185px;
+  max-width: 195px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -383,28 +381,35 @@ canvas#garden-canvas:active {
 /* ==================== BOTTOM STARDEW RPG HOTBAR DOCK ==================== */
 #cozy-dock {
   position: fixed;
-  bottom: calc(14px + var(--safe-bottom));
+  bottom: calc(12px + var(--safe-bottom));
   left: 50%;
   transform: translateX(-50%);
   z-index: 30;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 12px !important;
+  gap: 7px;
+  padding: 11px 13px !important;
   width: fit-content;
-  max-width: calc(100vw - 14px);
+  max-width: calc(100vw - 12px);
 }
 
 .stardew-btn-green,
 .stardew-btn,
 .stardew-btn-sky {
   border-radius: 4px !important;
-  border: 3px solid var(--sv-border-dark) !important;
+  border: 2.5px solid var(--sv-border-dark) !important;
   font-family: 'StardewValley', 'Quicksand', sans-serif;
   font-weight: 700;
+  padding: 7px 11px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
   cursor: pointer;
   white-space: nowrap;
+  overflow: hidden;
+  line-height: 1.15;
   transition: transform 0.08s ease, box-shadow 0.08s ease !important;
 }
 
@@ -445,6 +450,16 @@ canvas#garden-canvas:active {
   box-shadow: 0 0 0 var(--sv-border-dark) !important;
 }
 
+#bowlBadge,
+#catCountBadge {
+  display: inline-block;
+  padding: 2px 5px !important;
+  font-size: 9.5px !important;
+  line-height: 1 !important;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
 /* ==================== STARDEW DIALOGUE MODALS ==================== */
 .modal-overlay {
   position: fixed;
@@ -482,7 +497,7 @@ canvas#garden-canvas:active {
   transform: translateY(0) scale(1);
 }
 
-/* ==================== TWIN POLAROID FRAMES (STARDEW WOODEN PORTRAITS) ==================== */
+/* ==================== TWIN POLAROID FRAMES ==================== */
 .polaroid-card {
   width: 146px;
   background: #fffdf7;
@@ -619,7 +634,7 @@ canvas#garden-canvas:active {
   background: linear-gradient(180deg, #68b82e 0%, #3d7a14 100%);
 }
 
-/* ==================== WIDGET (?widget=1) & WALLPAPER (?wallpaper=1) MODES ==================== */
+/* ==================== WIDGET & WALLPAPER MODES ==================== */
 body.widget-mode #intro-overlay,
 body.widget-mode #cozy-dock,
 body.widget-mode #whisperBlooms,
@@ -636,7 +651,6 @@ body.widget-mode #whisper-pill {
   top: 6px;
 }
 
-/* Pure Live Wallpaper Mode: Hides all UI chrome so only the garden & cats render */
 body.wallpaper-mode #intro-overlay,
 body.wallpaper-mode #whisper-pill,
 body.wallpaper-mode #cozy-dock,
@@ -644,28 +658,26 @@ body.wallpaper-mode #toastBox {
   display: none !important;
 }
 
-/* ==================== MOBILE OVERLAP & CONTAINMENT FIXES ==================== */
+/* ==================== MOBILE RESPONSIVE CONTAINMENT FIXES ==================== */
 @media (max-width: 640px) {
-  /* 1. Fix Top Whisper Plaque: Wrap cleanly into 2 compact rows so "L..." is never squished */
   #whisper-pill {
-    width: calc(100vw - 16px);
-    max-width: 420px;
+    width: calc(100vw - 14px);
+    max-width: 430px;
   }
 
   .whisper-container {
     flex-wrap: wrap !important;
     justify-content: space-between !important;
     padding: 10px 12px !important;
-    gap: 6px !important;
+    gap: 5px !important;
     white-space: normal !important;
   }
 
   .whisper-btn {
     font-size: 10.5px !important;
-    padding: 4px 8px !important;
+    padding: 4px 7px !important;
   }
 
-  /* Move Lilo's live mood onto its own full-width second row inside the wooden plaque */
   .whisper-mood {
     order: 4;
     width: 100% !important;
@@ -675,32 +687,29 @@ body.wallpaper-mode #toastBox {
     padding: 3px 8px !important;
   }
 
-  /* 2. Fix Bottom Dock: Keep all 3 buttons strictly inside the wooden box */
   #cozy-dock {
-    width: calc(100vw - 16px) !important;
-    max-width: 420px !important;
+    width: calc(100vw - 12px) !important;
+    max-width: 440px !important;
     padding: 10px 10px !important;
-    gap: 6px !important;
+    gap: 4px !important;
     justify-content: space-between !important;
   }
 
   #cozy-dock > button {
     flex: 1 1 0% !important;
     min-width: 0 !important;
-    padding: 8px 6px !important;
-    font-size: 11px !important;
+    padding: 7px 5px !important;
+    font-size: 10.5px !important;
     justify-content: center !important;
-    gap: 4px !important;
+    gap: 3px !important;
   }
 
-  /* Make the "Empty/Full" and "2" badges compact on small phones */
   #bowlBadge,
   #catCountBadge {
-    padding: 1px 5px !important;
-    font-size: 9px !important;
+    padding: 1px 4px !important;
+    font-size: 8.5px !important;
   }
 
-  /* 3. Fix Modal Top/Bottom Wooden Border Overlap when Scrolling */
   .modal-overlay {
     align-items: flex-end;
     padding: 0;
@@ -710,24 +719,13 @@ body.wallpaper-mode #toastBox {
     max-width: 100%;
     max-height: 88dvh;
     border-radius: 10px 10px 0 0 !important;
-    /* Extra padding + border clip so scrolling content never overlaps the wooden frame */
     padding: 22px 18px calc(22px + var(--safe-bottom)) !important;
     border-top: 6px solid var(--sv-border-dark) !important;
   }
+}
 
-  .remote-save-box {
-    margin-top: 4px !important;
-    padding: 10px !important;
-  }
-
-  .remote-save-actions {
-    width: 100%;
-    justify-content: stretch;
-  }
-
-  .remote-save-actions .copy-link-btn {
-    flex: 1 1 0%;
-    text-align: center;
-    justify-content: center;
+@media (max-width: 390px) {
+  #bowlBadge {
+    display: none !important;
   }
 }

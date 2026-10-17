@@ -146,33 +146,40 @@
   <!-- ==================== BOTTOM COZY DOCK ==================== -->
   <nav id="cozy-dock">
     <button type="button" id="btnFeed"
-      class="stardew-btn-green rounded-full px-4 py-2.5 text-xs sm:text-sm font-bold flex items-center gap-1.5">
+      class="stardew-btn-green text-xs sm:text-sm font-bold">
       <svg class="pixel-icon text-amber-300"><use href="#pi-fish"/></svg>
-      <span>Fill Bowl</span>
-      <span id="bowlBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-black/25 text-white">Full</span>
+      <span>Feed</span>
+      <span id="bowlBadge" class="bg-black/25 text-white">Full</span>
     </button>
 
     <button type="button" id="btnCameraMode"
-      class="stardew-btn-sky rounded-full px-3.5 py-2.5 text-xs sm:text-sm font-bold flex items-center gap-1.5"
+      class="stardew-btn-sky text-xs sm:text-sm font-bold"
       title="Center on Lilo or toggle zoom">
       <span id="cameraBtnIcon" class="inline-flex items-center">
         <svg class="pixel-icon text-sky-200"><use href="#pi-target"/></svg>
       </span>
-      <span id="cameraBtnText">Follow Lilo</span>
+      <span id="cameraBtnText">Follow</span>
     </button>
 
     <button type="button" id="btnToggleScene"
-      class="stardew-btn rounded-full px-3.5 py-2.5 text-xs sm:text-sm font-bold flex items-center gap-1.5"
+      class="stardew-btn text-xs sm:text-sm font-bold"
       title="Step inside the Cozy Cottage or back out to the Garden">
       <svg class="pixel-icon text-amber-900"><use href="#pi-coffee"/></svg>
       <span id="sceneBtnText">Cottage</span>
     </button>
 
+    <button type="button" id="btnOpenCaretaker"
+      class="stardew-btn text-xs sm:text-sm font-bold"
+      title="Customize your 8-bit Caretaker">
+      <svg class="pixel-icon text-[#5c3820]"><use href="#pi-users"/></svg>
+      <span>Me</span>
+    </button>
+
     <button type="button" id="btnOpenFriends"
-      class="stardew-btn rounded-full px-4 py-2.5 text-xs sm:text-sm font-bold flex items-center gap-1.5">
+      class="stardew-btn text-xs sm:text-sm font-bold">
       <svg class="pixel-icon text-[#5c3820]"><use href="#pi-paw"/></svg>
-      <span>Cat Friends</span>
-      <span id="catCountBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-black/20 text-[#3e2213]">2</span>
+      <span>Cats</span>
+      <span id="catCountBadge" class="bg-black/20 text-[#3e2213]">2</span>
     </button>
   </nav>
 
@@ -608,6 +615,87 @@
             <span>Add Campfire Focus Widget</span>
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 6: 8-BIT CARETAKER CUSTOMIZER MODAL ==================== -->
+  <div id="modalCaretaker" class="modal-overlay">
+    <div class="cozy-card">
+      <div class="flex items-center justify-between border-b-2 border-[#d8bfa3] pb-3 mb-3">
+        <div class="flex items-center gap-2">
+          <svg class="pixel-icon pixel-icon-lg text-amber-800"><use href="#pi-users"/></svg>
+          <div>
+            <h2 class="font-pixel text-xs sm:text-sm text-[#4a3525]">8-BIT CARETAKER</h2>
+            <p class="text-xs text-[#7c624c] font-semibold">Customize your pixel character &amp; call the cats over</p>
+          </div>
+        </div>
+        <button type="button" data-close-modal="modalCaretaker"
+          class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center cursor-pointer">
+          <svg class="pixel-icon"><use href="#pi-close"/></svg>
+        </button>
+      </div>
+
+      <!-- Live 8-Bit Caretaker Preview + Name Input -->
+      <div class="flex items-center gap-3 bg-[#f5e6c8] p-2.5 rounded-xl border border-[#b88b5a]/60 mb-3">
+        <canvas id="previewCaretakerCanvas" width="64" height="56"
+          class="rounded-lg border-2 border-[#8f4d22] bg-[#2d5c2b] shrink-0"
+          style="image-rendering: pixelated; width: 64px; height: 56px;"></canvas>
+        <div class="flex-1">
+          <label for="inputCaretakerName" class="block text-[11px] font-bold text-[#4a3525] mb-1">Caretaker Name:</label>
+          <input type="text" id="inputCaretakerName" maxlength="16" placeholder="e.g., Dom, Alex..."
+            class="w-full rounded-lg border-2 border-[#b88b5a] bg-[#fffdf7] px-2.5 py-1.5 text-xs font-bold text-[#3d2516] focus:outline-none" />
+          <p class="text-[10.5px] text-[#7c624c] mt-1">Tip: Tap your character in the room/garden to call Lilo &amp; Cheeto!</p>
+        </div>
+      </div>
+
+      <!-- Hairstyle & Accessory -->
+      <div class="grid grid-cols-2 gap-2.5 mb-3">
+        <div>
+          <span class="block text-[11px] font-bold text-[#4a3525] mb-1">Hairstyle:</span>
+          <div id="caretakerHairStyleSelector" class="grid grid-cols-2 gap-1 text-[11px]"></div>
+        </div>
+        <div>
+          <span class="block text-[11px] font-bold text-[#4a3525] mb-1">Accessory:</span>
+          <div id="caretakerAccessorySelector" class="grid grid-cols-2 gap-1 text-[11px]"></div>
+        </div>
+      </div>
+
+      <!-- Activity / Pose -->
+      <div class="mb-3">
+        <span class="block text-[11px] font-bold text-[#4a3525] mb-1">Cozy Activity:</span>
+        <div id="caretakerActivitySelector" class="grid grid-cols-4 gap-1.5 text-[11px]"></div>
+      </div>
+
+      <!-- Skin Tone Swatches -->
+      <div class="mb-3">
+        <span class="block text-[11px] font-bold text-[#4a3525] mb-1">Skin Tone:</span>
+        <div id="caretakerSkinSelector" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <!-- Hair Color Swatches -->
+      <div class="mb-3">
+        <span class="block text-[11px] font-bold text-[#4a3525] mb-1">Hair Color:</span>
+        <div id="caretakerHairColorSelector" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <!-- Outfit / Hoodie Color Swatches -->
+      <div class="mb-4">
+        <span class="block text-[11px] font-bold text-[#4a3525] mb-1">Outfit / Hoodie Color:</span>
+        <div id="caretakerOutfitSelector" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <div class="flex gap-2">
+        <button type="button" id="btnCallCatsToCaretaker"
+          class="flex-1 stardew-btn-green py-2.5 text-xs font-bold">
+          <svg class="pixel-icon"><use href="#pi-heart-solid"/></svg>
+          <span>Call Cats Over</span>
+        </button>
+        <button type="button" id="btnSaveCaretaker"
+          class="flex-1 stardew-btn py-2.5 text-xs font-bold">
+          <svg class="pixel-icon"><use href="#pi-sparkle"/></svg>
+          <span>Save Caretaker</span>
+        </button>
       </div>
     </div>
   </div>

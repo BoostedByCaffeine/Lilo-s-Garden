@@ -57,6 +57,56 @@ const EYE_SWATCHES = [
   { name: 'Copper Gold', hex: '#f97316' }
 ];
 
+const CARETAKER_SKIN_SWATCHES = [
+  { name: 'Warm Peach', hex: '#ffdbb5', shade: '#e0b183' },
+  { name: 'Golden Tan', hex: '#eab676', shade: '#c68b45' },
+  { name: 'Honey Bronze', hex: '#c68642', shade: '#995f22' },
+  { name: 'Rich Espresso', hex: '#8d5524', shade: '#5e3511' },
+  { name: 'Fair Ivory', hex: '#ffe9d6', shade: '#deb896' },
+  { name: 'Olive Warm', hex: '#d9a16c', shade: '#ad7642' }
+];
+
+const CARETAKER_HAIR_SWATCHES = [
+  { name: 'Espresso Black', hex: '#1e1b18' },
+  { name: 'Chestnut Brown', hex: '#5c3317' },
+  { name: 'Golden Blonde', hex: '#eab308' },
+  { name: 'Auburn Copper', hex: '#b45309' },
+  { name: 'Sakura Pink', hex: '#f472b6' },
+  { name: 'Silver Ash', hex: '#94a3b8' }
+];
+
+const CARETAKER_OUTFIT_SWATCHES = [
+  { name: 'Forest Hoodie', hex: '#15803d', pants: '#1e293b' },
+  { name: 'Sky Blue', hex: '#0284c7', pants: '#1e293b' },
+  { name: 'Berry Cardigan', hex: '#be123c', pants: '#334155' },
+  { name: 'Mustard Gold', hex: '#d97706', pants: '#3b1d0a' },
+  { name: 'Lavender Knit', hex: '#7c3aed', pants: '#1e293b' },
+  { name: 'Charcoal Jacket', hex: '#374151', pants: '#111827' },
+  { name: 'Sunset Coral', hex: '#ea580c', pants: '#1e293b' },
+  { name: 'Cream Sweater', hex: '#fef3c7', pants: '#532e16' }
+];
+
+const DEFAULT_CARETAKER = Object.freeze({
+  name: 'Dom',
+  skinColor: '#eab676',
+  skinShade: '#c68b45',
+  hairStyle: 'short',     // 'short' | 'long' | 'spiky' | 'bun'
+  hairColor: '#1e1b18',
+  outfitColor: '#0284c7',
+  pantsColor: '#1e293b',
+  accessory: 'glasses',   // 'none' | 'glasses' | 'catears' | 'hat'
+  activity: 'AUTO'        // 'AUTO' | 'READ' | 'COFFEE' | 'CODE'
+});
+
+const COTTAGE_SPOTS = {
+  hearth: { x: 350, y: 205, radius: 34, label: 'Fireplace Mantle Tribute' },
+  sofa: { x: 345, y: 295, radius: 32, label: 'Plush Red Sofa' },
+  bed: { x: 642, y: 242, radius: 32, label: 'Cozy Checkered Bed' },
+  desk: { x: 648, y: 375, radius: 26, label: 'Wooden Study Desk' },
+  rug: { x: 480, y: 310, radius: 36, label: 'Crimson Living Room Rug' },
+  bowl: { x: 480, y: 405, radius: 22, label: 'Indoor Ceramic Bowl' }
+};
+
 const DEFAULT_LILO = Object.freeze({
   id: 'lilo',
   name: 'Lilo',
@@ -583,9 +633,55 @@ const world = {
   rainDrops: [],
   pointer: { x: -100, y: -100, hoveredEntity: null },
   scene: 'GARDEN',
+  caretaker: {
+    ...DEFAULT_CARETAKER,
+    x: 650,
+    y: 378,
+    targetX: 650,
+    targetY: 378,
+    facing: -1,
+    state: 'IDLE',
+    stateTimer: 6,
+    effectiveActivity: 'COFFEE',
+    labelAlpha: 1.5
+  },
+  callCatsToCaretaker() {
+    this.caretaker.labelAlpha = 2.0;
+    this.spawnHeart(this.caretaker.x, this.caretaker.y - 16, 'heart');
+    sound.playFeedSound();
+    this.cats.forEach((cat, idx) => {
+      cat.state = 'WANDER';
+      cat.pose = 'sit';
+      cat.targetX = this.caretaker.x + (idx % 2 === 0 ? -18 : 18);
+      cat.targetY = this.caretaker.y + 4 + (idx * 3);
+      cat.stateTimer = 6;
+    });
+    showToast(`${this.caretaker.name} called Lilo & Cheeto over for cuddles!`, 'heart-solid', '#fb7185');
+  },
   toggleScene() {
     this.scene = this.scene === 'COTTAGE' ? 'GARDEN' : 'COTTAGE';
     safeText('sceneBtnText', this.scene === 'COTTAGE' ? 'Garden' : 'Cottage');
+    if (this.scene === 'COTTAGE') {
+      this.caretaker.x = 345;
+      this.caretaker.y = 298;
+      this.caretaker.targetX = 345;
+      this.caretaker.targetY = 298;
+      this.caretaker.state = 'IDLE';
+      this.cats.forEach((c, i) => {
+        c.state = 'IDLE';
+        c.pose = i % 2 === 0 ? 'sleep' : 'sit';
+        c.x = 460 + ((i * 28) % 70);
+        c.y = 305 + ((i * 18) % 45);
+        c.targetX = c.x;
+        c.targetY = c.y;
+      });
+    } else {
+      this.caretaker.x = 665;
+      this.caretaker.y = 382;
+      this.caretaker.targetX = 665;
+      this.caretaker.targetY = 382;
+      this.caretaker.state = 'IDLE';
+    }
     camera.x = 480;
     camera.y = 310;
     clampCamera();
@@ -729,6 +825,12 @@ const world = {
       this.bowlLevel = typeof saved.bowlLevel === 'number' ? Math.max(0, Math.min(3, saved.bowlLevel)) : 3;
       if (saved.tributeNote) this.tributeNote = String(saved.tributeNote);
       if (saved.weatherMode) this.weatherMode = saved.weatherMode;
+      if (saved.caretaker && typeof saved.caretaker === 'object') {
+        this.caretaker = {
+          ...this.caretaker,
+          ...saved.caretaker
+        };
+      }
 
       const companions = Array.isArray(saved.companions)
         ? saved.companions.filter((c) => c && c.id !== 'lilo' && c.id !== 'cheeto')
@@ -774,6 +876,17 @@ const world = {
       weather: this.weather,
       tempC: this.tempC,
       tributeNote: this.tributeNote,
+      caretaker: this.caretaker ? {
+        name: this.caretaker.name,
+        skinColor: this.caretaker.skinColor,
+        skinShade: this.caretaker.skinShade,
+        hairStyle: this.caretaker.hairStyle,
+        hairColor: this.caretaker.hairColor,
+        outfitColor: this.caretaker.outfitColor,
+        pantsColor: this.caretaker.pantsColor,
+        accessory: this.caretaker.accessory,
+        activity: this.caretaker.activity
+      } : DEFAULT_CARETAKER,
       companions
     };
   },
@@ -950,7 +1063,7 @@ const world = {
         this.spawnSleepZ(cat.x, cat.y);
       }
 
-      if (this.weather === 'RAIN' && cat.state !== 'SHELTERED' && cat.state !== 'SEEK_SHELTER' && cat.state !== 'INTERACT') {
+      if (this.scene !== 'COTTAGE' && this.weather === 'RAIN' && cat.state !== 'SHELTERED' && cat.state !== 'SEEK_SHELTER' && cat.state !== 'INTERACT') {
         cat.state = 'SEEK_SHELTER';
         cat.targetX = 610 + ((i % 2) * 16);
         cat.targetY = 238 + (i % 2 === 0 ? 0 : 6);
@@ -1089,6 +1202,56 @@ const world = {
       if (p.life <= 0) this.particles.splice(i, 1);
     }
 
+    // Update 8-Bit Caretaker
+    if (this.caretaker) {
+      const ct = this.caretaker;
+      if (ct.labelAlpha > 0) ct.labelAlpha = Math.max(0, ct.labelAlpha - dt * 0.25);
+      ct.stateTimer -= dt;
+      if (ct.activity !== 'AUTO') {
+        ct.effectiveActivity = ct.activity;
+      }
+      if (ct.state === 'WANDER') {
+        const dx = ct.targetX - ct.x;
+        const dy = ct.targetY - ct.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < 4) {
+          ct.state = 'IDLE';
+          ct.stateTimer = 7 + Math.random() * 6;
+          if (ct.activity === 'AUTO') {
+            const acts = ['READ', 'COFFEE', 'CODE'];
+            ct.effectiveActivity = acts[Math.floor(Math.random() * acts.length)];
+          }
+        } else {
+          ct.x += (dx / dist) * 24 * dt;
+          ct.y += (dy / dist) * 24 * dt;
+          if (Math.abs(dx) > 0.3) ct.facing = dx < 0 ? -1 : 1;
+        }
+      } else if (ct.stateTimer <= 0 && ct.activity === 'AUTO') {
+        ct.state = 'WANDER';
+        if (this.scene === 'COTTAGE') {
+          const spots = [
+            { x: 345, y: 298 }, // Plush Red Sofa
+            { x: 648, y: 382 }, // Study Desk
+            { x: 480, y: 312 }, // Crimson Rug
+            { x: 350, y: 225 }  // Warm Hearth
+          ];
+          const pick = spots[Math.floor(Math.random() * spots.length)];
+          ct.targetX = pick.x;
+          ct.targetY = pick.y;
+        } else {
+          const spots = [
+            { x: 665, y: 382 }, // Campfire Log
+            { x: 545, y: 340 }, // Picnic Rug
+            { x: 475, y: 285 }  // Garden Path
+          ];
+          const pick = spots[Math.floor(Math.random() * spots.length)];
+          ct.targetX = pick.x;
+          ct.targetY = pick.y;
+        }
+        ct.stateTimer = 6 + Math.random() * 5;
+      }
+    }
+
     this.updateLiveMoodTicker();
   },
 
@@ -1105,7 +1268,10 @@ const world = {
     else if (lilo.state === 'PLAYFUL') moodText = "Lilo: Chasing butterflies";
     else if (lilo.state === 'IDLE' && lilo.pose === 'sleep') moodText = "Lilo: Napping in sun";
     else if (lilo.state === 'WANDER') moodText = "Lilo: Exploring with Cheeto";
-    el.textContent = moodText;
+    if (this._lastMoodText !== moodText) {
+      this._lastMoodText = moodText;
+      el.textContent = moodText;
+    }
   },
 
   syncUI() {
@@ -1278,16 +1444,297 @@ const SPRITE_BANK = {
 };
 
 const loadedSprites = {};
+let cleanedInteriorSheet = null;
+let gardenStaticCache = null;
+let cottageStaticCache = null;
+let fireGlowSprite = null;
+let lanternGlowSprite = null;
+
+function invalidateSceneCaches() {
+  gardenStaticCache = null;
+  cottageStaticCache = null;
+}
+
+// Automatically removes the flat brown demo backdrop from interiors_demo.png so every
+// sliced furniture sprite (bed, sofa, armchairs, bookshelf, desk, plants) has 100% transparent background!
+function buildCleanInteriorSpritesheet(img) {
+  try {
+    const off = document.createElement('canvas');
+    off.width = img.naturalWidth;
+    off.height = img.naturalHeight;
+    const octx = off.getContext('2d');
+    octx.drawImage(img, 0, 0);
+    const imgData = octx.getImageData(0, 0, off.width, off.height);
+    const d = imgData.data;
+
+    // Sample the flat brown background color from the empty margin pixel at (x=42%, y=25%)
+    const sampleX = Math.floor(off.width * 0.41);
+    const sampleY = Math.floor(off.height * 0.25);
+    const sIdx = (sampleY * off.width + sampleX) * 4;
+    const bgR = d[sIdx];
+    const bgG = d[sIdx + 1];
+    const bgB = d[sIdx + 2];
+
+    for (let i = 0; i < d.length; i += 4) {
+      const r = d[i];
+      const g = d[i + 1];
+      const b = d[i + 2];
+      // Match primary background brown or dark border brown around the demo sheet
+      if (
+        (Math.abs(r - bgR) <= 14 && Math.abs(g - bgG) <= 14 && Math.abs(b - bgB) <= 14) ||
+        (Math.abs(r - 122) <= 12 && Math.abs(g - 72) <= 12 && Math.abs(b - 41) <= 12)
+      ) {
+        d[i + 3] = 0;
+      }
+    }
+    octx.putImageData(imgData, 0, 0);
+    return off;
+  } catch (e) {
+    return img;
+  }
+}
 
 (function preloadGardenSprites() {
   Object.entries(SPRITE_BANK).forEach(([key, src]) => {
     const img = new Image();
     img.onload = () => {
       loadedSprites[key] = img;
+      if (key === 'interiorDemo') {
+        cleanedInteriorSheet = buildCleanInteriorSpritesheet(img);
+      }
+      invalidateSceneCaches();
     };
     img.src = encodeURI(src);
   });
 })();
+
+// Normalized 9x8 Grid Furniture Disassembler for assets/interior/interiors_demo.png
+const INTERIOR_FURNITURE_SLICES = {
+  blueWallPanel: { gx: 0.02, gy: 0.02, gw: 1.96, gh: 1.96 },
+  stoneBrickWall: { gx: 2.02, gy: 0.02, gw: 1.96, gh: 1.96 },
+  smallWindow:   { gx: 4.02, gy: 0.04, gw: 0.96, gh: 0.96 },
+  armchairFront: { gx: 5.02, gy: 0.02, gw: 0.96, gh: 1.42 },
+  armchairRight: { gx: 6.02, gy: 0.02, gw: 0.96, gh: 1.42 },
+  armchairLeft:  { gx: 7.02, gy: 0.02, gw: 0.96, gh: 1.42 },
+  armchairBack:  { gx: 8.02, gy: 0.02, gw: 0.96, gh: 1.42 },
+  blueMat:       { gx: 3.04, gy: 1.95, gw: 1.05, gh: 0.95 },
+  nightstand:    { gx: 4.18, gy: 2.15, gw: 0.78, gh: 0.85 },
+  cozyBed:       { gx: 6.18, gy: 1.55, gw: 1.95, gh: 2.65 },
+  crimsonRug:    { gx: 3.05, gy: 3.12, gw: 1.88, gh: 2.35 },
+  curtainsRed:   { gx: 6.82, gy: 4.42, gw: 0.95, gh: 1.35 },
+  pottedPlant:   { gx: 7.78, gy: 4.35, gw: 0.65, gh: 1.45 },
+  sofaFront:     { gx: 0.08, gy: 5.75, gw: 1.78, gh: 1.65 },
+  sofaRight:     { gx: 1.92, gy: 5.55, gw: 0.95, gh: 2.35 },
+  sofaBack:      { gx: 2.95, gy: 5.85, gw: 1.82, gh: 1.55 },
+  bookshelf:     { gx: 5.75, gy: 5.75, gw: 1.08, gh: 2.15 },
+  studyDesk:     { gx: 6.85, gy: 5.95, gw: 1.58, gh: 1.92 }
+};
+
+function drawInteriorPiece(c, pieceKey, dx, dy, dw, dh) {
+  const srcSheet = cleanedInteriorSheet || loadedSprites.interiorDemo;
+  const spec = INTERIOR_FURNITURE_SLICES[pieceKey];
+  if (!srcSheet || !spec) return false;
+  const sw = srcSheet.width || srcSheet.naturalWidth;
+  const sh = srcSheet.height || srcSheet.naturalHeight;
+  if (!sw || !sh) return false;
+
+  const cellW = sw / 9;
+  const cellH = sh / 8;
+  c.drawImage(
+    srcSheet,
+    Math.round(spec.gx * cellW),
+    Math.round(spec.gy * cellH),
+    Math.round(spec.gw * cellW),
+    Math.round(spec.gh * cellH),
+    Math.round(dx),
+    Math.round(dy),
+    Math.round(dw),
+    Math.round(dh)
+  );
+  return true;
+}
+
+function getFireGlowSprite() {
+  if (!fireGlowSprite) {
+    fireGlowSprite = document.createElement('canvas');
+    fireGlowSprite.width = 96;
+    fireGlowSprite.height = 96;
+    const gctx = fireGlowSprite.getContext('2d');
+    const grad = gctx.createRadialGradient(48, 48, 3, 48, 48, 46);
+    grad.addColorStop(0, 'rgba(251, 146, 60, 1)');
+    grad.addColorStop(1, 'rgba(251, 146, 60, 0)');
+    gctx.fillStyle = grad;
+    gctx.fillRect(0, 0, 96, 96);
+  }
+  return fireGlowSprite;
+}
+
+function getLanternGlowSprite() {
+  if (!lanternGlowSprite) {
+    lanternGlowSprite = document.createElement('canvas');
+    lanternGlowSprite.width = 84;
+    lanternGlowSprite.height = 84;
+    const gctx = lanternGlowSprite.getContext('2d');
+    const grad = gctx.createRadialGradient(42, 42, 2, 42, 42, 40);
+    grad.addColorStop(0, 'rgba(253, 224, 71, 1)');
+    grad.addColorStop(1, 'rgba(253, 224, 71, 0)');
+    gctx.fillStyle = grad;
+    gctx.fillRect(0, 0, 84, 84);
+  }
+  return lanternGlowSprite;
+}
+
+// 8-BIT CUSTOMIZABLE CARETAKER RENDERER
+function drawPixelCaretaker(c, caretaker, time) {
+  if (!caretaker) return;
+  const x = Math.round(caretaker.x);
+  const y = Math.round(caretaker.y);
+  const isWalking = caretaker.state === 'WANDER';
+  const walkStep = isWalking ? Math.floor(time * 7) % 4 : 0;
+  const bobY = isWalking ? (walkStep % 2 === 1 ? -1 : 0) : (Math.sin(time * 2.2) > 0.5 ? -1 : 0);
+
+  const act = caretaker.effectiveActivity || 'READ';
+  const isSitting = !isWalking && (act === 'READ' || act === 'COFFEE' || act === 'CODE');
+
+  c.save();
+  c.translate(x, y);
+
+  // Soft floor shadow
+  c.fillStyle = 'rgba(15, 23, 42, 0.30)';
+  c.fillRect(-7, -1, 14, 3);
+
+  if (caretaker.facing < 0 && !isSitting) {
+    c.scale(-1, 1);
+  }
+
+  const px = (rx, ry, rw, rh, col) => {
+    c.fillStyle = col;
+    c.fillRect(Math.round(rx), Math.round(ry), rw, rh);
+  };
+
+  const skin = caretaker.skinColor || '#eab676';
+  const skinShade = caretaker.skinShade || '#c68b45';
+  const hair = caretaker.hairColor || '#1e1b18';
+  const outfit = caretaker.outfitColor || '#0284c7';
+  const pants = caretaker.pantsColor || '#1e293b';
+
+  // 1. Legs / Boots
+  if (isSitting) {
+    px(-5, -4, 10, 3, pants);
+    px(-6, -2, 4, 2, '#3b1d0a');
+    px(2, -2, 4, 2, '#3b1d0a');
+  } else if (isWalking) {
+    const lA = walkStep === 1 ? -1 : 0;
+    const lB = walkStep === 3 ? -1 : 0;
+    px(-4, -5 + lA, 3, 4, pants);
+    px(1, -5 + lB, 3, 4, pants);
+    px(-4, -2 + lA, 3, 2, '#3b1d0a');
+    px(1, -2 + lB, 3, 2, '#3b1d0a');
+  } else {
+    px(-4, -5, 3, 4, pants);
+    px(1, -5, 3, 4, pants);
+    px(-4, -2, 3, 2, '#3b1d0a');
+    px(1, -2, 3, 2, '#3b1d0a');
+  }
+
+  // 2. Torso / Hoodie & Arms
+  const ty = -12 + bobY;
+  px(-5, ty, 10, 7, outfit);
+  px(-6, ty + 1, 2, 5, outfit);
+  px(4, ty + 1, 2, 5, outfit);
+  px(-6, ty + 5, 2, 2, skin);
+  px(4, ty + 5, 2, 2, skin);
+
+  // Activity Props (Book, Coffee Mug, or Pixel Laptop)
+  if (!isWalking) {
+    if (act === 'READ') {
+      px(-4, ty + 3, 8, 4, '#991b1b');
+      px(-3, ty + 3, 6, 3, '#fef3c7');
+      px(0, ty + 3, 1, 3, '#d97706');
+    } else if (act === 'COFFEE') {
+      const sip = Math.sin(time * 1.8) > 0.65 ? -2 : 0;
+      px(3, ty + 2 + sip, 4, 4, '#fffbeb');
+      px(4, ty + 3 + sip, 2, 2, '#78350f');
+      if (Math.floor(time * 3) % 2 === 0) {
+        px(4, ty - 1 + sip, 1, 2, 'rgba(255,255,255,0.75)');
+      }
+    } else if (act === 'CODE') {
+      px(-5, ty + 2, 10, 5, '#475569');
+      px(-4, ty + 3, 8, 3, '#38bdf8');
+      px(-1, ty + 4, 2, 1, '#ffffff');
+    }
+  }
+
+  // 3. Head & Face
+  const hy = -20 + bobY;
+  px(-5, hy, 10, 8, skin);
+  px(-5, hy + 7, 10, 1, skinShade);
+
+  // Blinking Eyes
+  const isBlinking = Math.sin(time * 1.9) > 0.95;
+  if (isBlinking) {
+    px(-3, hy + 4, 2, 1, '#1e293b');
+    px(1, hy + 4, 2, 1, '#1e293b');
+  } else {
+    px(-3, hy + 3, 2, 2, '#1e293b');
+    px(1, hy + 3, 2, 2, '#1e293b');
+    px(-3, hy + 3, 1, 1, '#ffffff');
+    px(1, hy + 3, 1, 1, '#ffffff');
+  }
+  // Rosy Cheeks
+  px(-4, hy + 5, 1, 1, '#fda4af');
+  px(3, hy + 5, 1, 1, '#fda4af');
+
+  // 4. Hairstyles
+  const hs = caretaker.hairStyle || 'short';
+  px(-5, hy - 2, 10, 3, hair);
+  px(-6, hy - 1, 2, 4, hair);
+  px(4, hy - 1, 2, 4, hair);
+  if (hs === 'long') {
+    px(-6, hy + 2, 2, 6, hair);
+    px(4, hy + 2, 2, 6, hair);
+  } else if (hs === 'spiky') {
+    px(-4, hy - 4, 2, 2, hair);
+    px(-1, hy - 4, 2, 2, hair);
+    px(2, hy - 4, 2, 2, hair);
+  } else if (hs === 'bun') {
+    px(-2, hy - 5, 4, 3, hair);
+  }
+
+  // 5. Accessories
+  const acc = caretaker.accessory || 'glasses';
+  if (acc === 'glasses') {
+    px(-4, hy + 3, 4, 2, '#fbbf24');
+    px(0, hy + 3, 4, 2, '#fbbf24');
+    px(-3, hy + 3, 2, 1, '#e0f2fe');
+    px(1, hy + 3, 2, 1, '#e0f2fe');
+  } else if (acc === 'catears') {
+    px(-5, hy - 4, 3, 2, '#f43f5e');
+    px(2, hy - 4, 3, 2, '#f43f5e');
+    px(-4, hy - 3, 1, 1, '#ffe4e6');
+    px(3, hy - 3, 1, 1, '#ffe4e6');
+  } else if (acc === 'hat') {
+    px(-7, hy - 2, 14, 2, '#d97706');
+    px(-5, hy - 5, 10, 3, '#fbbf24');
+    px(-5, hy - 3, 10, 1, '#b91c1c');
+  }
+
+  c.restore();
+
+  if (caretaker.labelAlpha > 0.02) {
+    c.save();
+    c.globalAlpha = Math.min(1, caretaker.labelAlpha);
+    c.font = 'bold 7px Quicksand, sans-serif';
+    c.textAlign = 'center';
+    const labelStr = caretaker.name || 'Caretaker';
+    const textW = c.measureText(labelStr).width + 8;
+    c.fillStyle = 'rgba(24, 16, 10, 0.82)';
+    c.fillRect(Math.round(x - textW / 2), Math.round(y - 31), Math.round(textW), 9);
+    c.fillStyle = '#fde047';
+    c.fillText(labelStr, Math.round(x), Math.round(y - 24));
+    c.restore();
+  }
+}
 
 function drawLoadedSprite(c, key, x, y, w, h, animTime) {
   const img = loadedSprites[key];
@@ -1557,34 +2004,16 @@ const PATH_STONES = [
   { x: 478, y: 342, w: 16, h: 9 }
 ];
 
-function drawGardenScenery(c, time) {
-  const scale = camera.getEffectiveScale();
-  const halfViewW = (canvas.width / 2) / scale;
-  const halfViewH = (canvas.height / 2) / scale;
-  const viewLeft = Math.min(0, camera.x - halfViewW - 80);
-  const viewTop = Math.min(0, camera.y - halfViewH - 80);
-  const viewRight = Math.max(960, camera.x + halfViewW + 80);
-  const viewBottom = Math.max(600, camera.y + halfViewH + 80);
-  const viewW = viewRight - viewLeft;
-  const viewH = viewBottom - viewTop;
+function ensureGardenStaticCache() {
+  if (gardenStaticCache) return gardenStaticCache;
+  const off = document.createElement('canvas');
+  off.width = 640;
+  off.height = 420;
+  const c = off.getContext('2d');
+  c.imageSmoothingEnabled = false;
+  c.translate(-160, -100);
 
-  // 1. Deep Forest Surround
-  c.fillStyle = '#224426';
-  c.fillRect(viewLeft, viewTop, viewW, viewH);
-
-  // North Dark Forest Strip (stops above lawn at y=120)
-  if (viewTop < 120) {
-    c.fillStyle = '#172d1a';
-    c.fillRect(viewLeft, viewTop, viewW, 120 - viewTop);
-  }
-
-  // South Dark Forest Strip (below lawn at y=500)
-  if (viewBottom > 500) {
-    c.fillStyle = '#1a3520';
-    c.fillRect(viewLeft, 500, viewW, viewBottom - 500);
-  }
-
-  // 2. Tiled Garden Lawn using FieldsTile_38.png
+  // 1. Tiled Garden Lawn
   const grassTile = loadedSprites.grassTile;
   if (grassTile && grassTile.complete && grassTile.naturalWidth > 0) {
     for (let ty = 120; ty < 504; ty += 32) {
@@ -1597,7 +2026,7 @@ function drawGardenScenery(c, time) {
     c.fillRect(180, 120, 600, 380);
   }
 
-  // 3. Top Hedge Background
+  // 2. Top Hedge Background
   c.fillStyle = '#2d5c2b';
   c.fillRect(180, 120, 600, 36);
   c.fillStyle = '#386e35';
@@ -1605,14 +2034,14 @@ function drawGardenScenery(c, time) {
     c.fillRect(hx, 134 + (hx % 28 === 0 ? 3 : 0), 12, 18);
   }
 
-  // 4. Clean Wooden Fence Along Top Border
+  // 3. Wooden Fence Along Top Border
   c.fillStyle = 'rgba(15, 28, 17, 0.28)';
   c.fillRect(190, 162, 580, 5);
   c.fillStyle = '#8c5832';
   c.fillRect(190, 146, 580, 4);
   c.fillRect(190, 155, 580, 4);
   for (let fx = 195; fx < 770; fx += 26) {
-    if (fx > 455 && fx < 505) continue; // Center gate opening
+    if (fx > 455 && fx < 505) continue;
     c.fillStyle = '#6e4223';
     c.fillRect(fx, 139, 7, 23);
     c.fillStyle = '#a86e42';
@@ -1621,17 +2050,10 @@ function drawGardenScenery(c, time) {
     c.fillRect(fx + 1, 139, 5, 3);
   }
 
-  // 5. Bushes inside the fence along the fence line
-  FENCE_BUSHES.forEach((b) => {
-    drawLoadedSprite(c, b.key, b.x, b.y, b.w, b.h);
-  });
+  // 4. Fence Bushes, Garden Bushes & Stepping Stones
+  FENCE_BUSHES.forEach((b) => drawLoadedSprite(c, b.key, b.x, b.y, b.w, b.h));
+  GARDEN_BUSHES.forEach((b) => drawLoadedSprite(c, b.key, b.x, b.y, b.w, b.h));
 
-  // 6. Bushes scattered around the garden
-  GARDEN_BUSHES.forEach((b) => {
-    drawLoadedSprite(c, b.key, b.x, b.y, b.w, b.h);
-  });
-
-  // 7. Stepping Stone Path (Retained original stones)
   PATH_STONES.forEach((st) => {
     c.fillStyle = '#64748b';
     c.fillRect(st.x, st.y + 1, st.w, st.h);
@@ -1641,24 +2063,20 @@ function drawGardenScenery(c, time) {
     c.fillRect(st.x + 1, st.y + 1, st.w - 4, 2);
   });
 
-  // 8. Swaying Grass Blades & Wildflower Sprites
   GRASS_TUFT_LIST.forEach((g) => {
-    const sway = Math.round(Math.sin(time * 2 + g.phase) * 0.7);
-    if (!drawLoadedSprite(c, g.spriteKey, g.x + sway, g.y, 8, 8)) {
+    if (!drawLoadedSprite(c, g.spriteKey, g.x, g.y, 8, 8)) {
       c.fillStyle = g.shade;
-      c.fillRect(g.x + sway, g.y, 1, 3);
+      c.fillRect(g.x, g.y, 1, 3);
     }
   });
-
   GENERAL_FLOWERS.forEach((f) => {
-    const bob = Math.sin(time * 2.5 + f.phase) > 0.6 ? -1 : 0;
-    if (!drawLoadedSprite(c, f.spriteKey, f.x - 3, f.y - 3 + bob, 8, 8)) {
+    if (!drawLoadedSprite(c, f.spriteKey, f.x - 3, f.y - 3, 8, 8)) {
       c.fillStyle = f.color;
-      c.fillRect(f.x - 1, f.y + bob, 3, 2);
+      c.fillRect(f.x - 1, f.y, 3, 2);
     }
   });
 
-  // 9. Birdbath Pond with Corner Accent Rocks (Retained original water & rocks)
+  // 5. Birdbath Pond Basin, Sunny Nap Rug, Lamp, Log & Gazebo Deck
   const px = LANDMARKS.pond.x;
   const py = LANDMARKS.pond.y;
   c.fillStyle = '#57534e';
@@ -1669,14 +2087,9 @@ function drawGardenScenery(c, time) {
   c.fillRect(px - 14, py - 9, 28, 16);
   c.fillStyle = '#38bdf8';
   c.fillRect(px - 12, py - 7, 24, 12);
-  const rip = Math.floor(Math.sin(time * 2) * 2);
-  c.fillStyle = '#bae6fd';
-  c.fillRect(px - 6 + rip, py - 3, 6, 1);
-  c.fillRect(px + 2 - rip, py + 2, 5, 1);
   drawLoadedSprite(c, 'stone7', px - 22, py - 12, 14, 12);
   drawLoadedSprite(c, 'stone8', px + 10, py + 2, 12, 10);
 
-  // 10. Sunny Nap Picnic Rug
   const rx = LANDMARKS.rug.x;
   const ry = LANDMARKS.rug.y;
   c.fillStyle = 'rgba(15, 28, 17, 0.25)';
@@ -1690,21 +2103,54 @@ function drawGardenScenery(c, time) {
     }
   }
 
-  // 11. Shrine Lantern, Cozy Bonfire & Camp Log (Retained original bonfire & log)
   drawLoadedSprite(c, 'lamp1', 304, 210, 20, 35);
   drawLoadedSprite(c, 'log1', 668, 376, 34, 21);
+  drawShelterDeck(c);
 
+  gardenStaticCache = off;
+  return off;
+}
+
+function drawGardenScenery(c, time) {
+  const scale = camera.getEffectiveScale();
+  const halfViewW = (canvas.width / 2) / scale;
+  const halfViewH = (canvas.height / 2) / scale;
+  const viewLeft = Math.min(0, camera.x - halfViewW - 80);
+  const viewTop = Math.min(0, camera.y - halfViewH - 80);
+  const viewRight = Math.max(960, camera.x + halfViewW + 80);
+  const viewBottom = Math.max(600, camera.y + halfViewH + 80);
+
+  c.fillStyle = '#224426';
+  c.fillRect(viewLeft, viewTop, viewRight - viewLeft, viewBottom - viewTop);
+  if (viewTop < 120) {
+    c.fillStyle = '#172d1a';
+    c.fillRect(viewLeft, viewTop, viewRight - viewLeft, 120 - viewTop);
+  }
+  if (viewBottom > 500) {
+    c.fillStyle = '#1a3520';
+    c.fillRect(viewLeft, 500, viewRight - viewLeft, viewBottom - 500);
+  }
+
+  // Blit entire pre-rendered static garden in 1 single drawImage call!
+  const cache = ensureGardenStaticCache();
+  c.drawImage(cache, 160, 100);
+
+  // Animated water ripple on pond
+  const px = LANDMARKS.pond.x;
+  const py = LANDMARKS.pond.y;
+  const rip = Math.floor(Math.sin(time * 2) * 2);
+  c.fillStyle = '#bae6fd';
+  c.fillRect(px - 6 + rip, py - 3, 6, 1);
+  c.fillRect(px + 2 - rip, py + 2, 5, 1);
+
+  // Animated Campfire & Pre-rendered Glow
   const isRaining = world.weather === 'RAIN';
   const fireKey = isRaining ? 'campfireSmoke' : 'campfireActive';
   if (!isRaining) {
-    const flicker = Math.sin(time * 7) * 0.08 + 0.30;
-    const fireGrad = c.createRadialGradient(644, 384, 2, 644, 384, 38);
-    fireGrad.addColorStop(0, 'rgba(251, 146, 60, ' + flicker + ')');
-    fireGrad.addColorStop(1, 'rgba(251, 146, 60, 0)');
-    c.fillStyle = fireGrad;
-    c.beginPath();
-    c.arc(644, 384, 38, 0, Math.PI * 2);
-    c.fill();
+    c.save();
+    c.globalAlpha = Math.sin(time * 7) * 0.07 + 0.30;
+    c.drawImage(getFireGlowSprite(), 644 - 40, 384 - 40, 80, 80);
+    c.restore();
   }
   drawLoadedSprite(c, fireKey, 628, 366, 32, 32, time);
 }
@@ -1866,6 +2312,128 @@ function drawFoodBowl(c, bowlLevel, hovered) {
   }
 }
 
+function ensureCottageStaticCache() {
+  if (cottageStaticCache) return cottageStaticCache;
+  const off = document.createElement('canvas');
+  off.width = 600;
+  off.height = 380;
+  const c = off.getContext('2d');
+  c.imageSmoothingEnabled = false;
+  c.translate(-180, -110);
+
+  // 1. Outer Carved Cottage Walls & Honey-Oak Floor (x = 210..750, y = 128..466)
+  c.fillStyle = '#3b1d0a';
+  c.fillRect(202, 120, 556, 354);
+  c.fillStyle = '#9c6234';
+  c.fillRect(210, 190, 540, 276);
+  c.fillStyle = '#855027';
+  for (let py = 190; py < 466; py += 16) {
+    c.fillRect(210, py, 540, 2);
+  }
+  for (let px = 210; px < 750; px += 48) {
+    c.fillRect(px, 190, 1, 276);
+  }
+
+  // 2. Back Wall Cream Plaster & Wood Wainscoting (y = 128..190)
+  c.fillStyle = '#f3dfc1';
+  c.fillRect(210, 128, 540, 42);
+  c.fillStyle = '#6e4223';
+  c.fillRect(210, 168, 540, 22);
+  for (let wx = 214; wx < 746; wx += 16) {
+    c.fillStyle = '#532e16';
+    c.fillRect(wx, 170, 2, 18);
+  }
+  c.fillStyle = '#3b1d0a';
+  c.fillRect(210, 167, 540, 3);
+  c.fillRect(210, 189, 540, 3);
+
+  // 3. Disassembled Wall Wallpaper Accents from interior sheet
+  drawInteriorPiece(c, 'blueWallPanel', 218, 130, 48, 37);
+  drawInteriorPiece(c, 'blueWallPanel', 684, 130, 48, 37);
+
+  // 4. Center Cottage Door (x = 458..502, y = 130..190)
+  c.fillStyle = '#3b1d0a';
+  c.fillRect(458, 130, 44, 60);
+  c.fillStyle = '#78431e';
+  c.fillRect(462, 134, 36, 56);
+  c.fillStyle = '#532e16';
+  c.fillRect(467, 139, 26, 20);
+  c.fillRect(467, 163, 26, 22);
+  c.fillStyle = '#fde047';
+  c.fillRect(491, 162, 3, 3);
+  // Welcome Mat in front of Door
+  drawInteriorPiece(c, 'blueMat', 462, 194, 36, 22);
+
+  // 5. Brick Hearth Fireplace & Twin Polaroid Tribute Mantle (x = 350, y = 190)
+  const fx = COTTAGE_SPOTS.hearth.x;
+  const fy = 190;
+  c.fillStyle = '#7f1d1d';
+  c.fillRect(fx - 30, fy - 58, 60, 60);
+  c.fillStyle = '#991b1b';
+  c.fillRect(fx - 27, fy - 55, 54, 55);
+  c.fillStyle = '#532e16';
+  c.fillRect(fx - 34, fy - 62, 68, 7);
+  c.fillStyle = '#1e1b18';
+  c.fillRect(fx - 18, fy - 28, 36, 28);
+
+  // Twin Mini Polaroids of Lilo & Cheeto on the Fireplace Mantle!
+  c.fillStyle = '#fffdf7';
+  c.fillRect(fx - 22, fy - 52, 16, 18);
+  c.fillStyle = '#0f172a';
+  c.fillRect(fx - 20, fy - 50, 12, 11);
+  c.fillStyle = '#ffffff';
+  c.fillRect(fx - 17, fy - 46, 6, 6);
+  c.fillStyle = '#29b6f6';
+  c.fillRect(fx - 16, fy - 45, 2, 2);
+
+  c.fillStyle = '#fffdf7';
+  c.fillRect(fx + 6, fy - 52, 16, 18);
+  c.fillStyle = '#451a03';
+  c.fillRect(fx + 8, fy - 50, 12, 11);
+  c.fillStyle = '#ffffff';
+  c.fillRect(fx + 11, fy - 46, 6, 6);
+  c.fillStyle = '#ffb300';
+  c.fillRect(fx + 12, fy - 45, 2, 2);
+
+  // 6. Disassembled Floor Rugs (Center Crimson Rug & Bedroom Runner)
+  if (!drawInteriorPiece(c, 'crimsonRug', 432, 270, 96, 86)) {
+    c.fillStyle = '#991b1b';
+    c.fillRect(432, 270, 96, 86);
+  }
+  drawInteriorPiece(c, 'blueMat', 458, 392, 44, 26);
+
+  // 7. Disassembled Bedroom & Study Nook Furniture (Placed Around Perimeter)
+  // Top-Left Library Nook: Bookshelf + Nightstand + Potted Plant
+  drawInteriorPiece(c, 'bookshelf', 228, 172, 42, 66);
+  drawInteriorPiece(c, 'nightstand', 276, 194, 28, 32);
+  drawInteriorPiece(c, 'pottedPlant', 416, 168, 26, 48);
+
+  // Top-Right Bedroom Nook: Cozy Checkered Bed + Nightstand + Window Curtains + Plant
+  drawInteriorPiece(c, 'curtainsRed', 606, 134, 34, 46);
+  drawInteriorPiece(c, 'cozyBed', 646, 188, 76, 88);
+  drawInteriorPiece(c, 'pottedPlant', 716, 284, 26, 48);
+
+  // Left Living Room Lounge: Plush Red Sofa + Cozy Armchairs
+  drawInteriorPiece(c, 'sofaFront', 306, 258, 74, 54);
+  drawInteriorPiece(c, 'armchairRight', 246, 284, 38, 48);
+  drawInteriorPiece(c, 'armchairLeft', 392, 284, 38, 48);
+
+  // Bottom-Right Study Nook: Wooden Study Desk & Chair
+  drawInteriorPiece(c, 'studyDesk', 616, 346, 68, 62);
+  drawInteriorPiece(c, 'armchairBack', 634, 386, 34, 42);
+
+  // Indoor Velvet Cat Cushion near Fireplace (x = 345, y = 375)
+  c.fillStyle = '#4c0519';
+  c.fillRect(321, 366, 48, 24);
+  c.fillStyle = '#be123c';
+  c.fillRect(324, 368, 42, 20);
+  c.fillStyle = '#fda4af';
+  c.fillRect(330, 372, 30, 12);
+
+  cottageStaticCache = off;
+  return off;
+}
+
 function drawCottageInteriorScenery(c, time) {
   const scale = camera.getEffectiveScale();
   const halfViewW = (canvas.width / 2) / scale;
@@ -1875,55 +2443,14 @@ function drawCottageInteriorScenery(c, time) {
   const viewRight = Math.max(960, camera.x + halfViewW + 80);
   const viewBottom = Math.max(600, camera.y + halfViewH + 80);
 
-  // 1. Cozy Dark Wood Surround
   c.fillStyle = '#1c120c';
   c.fillRect(viewLeft, viewTop, viewRight - viewLeft, viewBottom - viewTop);
 
-  // 2. Warm Honey-Oak Plank Floor (x = 210..750, y = 185..465)
-  c.fillStyle = '#3b1d0a';
-  c.fillRect(202, 122, 556, 352);
-  c.fillStyle = '#9c6234';
-  c.fillRect(210, 190, 540, 276);
-  c.fillStyle = '#7c4a24';
-  for (let py = 190; py < 466; py += 14) {
-    c.fillRect(210, py, 540, 2);
-  }
-  for (let px = 210; px < 750; px += 48) {
-    c.fillRect(px, 190, 1, 276);
-  }
+  // Blit entire pre-rendered Cottage room & furniture in 1 drawImage call!
+  const cache = ensureCottageStaticCache();
+  c.drawImage(cache, 180, 110);
 
-  // 3. Wainscoting & Cream Plaster Cottage Back Wall (y = 128..190)
-  c.fillStyle = '#e6ccb2';
-  c.fillRect(210, 128, 540, 42);
-  c.fillStyle = '#6e4223';
-  c.fillRect(210, 168, 540, 22);
-  for (let wx = 214; wx < 746; wx += 18) {
-    c.fillStyle = '#532e16';
-    c.fillRect(wx, 170, 2, 18);
-  }
-  c.fillStyle = '#3b1d0a';
-  c.fillRect(210, 167, 540, 3);
-  c.fillRect(210, 189, 540, 3);
-
-  // 4. Render Bundled Interior Furnishing Showcase Card on Left Wall (assets/interior/interiors_demo.png & tiles and items.png)
-  const intDemo = loadedSprites.interiorDemo;
-  if (intDemo && intDemo.complete && intDemo.naturalWidth > 0) {
-    c.save();
-    c.beginPath();
-    c.rect(222, 196, 132, 92);
-    c.clip();
-    c.drawImage(intDemo, 0, 0, intDemo.naturalWidth, intDemo.naturalHeight, 222, 196, 132, 92);
-    c.restore();
-    c.strokeStyle = '#532e16';
-    c.lineWidth = 2;
-    c.strokeRect(222, 196, 132, 92);
-  }
-  const intTiles = loadedSprites.interiorTiles;
-  if (intTiles && intTiles.complete && intTiles.naturalWidth > 0) {
-    c.drawImage(intTiles, 0, 0, Math.min(64, intTiles.naturalWidth), Math.min(48, intTiles.naturalHeight), 662, 200, 64, 48);
-  }
-
-  // 5. Weather-Reactive Cottage Window Looking Out at the Sky (x = 528..598, y = 134..174)
+  // Weather-Reactive Cottage Window Pane (x = 530..596, y = 136..172)
   const isNight = world.weather === 'NIGHT';
   const isRain = world.weather === 'RAIN';
   c.fillStyle = '#3b1d0a';
@@ -1947,56 +2474,30 @@ function drawCottageInteriorScenery(c, time) {
   c.fillRect(562, 136, 2, 36);
   c.fillRect(530, 153, 66, 2);
 
-  // 6. Cottage Wooden Door at Center Top (Tap or Walk to Step Back Outside)
-  c.fillStyle = '#3b1d0a';
-  c.fillRect(458, 130, 44, 60);
-  c.fillStyle = '#78431e';
-  c.fillRect(462, 134, 36, 56);
-  c.fillStyle = '#fde047';
-  c.fillRect(490, 162, 3, 3);
-
-  // 7. Brick Hearth Fireplace & Twin Polaroid Tribute Mantle (x = 340, y = 210)
-  const fx = LANDMARKS.shrine.x;
-  const fy = 192;
-  c.fillStyle = '#7f1d1d';
-  c.fillRect(fx - 28, fy - 52, 56, 54);
-  c.fillStyle = '#991b1b';
-  c.fillRect(fx - 26, fy - 50, 52, 50);
-  c.fillStyle = '#532e16';
-  c.fillRect(fx - 32, fy - 56, 64, 6);
-  c.fillStyle = '#1e1b18';
-  c.fillRect(fx - 18, fy - 28, 36, 28);
+  // Animated Crackling Hearth Fire & Warm Pre-Rendered Glow
+  const fx = COTTAGE_SPOTS.hearth.x;
+  const fy = 190;
   drawLoadedSprite(c, 'campfireActive', fx - 16, fy - 30, 32, 32, time);
+  c.save();
+  c.globalAlpha = Math.sin(time * 7) * 0.05 + 0.26;
+  c.drawImage(getFireGlowSprite(), fx - 48, fy - 42, 96, 96);
+  c.restore();
 
-  // Warm Hearth Glow on the Cottage Floor
-  const flicker = Math.sin(time * 7) * 0.06 + 0.28;
-  const hearthGrad = c.createRadialGradient(fx, fy + 6, 4, fx, fy + 6, 68);
-  hearthGrad.addColorStop(0, `rgba(251, 146, 60, ${flicker})`);
-  hearthGrad.addColorStop(1, 'rgba(251, 146, 60, 0)');
-  c.fillStyle = hearthGrad;
-  c.beginPath();
-  c.arc(fx, fy + 6, 68, 0, Math.PI * 2);
-  c.fill();
-
-  // Cozy Braided Rug in Center of Room (LANDMARKS.rug)
-  const rx = LANDMARKS.rug.x;
-  const ry = LANDMARKS.rug.y;
-  c.fillStyle = '#7c2d12';
-  c.fillRect(rx - 32, ry - 18, 64, 36);
-  c.fillStyle = '#b45309';
-  c.fillRect(rx - 28, ry - 14, 56, 28);
-  c.fillStyle = '#fef3c7';
-  c.fillRect(rx - 22, ry - 10, 44, 20);
-
-  // Plush Cat Lounge Bed on Right Side (LANDMARKS.shelter)
-  drawShelterDeck(c);
+  if (world.pointer.hoveredEntity === 'shrine') {
+    c.font = 'bold 7px Quicksand, sans-serif';
+    c.textAlign = 'center';
+    c.fillStyle = 'rgba(24, 16, 10, 0.88)';
+    c.fillRect(fx - 46, fy - 76, 92, 11);
+    c.fillStyle = '#fde68a';
+    c.fillText('Lilo & Cheeto Mantle', fx, fy - 68);
+  }
 }
 
 function drawGardenScene(time = 0) {
   if (!canvas || !ctx) return;
   ctx.imageSmoothingEnabled = false;
-
-  ctx.fillStyle = '#224426';
+  const isCottage = world.scene === 'COTTAGE';
+  ctx.fillStyle = isCottage ? '#1c120c' : '#224426';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   const scale = camera.getEffectiveScale();
@@ -2005,44 +2506,28 @@ function drawGardenScene(time = 0) {
   ctx.scale(scale, scale);
   ctx.translate(-Math.round(camera.x), -Math.round(camera.y));
 
-  if (world.scene === 'COTTAGE') {
+  if (isCottage) {
     drawCottageInteriorScenery(ctx, time);
   } else {
     drawGardenScenery(ctx, time);
-    drawShelterDeck(ctx);
   }
 
+  const bowlPos = isCottage ? COTTAGE_SPOTS.bowl : LANDMARKS.bowl;
   const renderables = [
     {
-      y: LANDMARKS.shrine.y,
-      draw: () => drawMemorialStone(ctx, time, world.pointer.hoveredEntity === 'shrine')
-    },
-    {
-      y: LANDMARKS.bowl.y - 2,
-      draw: () => drawFoodBowl(ctx, world.bowlLevel, world.pointer.hoveredEntity === 'bowl')
-    },
-    {
-      y: 254,
+      y: bowlPos.y - 2,
       draw: () => {
-        if (world.scene !== 'COTTAGE') drawShelterRoofOverhead(ctx, time);
-      }
-    },
-    {
-      // The 1 tree inside the garden (depth-sorted at trunk base y=258)
-      y: 258,
-      draw: () => {
-        if (world.scene === 'COTTAGE') return;
-        ctx.fillStyle = 'rgba(15, 28, 17, 0.28)';
-        ctx.fillRect(244, 256, 30, 6);
-        if (!drawLoadedSprite(ctx, 'tree1', 226, 185, 66, 77)) {
-          ctx.fillStyle = '#5c2d12';
-          ctx.fillRect(254, 226, 10, 32);
-          ctx.fillStyle = '#2d5c2b';
-          ctx.fillRect(230, 185, 58, 48);
-          ctx.fillStyle = '#3f7d3b';
-          ctx.fillRect(234, 189, 50, 40);
+        ctx.save();
+        if (isCottage) {
+          ctx.translate(COTTAGE_SPOTS.bowl.x - LANDMARKS.bowl.x, COTTAGE_SPOTS.bowl.y - LANDMARKS.bowl.y);
         }
+        drawFoodBowl(ctx, world.bowlLevel, world.pointer.hoveredEntity === 'bowl');
+        ctx.restore();
       }
+    },
+    {
+      y: world.caretaker.y,
+      draw: () => drawPixelCaretaker(ctx, world.caretaker, time)
     },
     ...world.cats.map((cat) => ({
       y: cat.y,
@@ -2050,25 +2535,62 @@ function drawGardenScene(time = 0) {
     }))
   ];
 
+  // Strictly include outdoor-only landmarks when in GARDEN mode!
+  if (!isCottage) {
+    renderables.push(
+      {
+        y: LANDMARKS.shrine.y,
+        draw: () => drawMemorialStone(ctx, time, world.pointer.hoveredEntity === 'shrine')
+      },
+      {
+        y: 254,
+        draw: () => drawShelterRoofOverhead(ctx, time)
+      },
+      {
+        y: 258,
+        draw: () => {
+          ctx.fillStyle = 'rgba(15, 28, 17, 0.28)';
+          ctx.fillRect(244, 256, 30, 6);
+          drawLoadedSprite(ctx, 'tree1', 226, 185, 66, 77);
+        }
+      }
+    );
+  }
+
   renderables.sort((a, b) => a.y - b.y);
-  renderables.forEach((item) => item.draw());
+  for (let i = 0; i < renderables.length; i++) {
+    renderables[i].draw();
+  }
 
-  world.critters.forEach((cr) => {
-    const cx = Math.round(cr.x);
-    const cy = Math.round(cr.y);
-    if (cr.type === 'butterfly' && world.weather !== 'NIGHT' && world.weather !== 'RAIN') {
-      const wing = Math.floor(time * 10) % 2 === 0;
-      ctx.fillStyle = cr.color || '#38bdf8';
-      if (wing) ctx.fillRect(cx - 1, cy, 3, 2);
-      else ctx.fillRect(cx, cy - 1, 1, 3);
-    } else if (cr.type === 'firefly' && world.weather === 'NIGHT') {
-      const pulse = (Math.sin(time * 4 + cr.phase) + 1) * 0.5;
-      ctx.fillStyle = `rgba(250, 204, 21, ${0.3 + pulse * 0.7})`;
-      ctx.fillRect(cx, cy, 2, 2);
+  // Outdoor critters & rain only render outdoors in GARDEN mode!
+  if (!isCottage) {
+    world.critters.forEach((cr) => {
+      const cx = Math.round(cr.x);
+      const cy = Math.round(cr.y);
+      if (cr.type === 'butterfly' && world.weather !== 'NIGHT' && world.weather !== 'RAIN') {
+        const wing = Math.floor(time * 10) % 2 === 0;
+        ctx.fillStyle = cr.color || '#38bdf8';
+        if (wing) ctx.fillRect(cx - 1, cy, 3, 2);
+        else ctx.fillRect(cx, cy - 1, 1, 3);
+      } else if (cr.type === 'firefly' && world.weather === 'NIGHT') {
+        const pulse = (Math.sin(time * 4 + cr.phase) + 1) * 0.5;
+        ctx.fillStyle = `rgba(250, 204, 21, ${0.3 + pulse * 0.7})`;
+        ctx.fillRect(cx, cy, 2, 2);
+      }
+    });
+
+    if (world.weather === 'RAIN') {
+      ctx.fillStyle = 'rgba(186, 230, 253, 0.7)';
+      for (let i = 0; i < world.rainDrops.length; i++) {
+        const d = world.rainDrops[i];
+        ctx.fillRect(Math.round(d.x), Math.round(d.y), 1, Math.round(d.len));
+      }
     }
-  });
+  }
 
-  world.particles.forEach((p) => {
+  // Floating Hearts, Sparkles & Sleep Zs
+  for (let i = 0; i < world.particles.length; i++) {
+    const p = world.particles[i];
     const alpha = Math.max(0, Math.min(1, p.life / p.maxLife));
     ctx.save();
     ctx.globalAlpha = alpha;
@@ -2093,26 +2615,24 @@ function drawGardenScene(time = 0) {
       ctx.fillRect(px - 1, py, 3, 1);
     }
     ctx.restore();
-  });
-
-  if (world.weather === 'RAIN') {
-    ctx.fillStyle = 'rgba(186, 230, 253, 0.7)';
-    world.rainDrops.forEach((d) => {
-      ctx.fillRect(Math.round(d.x), Math.round(d.y), 1, Math.round(d.len));
-    });
   }
 
   ctx.restore();
 
-  // Screen-space atmospheric tint
-  if (world.weather === 'CLOUDY') {
-    ctx.fillStyle = 'rgba(148, 163, 184, 0.12)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  } else if (world.weather === 'RAIN') {
-    ctx.fillStyle = 'rgba(30, 41, 59, 0.30)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // Atmospheric tint (softer indoors)
+  if (!isCottage) {
+    if (world.weather === 'CLOUDY') {
+      ctx.fillStyle = 'rgba(148, 163, 184, 0.12)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    } else if (world.weather === 'RAIN') {
+      ctx.fillStyle = 'rgba(30, 41, 59, 0.30)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    } else if (world.weather === 'NIGHT') {
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
   } else if (world.weather === 'NIGHT') {
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.18)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 }
@@ -2143,14 +2663,33 @@ function handleCanvasTap(clientX, clientY, isTouch = false) {
     return;
   }
 
-  if (Math.hypot(pt.x - LANDMARKS.shrine.x, pt.y - (LANDMARKS.shrine.y - 10)) <= LANDMARKS.shrine.radius * touchMult) {
-    openModal('tribute-modal');
+  // Tapping Caretaker calls the cats over
+  if (world.caretaker && Math.hypot(pt.x - world.caretaker.x, pt.y - (world.caretaker.y - 12)) <= 20 * touchMult) {
+    world.callCatsToCaretaker();
     return;
   }
 
-  if (Math.hypot(pt.x - LANDMARKS.bowl.x, pt.y - LANDMARKS.bowl.y) <= LANDMARKS.bowl.radius * touchMult) {
-    world.feedBowl();
-    return;
+  if (world.scene === 'COTTAGE') {
+    // Tapping the Fireplace Mantle (COTTAGE_SPOTS.hearth, x: 350, y: 165, radius 38)
+    if (Math.hypot(pt.x - 350, pt.y - 165) <= 38 * touchMult) {
+      openModal('tribute-modal');
+      return;
+    }
+    // Tapping Indoor Ceramic Bowl (COTTAGE_SPOTS.bowl)
+    if (Math.hypot(pt.x - COTTAGE_SPOTS.bowl.x, pt.y - COTTAGE_SPOTS.bowl.y) <= COTTAGE_SPOTS.bowl.radius * touchMult) {
+      world.feedBowl();
+      return;
+    }
+  } else {
+    if (Math.hypot(pt.x - LANDMARKS.shrine.x, pt.y - (LANDMARKS.shrine.y - 10)) <= LANDMARKS.shrine.radius * touchMult) {
+      openModal('tribute-modal');
+      return;
+    }
+
+    if (Math.hypot(pt.x - LANDMARKS.bowl.x, pt.y - LANDMARKS.bowl.y) <= LANDMARKS.bowl.radius * touchMult) {
+      world.feedBowl();
+      return;
+    }
   }
 
   // Tapping the top Cottage Door / Gate transitions between Garden & Cottage
@@ -2583,6 +3122,140 @@ function initCustomizerUI() {
 const previewCanvas = document.getElementById('previewCatCanvas');
 const previewCtx = previewCanvas ? previewCanvas.getContext('2d') : null;
 
+function initCaretakerCustomizerUI() {
+  const ct = world.caretaker;
+  const nameInput = document.getElementById('inputCaretakerName');
+  if (nameInput) {
+    nameInput.value = ct.name || 'Dom';
+    nameInput.addEventListener('input', () => {
+      ct.name = nameInput.value.trim().slice(0, 16) || 'Dom';
+    });
+  }
+
+  const hairStyles = [
+    { id: 'short', label: 'Short' },
+    { id: 'long', label: 'Long' },
+    { id: 'spiky', label: 'Spiky' },
+    { id: 'bun', label: 'Cozy Bun' }
+  ];
+  const hsBox = document.getElementById('caretakerHairStyleSelector');
+  if (hsBox) {
+    hsBox.innerHTML = '';
+    hairStyles.forEach((h) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `rounded-lg border-2 py-1 px-1.5 font-bold cursor-pointer ${ct.hairStyle === h.id ? 'border-[#3d2516] bg-[#f3dfc1]' : 'border-[#c8ab89] bg-[#fff9ea]'}`;
+      btn.textContent = h.label;
+      btn.addEventListener('click', () => {
+        ct.hairStyle = h.id;
+        initCaretakerCustomizerUI();
+      });
+      hsBox.appendChild(btn);
+    });
+  }
+
+  const accessories = [
+    { id: 'none', label: 'None' },
+    { id: 'glasses', label: 'Glasses' },
+    { id: 'catears', label: 'Cat Ears' },
+    { id: 'hat', label: 'Sun Hat' }
+  ];
+  const accBox = document.getElementById('caretakerAccessorySelector');
+  if (accBox) {
+    accBox.innerHTML = '';
+    accessories.forEach((a) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `rounded-lg border-2 py-1 px-1.5 font-bold cursor-pointer ${ct.accessory === a.id ? 'border-[#3d2516] bg-[#f3dfc1]' : 'border-[#c8ab89] bg-[#fff9ea]'}`;
+      btn.textContent = a.label;
+      btn.addEventListener('click', () => {
+        ct.accessory = a.id;
+        initCaretakerCustomizerUI();
+      });
+      accBox.appendChild(btn);
+    });
+  }
+
+  const activities = [
+    { id: 'AUTO', label: 'Auto' },
+    { id: 'READ', label: 'Reading' },
+    { id: 'COFFEE', label: 'Coffee' },
+    { id: 'CODE', label: 'Coding' }
+  ];
+  const actBox = document.getElementById('caretakerActivitySelector');
+  if (actBox) {
+    actBox.innerHTML = '';
+    activities.forEach((ac) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `rounded-lg border-2 py-1.5 px-2 font-bold cursor-pointer ${ct.activity === ac.id ? 'border-[#3d2516] bg-[#f3dfc1]' : 'border-[#c8ab89] bg-[#fff9ea]'}`;
+      btn.textContent = ac.label;
+      btn.addEventListener('click', () => {
+        ct.activity = ac.id;
+        if (ac.id !== 'AUTO') {
+          ct.effectiveActivity = ac.id;
+          ct.state = 'IDLE';
+        }
+        initCaretakerCustomizerUI();
+      });
+      actBox.appendChild(btn);
+    });
+  }
+
+  const skinBox = document.getElementById('caretakerSkinSelector');
+  if (skinBox) {
+    skinBox.innerHTML = '';
+    CARETAKER_SKIN_SWATCHES.forEach((sw) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `w-7 h-7 rounded-lg border-2 cursor-pointer ${ct.skinColor === sw.hex ? 'border-[#3d2516] ring-2 ring-amber-500' : 'border-[#b88b5a]'}`;
+      btn.style.backgroundColor = sw.hex;
+      btn.title = sw.name;
+      btn.addEventListener('click', () => {
+        ct.skinColor = sw.hex;
+        ct.skinShade = sw.shade;
+        initCaretakerCustomizerUI();
+      });
+      skinBox.appendChild(btn);
+    });
+  }
+
+  const hairColBox = document.getElementById('caretakerHairColorSelector');
+  if (hairColBox) {
+    hairColBox.innerHTML = '';
+    CARETAKER_HAIR_SWATCHES.forEach((sw) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `w-7 h-7 rounded-lg border-2 cursor-pointer ${ct.hairColor === sw.hex ? 'border-[#3d2516] ring-2 ring-amber-500' : 'border-[#b88b5a]'}`;
+      btn.style.backgroundColor = sw.hex;
+      btn.title = sw.name;
+      btn.addEventListener('click', () => {
+        ct.hairColor = sw.hex;
+        initCaretakerCustomizerUI();
+      });
+      hairColBox.appendChild(btn);
+    });
+  }
+
+  const outfitBox = document.getElementById('caretakerOutfitSelector');
+  if (outfitBox) {
+    outfitBox.innerHTML = '';
+    CARETAKER_OUTFIT_SWATCHES.forEach((sw) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `w-7 h-7 rounded-lg border-2 cursor-pointer ${ct.outfitColor === sw.hex ? 'border-[#3d2516] ring-2 ring-amber-500' : 'border-[#b88b5a]'}`;
+      btn.style.backgroundColor = sw.hex;
+      btn.title = sw.name;
+      btn.addEventListener('click', () => {
+        ct.outfitColor = sw.hex;
+        ct.pantsColor = sw.pants;
+        initCaretakerCustomizerUI();
+      });
+      outfitBox.appendChild(btn);
+    });
+  }
+}
+
 function renderMiniCanvases(time) {
   const modal = document.getElementById('modalFriends');
   if (modal && modal.classList.contains('active') && previewCtx) {
@@ -2600,6 +3273,21 @@ function renderMiniCanvases(time) {
       seed: 1,
       labelAlpha: 0
     }, time);
+  }
+
+  const ctModal = document.getElementById('modalCaretaker');
+  const ctCanvas = document.getElementById('previewCaretakerCanvas');
+  if (ctModal && ctModal.classList.contains('active') && ctCanvas) {
+    const cctx = ctCanvas.getContext('2d');
+    cctx.imageSmoothingEnabled = false;
+    cctx.clearRect(0, 0, 64, 56);
+    cctx.fillStyle = world.scene === 'COTTAGE' ? '#9c6234' : '#3f7d3b';
+    cctx.fillRect(0, 38, 64, 18);
+    cctx.save();
+    cctx.translate(32, 44);
+    cctx.scale(1.5, 1.5);
+    drawPixelCaretaker(cctx, { ...world.caretaker, x: 0, y: 0, state: 'IDLE', labelAlpha: 0 }, time);
+    cctx.restore();
   }
 }
 
@@ -2619,6 +3307,20 @@ function dismissIntroOverlay() {
 safeOn('enter-garden-btn', 'click', dismissIntroOverlay);
 safeOn('btnFeed', 'click', () => world.feedBowl());
 safeOn('btnOpenFriends', 'click', () => openModal('modalFriends'));
+safeOn('btnOpenCaretaker', 'click', () => {
+  initCaretakerCustomizerUI();
+  openModal('modalCaretaker');
+});
+safeOn('btnCallCatsToCaretaker', 'click', () => {
+  closeModal('modalCaretaker');
+  world.callCatsToCaretaker();
+});
+safeOn('btnSaveCaretaker', 'click', () => {
+  world.caretaker.labelAlpha = 1.8;
+  world.save();
+  closeModal('modalCaretaker');
+  showToast(`${world.caretaker.name}'s look saved!`, 'sparkle');
+});
 safeOn('btnWeather', 'click', () => world.cycleWeather());
 
 safeOn('btnAudio', 'click', () => {
@@ -2959,6 +3661,7 @@ window.addEventListener('orientationchange', updateCanvasResolution);
 
 function initGame() {
   initCustomizerUI();
+  initCaretakerCustomizerUI();
   world.init();
   updateCanvasResolution();
   updateCameraBtnUI();
