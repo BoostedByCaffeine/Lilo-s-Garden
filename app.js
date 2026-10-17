@@ -582,6 +582,20 @@ const world = {
   critters: [],
   rainDrops: [],
   pointer: { x: -100, y: -100, hoveredEntity: null },
+  scene: 'GARDEN',
+  toggleScene() {
+    this.scene = this.scene === 'COTTAGE' ? 'GARDEN' : 'COTTAGE';
+    safeText('sceneBtnText', this.scene === 'COTTAGE' ? 'Garden' : 'Cottage');
+    camera.x = 480;
+    camera.y = 310;
+    clampCamera();
+    showToast(
+      this.scene === 'COTTAGE'
+        ? 'Stepped inside the Cozy Cottage!'
+        : 'Stepped out into the Garden!',
+      this.scene === 'COTTAGE' ? 'coffee' : 'leaf'
+    );
+  },
 
   init() {
     this.load();
@@ -1256,7 +1270,11 @@ const SPRITE_BANK = {
 
   // Bonfire Animated Strips (2.png = active flames, 1.png = rain smoke)
   campfireActive: './assets/sprites/tileSprite/3 Animated Objects/2 Campfire/2.png',
-  campfireSmoke: './assets/sprites/tileSprite/3 Animated Objects/2 Campfire/1.png'
+  campfireSmoke: './assets/sprites/tileSprite/3 Animated Objects/2 Campfire/1.png',
+
+  // Cozy Cottage Interior Sprite Sheets
+  interiorDemo: './assets/interior/interiors_demo.png',
+  interiorTiles: './assets/interior/tiles and items.png'
 };
 
 const loadedSprites = {};
@@ -1848,6 +1866,132 @@ function drawFoodBowl(c, bowlLevel, hovered) {
   }
 }
 
+function drawCottageInteriorScenery(c, time) {
+  const scale = camera.getEffectiveScale();
+  const halfViewW = (canvas.width / 2) / scale;
+  const halfViewH = (canvas.height / 2) / scale;
+  const viewLeft = Math.min(0, camera.x - halfViewW - 80);
+  const viewTop = Math.min(0, camera.y - halfViewH - 80);
+  const viewRight = Math.max(960, camera.x + halfViewW + 80);
+  const viewBottom = Math.max(600, camera.y + halfViewH + 80);
+
+  // 1. Cozy Dark Wood Surround
+  c.fillStyle = '#1c120c';
+  c.fillRect(viewLeft, viewTop, viewRight - viewLeft, viewBottom - viewTop);
+
+  // 2. Warm Honey-Oak Plank Floor (x = 210..750, y = 185..465)
+  c.fillStyle = '#3b1d0a';
+  c.fillRect(202, 122, 556, 352);
+  c.fillStyle = '#9c6234';
+  c.fillRect(210, 190, 540, 276);
+  c.fillStyle = '#7c4a24';
+  for (let py = 190; py < 466; py += 14) {
+    c.fillRect(210, py, 540, 2);
+  }
+  for (let px = 210; px < 750; px += 48) {
+    c.fillRect(px, 190, 1, 276);
+  }
+
+  // 3. Wainscoting & Cream Plaster Cottage Back Wall (y = 128..190)
+  c.fillStyle = '#e6ccb2';
+  c.fillRect(210, 128, 540, 42);
+  c.fillStyle = '#6e4223';
+  c.fillRect(210, 168, 540, 22);
+  for (let wx = 214; wx < 746; wx += 18) {
+    c.fillStyle = '#532e16';
+    c.fillRect(wx, 170, 2, 18);
+  }
+  c.fillStyle = '#3b1d0a';
+  c.fillRect(210, 167, 540, 3);
+  c.fillRect(210, 189, 540, 3);
+
+  // 4. Render Bundled Interior Furnishing Showcase Card on Left Wall (assets/interior/interiors_demo.png & tiles and items.png)
+  const intDemo = loadedSprites.interiorDemo;
+  if (intDemo && intDemo.complete && intDemo.naturalWidth > 0) {
+    c.save();
+    c.beginPath();
+    c.rect(222, 196, 132, 92);
+    c.clip();
+    c.drawImage(intDemo, 0, 0, intDemo.naturalWidth, intDemo.naturalHeight, 222, 196, 132, 92);
+    c.restore();
+    c.strokeStyle = '#532e16';
+    c.lineWidth = 2;
+    c.strokeRect(222, 196, 132, 92);
+  }
+  const intTiles = loadedSprites.interiorTiles;
+  if (intTiles && intTiles.complete && intTiles.naturalWidth > 0) {
+    c.drawImage(intTiles, 0, 0, Math.min(64, intTiles.naturalWidth), Math.min(48, intTiles.naturalHeight), 662, 200, 64, 48);
+  }
+
+  // 5. Weather-Reactive Cottage Window Looking Out at the Sky (x = 528..598, y = 134..174)
+  const isNight = world.weather === 'NIGHT';
+  const isRain = world.weather === 'RAIN';
+  c.fillStyle = '#3b1d0a';
+  c.fillRect(526, 132, 74, 44);
+  c.fillStyle = isNight ? '#0f172a' : isRain ? '#334155' : '#38bdf8';
+  c.fillRect(530, 136, 66, 36);
+  if (isNight) {
+    c.fillStyle = '#fde047';
+    c.fillRect(540, 142, 3, 3);
+    c.fillRect(578, 146, 2, 2);
+  } else if (isRain) {
+    c.fillStyle = '#bae6fd';
+    for (let rx = 536; rx < 590; rx += 12) {
+      c.fillRect(rx, 138 + ((Math.floor(time * 24) + rx) % 24), 1, 6);
+    }
+  } else {
+    c.fillStyle = '#fde047';
+    c.fillRect(576, 140, 10, 10);
+  }
+  c.fillStyle = '#3b1d0a';
+  c.fillRect(562, 136, 2, 36);
+  c.fillRect(530, 153, 66, 2);
+
+  // 6. Cottage Wooden Door at Center Top (Tap or Walk to Step Back Outside)
+  c.fillStyle = '#3b1d0a';
+  c.fillRect(458, 130, 44, 60);
+  c.fillStyle = '#78431e';
+  c.fillRect(462, 134, 36, 56);
+  c.fillStyle = '#fde047';
+  c.fillRect(490, 162, 3, 3);
+
+  // 7. Brick Hearth Fireplace & Twin Polaroid Tribute Mantle (x = 340, y = 210)
+  const fx = LANDMARKS.shrine.x;
+  const fy = 192;
+  c.fillStyle = '#7f1d1d';
+  c.fillRect(fx - 28, fy - 52, 56, 54);
+  c.fillStyle = '#991b1b';
+  c.fillRect(fx - 26, fy - 50, 52, 50);
+  c.fillStyle = '#532e16';
+  c.fillRect(fx - 32, fy - 56, 64, 6);
+  c.fillStyle = '#1e1b18';
+  c.fillRect(fx - 18, fy - 28, 36, 28);
+  drawLoadedSprite(c, 'campfireActive', fx - 16, fy - 30, 32, 32, time);
+
+  // Warm Hearth Glow on the Cottage Floor
+  const flicker = Math.sin(time * 7) * 0.06 + 0.28;
+  const hearthGrad = c.createRadialGradient(fx, fy + 6, 4, fx, fy + 6, 68);
+  hearthGrad.addColorStop(0, `rgba(251, 146, 60, ${flicker})`);
+  hearthGrad.addColorStop(1, 'rgba(251, 146, 60, 0)');
+  c.fillStyle = hearthGrad;
+  c.beginPath();
+  c.arc(fx, fy + 6, 68, 0, Math.PI * 2);
+  c.fill();
+
+  // Cozy Braided Rug in Center of Room (LANDMARKS.rug)
+  const rx = LANDMARKS.rug.x;
+  const ry = LANDMARKS.rug.y;
+  c.fillStyle = '#7c2d12';
+  c.fillRect(rx - 32, ry - 18, 64, 36);
+  c.fillStyle = '#b45309';
+  c.fillRect(rx - 28, ry - 14, 56, 28);
+  c.fillStyle = '#fef3c7';
+  c.fillRect(rx - 22, ry - 10, 44, 20);
+
+  // Plush Cat Lounge Bed on Right Side (LANDMARKS.shelter)
+  drawShelterDeck(c);
+}
+
 function drawGardenScene(time = 0) {
   if (!canvas || !ctx) return;
   ctx.imageSmoothingEnabled = false;
@@ -1861,8 +2005,12 @@ function drawGardenScene(time = 0) {
   ctx.scale(scale, scale);
   ctx.translate(-Math.round(camera.x), -Math.round(camera.y));
 
-  drawGardenScenery(ctx, time);
-  drawShelterDeck(ctx);
+  if (world.scene === 'COTTAGE') {
+    drawCottageInteriorScenery(ctx, time);
+  } else {
+    drawGardenScenery(ctx, time);
+    drawShelterDeck(ctx);
+  }
 
   const renderables = [
     {
@@ -1875,12 +2023,15 @@ function drawGardenScene(time = 0) {
     },
     {
       y: 254,
-      draw: () => drawShelterRoofOverhead(ctx, time)
+      draw: () => {
+        if (world.scene !== 'COTTAGE') drawShelterRoofOverhead(ctx, time);
+      }
     },
     {
       // The 1 tree inside the garden (depth-sorted at trunk base y=258)
       y: 258,
       draw: () => {
+        if (world.scene === 'COTTAGE') return;
         ctx.fillStyle = 'rgba(15, 28, 17, 0.28)';
         ctx.fillRect(244, 256, 30, 6);
         if (!drawLoadedSprite(ctx, 'tree1', 226, 185, 66, 77)) {
@@ -1999,6 +2150,12 @@ function handleCanvasTap(clientX, clientY, isTouch = false) {
 
   if (Math.hypot(pt.x - LANDMARKS.bowl.x, pt.y - LANDMARKS.bowl.y) <= LANDMARKS.bowl.radius * touchMult) {
     world.feedBowl();
+    return;
+  }
+
+  // Tapping the top Cottage Door / Gate transitions between Garden & Cottage
+  if (pt.x >= 450 && pt.x <= 510 && pt.y >= 110 && pt.y <= 195) {
+    world.toggleScene();
     return;
   }
 
@@ -2719,6 +2876,39 @@ safeOn('btnPinWindowWidget', 'click', () => {
     window.AndroidBridge.pinWindowWidget();
   } else {
     showToast('Available in Lilo Garden Android APK!', 'grid-2x2');
+  }
+});
+
+safeOn('btnToggleScene', 'click', () => world.toggleScene());
+
+safeOn('btnPinBatteryWidget', 'click', () => {
+  closeModal('widget-choice-modal');
+  if (window.AndroidBridge && typeof window.AndroidBridge.pinBatteryWidget === 'function') {
+    window.AndroidBridge.pinBatteryWidget();
+  } else {
+    showToast('Available in Lilo Garden Android APK!', 'grid-2x2');
+  }
+});
+
+safeOn('btnPinPomodoroWidget', 'click', () => {
+  closeModal('widget-choice-modal');
+  if (window.AndroidBridge && typeof window.AndroidBridge.pinPomodoroWidget === 'function') {
+    window.AndroidBridge.pinPomodoroWidget();
+  } else {
+    showToast('Available in Lilo Garden Android APK!', 'grid-2x2');
+  }
+});
+
+window.addEventListener('focus', () => {
+  if (window.AndroidBridge && typeof window.AndroidBridge.getWidgetBlooms === 'function') {
+    try {
+      const widgetBlooms = Number(window.AndroidBridge.getWidgetBlooms());
+      if (widgetBlooms > world.blooms) {
+        world.blooms = Math.min(24, widgetBlooms);
+        world.save();
+        showToast(`Campfire Focus bloomed ${world.blooms}/24 flowers!`, 'sparkle', '#38bdf8');
+      }
+    } catch (e) {}
   }
 });
 

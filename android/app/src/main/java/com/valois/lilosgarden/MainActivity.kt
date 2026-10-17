@@ -210,6 +210,8 @@ class MainActivity : AppCompatActivity() {
                 LiloWidgetProvider.refreshAllWidgets(activity)
                 LiloCompanionWidgetProvider.refreshAllCompanionWidgets(activity)
                 LiloWindowWidgetProvider.refreshAllWindowWidgets(activity)
+                LiloBatteryWidgetProvider.refreshAllBatteryWidgets(activity)
+                LiloPomodoroWidgetProvider.refreshAllPomodoroWidgets(activity)
             } catch (e: Exception) {}
         }
 
@@ -322,6 +324,54 @@ class MainActivity : AppCompatActivity() {
                     Toast.LENGTH_LONG
                 ).show()
             }
+        }
+
+        @JavascriptInterface
+        fun pinBatteryWidget() {
+            activity.runOnUiThread {
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        val appWidgetManager = AppWidgetManager.getInstance(activity)
+                        val widgetProvider = ComponentName(activity, LiloBatteryWidgetProvider::class.java)
+                        if (appWidgetManager.isRequestPinAppWidgetSupported) {
+                            appWidgetManager.requestPinAppWidget(widgetProvider, null, null)
+                            return@runOnUiThread
+                        }
+                    }
+                } catch (_: Exception) {}
+                Toast.makeText(
+                    activity,
+                    "Long-press Home Screen -> Widgets -> Lilo's Purr-cent Battery Widget",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+
+        @JavascriptInterface
+        fun pinPomodoroWidget() {
+            activity.runOnUiThread {
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        val appWidgetManager = AppWidgetManager.getInstance(activity)
+                        val widgetProvider = ComponentName(activity, LiloPomodoroWidgetProvider::class.java)
+                        if (appWidgetManager.isRequestPinAppWidgetSupported) {
+                            appWidgetManager.requestPinAppWidget(widgetProvider, null, null)
+                            return@runOnUiThread
+                        }
+                    }
+                } catch (_: Exception) {}
+                Toast.makeText(
+                    activity,
+                    "Long-press Home Screen -> Widgets -> Lilo's Campfire Focus Widget",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+
+        @JavascriptInterface
+        fun getWidgetBlooms(): Int {
+            val prefs = activity.getSharedPreferences("lilo_widget_prefs", Context.MODE_PRIVATE)
+            return prefs.getInt("blooms", 8)
         }
 
         @JavascriptInterface

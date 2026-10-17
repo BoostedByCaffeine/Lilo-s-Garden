@@ -94,6 +94,41 @@
                 android:resource="@xml/lilo_window_widget_info" />
         </receiver>
 
+        <!-- 6. Purr-cent Battery & Cat Mood Widget Provider (Option A) -->
+        <receiver
+            android:name=".LiloBatteryWidgetProvider"
+            android:exported="true"
+            android:label="@string/battery_widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
+                <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" />
+                <action android:name="android.intent.action.BATTERY_LOW" />
+                <action android:name="android.intent.action.BATTERY_OKAY" />
+                <action android:name="com.valois.lilosgarden.ACTION_BAT_PET" />
+                <action android:name="com.valois.lilosgarden.ACTION_BAT_SWITCH_CAT" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/lilo_battery_widget_info" />
+        </receiver>
+
+        <!-- 7. Campfire Focus / Pomodoro Buddy Widget Provider (Option C) -->
+        <receiver
+            android:name=".LiloPomodoroWidgetProvider"
+            android:exported="true"
+            android:label="@string/pomodoro_widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.valois.lilosgarden.ACTION_POMO_TOGGLE" />
+                <action android:name="com.valois.lilosgarden.ACTION_POMO_RESET" />
+                <action android:name="com.valois.lilosgarden.ACTION_POMO_TICK" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/lilo_pomodoro_widget_info" />
+        </receiver>
+
     </application>
 
 </manifest>

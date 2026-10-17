@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/pomo_widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="154dp"
+        android:layout_gravity="center">
+
+        <TextClock
+            android:id="@+id/pomo_clock_tick"
+            android:layout_width="1dp"
+            android:layout_height="1dp"
+            android:alpha="0" />
+
+        <!-- LAYER 1: 32-Frame Campfire & Cats Animation Loop @ 4 FPS (250ms) -->
+        <ViewFlipper
+            android:id="@+id/pomo_flipper"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true"
+            android:autoStart="true"
+            android:flipInterval="250" />
+
+        <!-- LAYER 2: High-Res Solid Typography Overlay (Countdown + Bloom Count) -->
+        <ImageView
+            android:id="@+id/pomo_hud_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true"
+            android:scaleType="fitCenter" />
+
+        <!-- Interactive Touch Hotspots -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:weightSum="100">
+
+            <!-- Left 46%: Tap Campfire Scene to Open Main Sanctuary App -->
+            <FrameLayout
+                android:id="@+id/pomo_open_app"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="46"
+                android:background="@android:color/transparent" />
+
+            <!-- Right 54%: Timer Display + Bottom Start/Pause & Reset Buttons -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="54"
+                android:orientation="vertical"
+                android:weightSum="100">
+
+                <FrameLayout
+                    android:id="@+id/pomo_timer_area"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="68"
+                    android:background="@android:color/transparent" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="32"
+                    android:orientation="horizontal"
+                    android:weightSum="100">
+
+                    <FrameLayout
+                        android:id="@+id/pomo_bloom_badge"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="54"
+                        android:background="@android:color/transparent" />
+
+                    <!-- Button 1: Start / Pause Campfire Focus -->
+                    <FrameLayout
+                        android:id="@+id/pomo_btn_toggle"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="23"
+                        android:background="@android:color/transparent" />
+
+                    <!-- Button 2: Reset 25:00 Timer -->
+                    <FrameLayout
+                        android:id="@+id/pomo_btn_reset"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="23"
+                        android:background="@android:color/transparent" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </RelativeLayout>
+</FrameLayout>

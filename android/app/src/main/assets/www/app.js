@@ -386,46 +386,183 @@ function showToast(message, icon = 'heart-solid', iconColor = '') {
 }
 
 /********************************************************************
- * 4. OPEN-METEO LIVE WEATHER INTEGRATION
+ * 4. ENHANCED OPEN-METEO LIVE WEATHER INTEGRATION (GPS + IP FALLBACK)
  ********************************************************************/
+const WEATHER_CACHE_KEY = 'lilos_garden_weather_cache_v1';
+
+function loadCachedWeather() {
+  try {
+    const raw = localStorage.getItem(WEATHER_CACHE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function saveCachedWeather(lat, lon, tempC, weather, skyDesc) {
+  try {
+    localStorage.setItem(
+      WEATHER_CACHE_KEY,
+      JSON.stringify({
+        lat,
+        lon,
+        tempC,
+        weather,
+        skyDesc,
+        updatedAt: Date.now()
+      })
+    );
+  } catch (e) {}
+}
+
+function getDeviceCoordinates() {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('Geolocation not supported'));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude, source: 'GPS' }),
+      () => {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude, source: 'GPS' }),
+          (err) => reject(err),
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 600000 }
+        );
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 }
+    );
+  });
+}
+
+async function getIpCoordinatesFallback() {
+  try {
+    const res = await fetch('https://get.geojs.io/v1/ip/geo.json');
+    if (res.ok) {
+      const data = await res.json();
+      const lat = parseFloat(data.latitude);
+      const lon = parseFloat(data.longitude);
+      if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
+        return { lat, lon, source: 'IP' };
+      }
+    }
+  } catch (e) {}
+
+  try {
+    const res = await fetch('https://ipwho.is/');
+    if (res.ok) {
+      const data = await res.json();
+      const lat = parseFloat(data.latitude);
+      const lon = parseFloat(data.longitude);
+      if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
+        return { lat, lon, source: 'IP' };
+      }
+    }
+  } catch (e) {}
+
+  const cached = loadCachedWeather();
+  if (cached && typeof cached.lat === 'number' && typeof cached.lon === 'number') {
+    return { lat: cached.lat, lon: cached.lon, source: 'CACHE' };
+  }
+  throw new Error('All location providers failed');
+}
+
+async function fetchOpenMeteoForCoords(w, lat, lon) {
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day,precipitation,rain,showers,cloud_cover&timezone=auto`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Open-Meteo HTTP error');
+  const data = await res.json();
+  const cur = data.current;
+  if (!cur) throw new Error('Missing current weather payload');
+
+  w.lat = lat;
+  w.lon = lon;
+  w.tempC = Math.round(cur.temperature_2m);
+
+  const code = Number(cur.weather_code);
+  const isDay = Number(cur.is_day) === 1;
+  const precip = Number(cur.precipitation || 0) + Number(cur.rain || 0) + Number(cur.showers || 0);
+  const cloudCover = Number(cur.cloud_cover || 0);
+
+  const isRainCode = [
+    51, 53, 55, 56, 57,
+    61, 63, 65, 66, 67,
+    80, 81, 82,
+    95, 96, 99
+  ].includes(code);
+
+  const isCloudyCode = [2, 3, 45, 48].includes(code) || cloudCover >= 65;
+
+  if (isRainCode || precip > 0.05) {
+    w.weather = 'RAIN';
+    w.skyDesc = [95, 96, 99].includes(code) ? 'Thunderstorm' : 'Rain Shower';
+  } else if (!isDay) {
+    w.weather = 'NIGHT';
+    w.skyDesc = isCloudyCode ? 'Cloudy Night' : 'Starry Night';
+  } else if (isCloudyCode) {
+    w.weather = 'CLOUDY';
+    w.skyDesc = code === 3 ? 'Overcast Sky' : 'Cloudy Sky';
+  } else {
+    w.weather = 'SUNNY';
+    w.skyDesc = code === 1 ? 'Mostly Sunny' : 'Sunny Sky';
+  }
+
+  saveCachedWeather(lat, lon, w.tempC, w.weather, w.skyDesc);
+  w.onWeatherUpdated();
+}
+
 async function syncLiveWeather(w) {
   if (w.weatherMode !== 'AUTO') return;
-  if (!navigator.geolocation) {
-    w.applyClockFallback();
-    return;
+
+  const cached = loadCachedWeather();
+  if (cached && typeof cached.tempC === 'number') {
+    w.tempC = cached.tempC;
+    w.lat = cached.lat;
+    w.lon = cached.lon;
+    const hour = new Date().getHours();
+    const isNightNow = hour < 6 || hour >= 18;
+    if (cached.weather === 'RAIN') {
+      w.weather = 'RAIN';
+      w.skyDesc = cached.skyDesc || 'Rain Shower';
+    } else if (isNightNow) {
+      w.weather = 'NIGHT';
+      w.skyDesc = 'Starry Night';
+    } else {
+      w.weather = cached.weather === 'NIGHT' ? 'SUNNY' : (cached.weather || 'SUNNY');
+      w.skyDesc = cached.skyDesc || 'Sunny Sky';
+    }
+    w.syncUI();
   }
-  navigator.geolocation.getCurrentPosition(
-    async (pos) => {
-      try {
-        const { latitude, longitude } = pos.coords;
-        const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weather_code,is_day`;
-        const res = await fetch(url);
-        const data = await res.json();
-        const cur = data.current;
-        w.tempC = Math.round(cur.temperature_2m);
-        const code = cur.weather_code;
-        if ([51, 53, 55, 61, 63, 65, 80, 81, 82, 95].includes(code)) {
-          w.weather = 'RAIN';
-          w.skyDesc = 'Rain Shower';
-        } else if (cur.is_day === 0) {
-          w.weather = 'NIGHT';
-          w.skyDesc = 'Starry Night';
-        } else if ([2, 3, 45, 48].includes(code)) {
-          w.weather = 'CLOUDY';
-          w.skyDesc = 'Cloudy Sky';
-        } else {
-          w.weather = 'SUNNY';
-          w.skyDesc = 'Sunny Sky';
-        }
-        w.onWeatherUpdated();
-      } catch (e) {
-        w.applyClockFallback();
-      }
-    },
-    () => w.applyClockFallback(),
-    { timeout: 6000 }
-  );
+
+  if (cached && typeof cached.lat === 'number' && typeof cached.lon === 'number') {
+    fetchOpenMeteoForCoords(w, cached.lat, cached.lon).catch(() => {});
+  }
+
+  try {
+    const loc = await getDeviceCoordinates();
+    await fetchOpenMeteoForCoords(w, loc.lat, loc.lon);
+  } catch (gpsErr) {
+    try {
+      const ipLoc = await getIpCoordinatesFallback();
+      await fetchOpenMeteoForCoords(w, ipLoc.lat, ipLoc.lon);
+    } catch (ipErr) {
+      w.applyClockFallback();
+    }
+  }
 }
+
+setInterval(() => {
+  if (typeof world !== 'undefined' && world.weatherMode === 'AUTO') {
+    syncLiveWeather(world);
+  }
+}, 15 * 60 * 1000);
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && typeof world !== 'undefined' && world.weatherMode === 'AUTO') {
+    syncLiveWeather(world);
+  }
+});
+
 
 /********************************************************************
  * 5. WORLD ENGINE & FINITE STATE MACHINE
@@ -445,6 +582,20 @@ const world = {
   critters: [],
   rainDrops: [],
   pointer: { x: -100, y: -100, hoveredEntity: null },
+  scene: 'GARDEN',
+  toggleScene() {
+    this.scene = this.scene === 'COTTAGE' ? 'GARDEN' : 'COTTAGE';
+    safeText('sceneBtnText', this.scene === 'COTTAGE' ? 'Garden' : 'Cottage');
+    camera.x = 480;
+    camera.y = 310;
+    clampCamera();
+    showToast(
+      this.scene === 'COTTAGE'
+        ? 'Stepped inside the Cozy Cottage!'
+        : 'Stepped out into the Garden!',
+      this.scene === 'COTTAGE' ? 'coffee' : 'leaf'
+    );
+  },
 
   init() {
     this.load();
@@ -455,15 +606,16 @@ const world = {
   },
 
   applyClockFallback() {
+    const cached = loadCachedWeather();
     const hour = new Date().getHours();
-    if (hour < 6 || hour >= 19) {
+    if (hour < 6 || hour >= 18) {
       this.weather = 'NIGHT';
       this.skyDesc = 'Firefly Night';
-      this.tempC = 18;
+      this.tempC = cached && typeof cached.tempC === 'number' ? cached.tempC : 26;
     } else {
       this.weather = 'SUNNY';
       this.skyDesc = 'Sunny Sky';
-      this.tempC = 25;
+      this.tempC = cached && typeof cached.tempC === 'number' ? cached.tempC : 30;
     }
     this.onWeatherUpdated();
   },
@@ -612,6 +764,8 @@ const world = {
     return {
       version: 4,
       updatedAt: new Date().toISOString(),
+      lat: this.lat || null,
+      lon: this.lon || null,
       stats: this.stats,
       petProgress: this.petProgress,
       blooms: this.blooms,
@@ -1116,7 +1270,11 @@ const SPRITE_BANK = {
 
   // Bonfire Animated Strips (2.png = active flames, 1.png = rain smoke)
   campfireActive: './assets/sprites/tileSprite/3 Animated Objects/2 Campfire/2.png',
-  campfireSmoke: './assets/sprites/tileSprite/3 Animated Objects/2 Campfire/1.png'
+  campfireSmoke: './assets/sprites/tileSprite/3 Animated Objects/2 Campfire/1.png',
+
+  // Cozy Cottage Interior Sprite Sheets
+  interiorDemo: './assets/interior/interiors_demo.png',
+  interiorTiles: './assets/interior/tiles and items.png'
 };
 
 const loadedSprites = {};
@@ -1708,6 +1866,132 @@ function drawFoodBowl(c, bowlLevel, hovered) {
   }
 }
 
+function drawCottageInteriorScenery(c, time) {
+  const scale = camera.getEffectiveScale();
+  const halfViewW = (canvas.width / 2) / scale;
+  const halfViewH = (canvas.height / 2) / scale;
+  const viewLeft = Math.min(0, camera.x - halfViewW - 80);
+  const viewTop = Math.min(0, camera.y - halfViewH - 80);
+  const viewRight = Math.max(960, camera.x + halfViewW + 80);
+  const viewBottom = Math.max(600, camera.y + halfViewH + 80);
+
+  // 1. Cozy Dark Wood Surround
+  c.fillStyle = '#1c120c';
+  c.fillRect(viewLeft, viewTop, viewRight - viewLeft, viewBottom - viewTop);
+
+  // 2. Warm Honey-Oak Plank Floor (x = 210..750, y = 185..465)
+  c.fillStyle = '#3b1d0a';
+  c.fillRect(202, 122, 556, 352);
+  c.fillStyle = '#9c6234';
+  c.fillRect(210, 190, 540, 276);
+  c.fillStyle = '#7c4a24';
+  for (let py = 190; py < 466; py += 14) {
+    c.fillRect(210, py, 540, 2);
+  }
+  for (let px = 210; px < 750; px += 48) {
+    c.fillRect(px, 190, 1, 276);
+  }
+
+  // 3. Wainscoting & Cream Plaster Cottage Back Wall (y = 128..190)
+  c.fillStyle = '#e6ccb2';
+  c.fillRect(210, 128, 540, 42);
+  c.fillStyle = '#6e4223';
+  c.fillRect(210, 168, 540, 22);
+  for (let wx = 214; wx < 746; wx += 18) {
+    c.fillStyle = '#532e16';
+    c.fillRect(wx, 170, 2, 18);
+  }
+  c.fillStyle = '#3b1d0a';
+  c.fillRect(210, 167, 540, 3);
+  c.fillRect(210, 189, 540, 3);
+
+  // 4. Render Bundled Interior Furnishing Showcase Card on Left Wall (assets/interior/interiors_demo.png & tiles and items.png)
+  const intDemo = loadedSprites.interiorDemo;
+  if (intDemo && intDemo.complete && intDemo.naturalWidth > 0) {
+    c.save();
+    c.beginPath();
+    c.rect(222, 196, 132, 92);
+    c.clip();
+    c.drawImage(intDemo, 0, 0, intDemo.naturalWidth, intDemo.naturalHeight, 222, 196, 132, 92);
+    c.restore();
+    c.strokeStyle = '#532e16';
+    c.lineWidth = 2;
+    c.strokeRect(222, 196, 132, 92);
+  }
+  const intTiles = loadedSprites.interiorTiles;
+  if (intTiles && intTiles.complete && intTiles.naturalWidth > 0) {
+    c.drawImage(intTiles, 0, 0, Math.min(64, intTiles.naturalWidth), Math.min(48, intTiles.naturalHeight), 662, 200, 64, 48);
+  }
+
+  // 5. Weather-Reactive Cottage Window Looking Out at the Sky (x = 528..598, y = 134..174)
+  const isNight = world.weather === 'NIGHT';
+  const isRain = world.weather === 'RAIN';
+  c.fillStyle = '#3b1d0a';
+  c.fillRect(526, 132, 74, 44);
+  c.fillStyle = isNight ? '#0f172a' : isRain ? '#334155' : '#38bdf8';
+  c.fillRect(530, 136, 66, 36);
+  if (isNight) {
+    c.fillStyle = '#fde047';
+    c.fillRect(540, 142, 3, 3);
+    c.fillRect(578, 146, 2, 2);
+  } else if (isRain) {
+    c.fillStyle = '#bae6fd';
+    for (let rx = 536; rx < 590; rx += 12) {
+      c.fillRect(rx, 138 + ((Math.floor(time * 24) + rx) % 24), 1, 6);
+    }
+  } else {
+    c.fillStyle = '#fde047';
+    c.fillRect(576, 140, 10, 10);
+  }
+  c.fillStyle = '#3b1d0a';
+  c.fillRect(562, 136, 2, 36);
+  c.fillRect(530, 153, 66, 2);
+
+  // 6. Cottage Wooden Door at Center Top (Tap or Walk to Step Back Outside)
+  c.fillStyle = '#3b1d0a';
+  c.fillRect(458, 130, 44, 60);
+  c.fillStyle = '#78431e';
+  c.fillRect(462, 134, 36, 56);
+  c.fillStyle = '#fde047';
+  c.fillRect(490, 162, 3, 3);
+
+  // 7. Brick Hearth Fireplace & Twin Polaroid Tribute Mantle (x = 340, y = 210)
+  const fx = LANDMARKS.shrine.x;
+  const fy = 192;
+  c.fillStyle = '#7f1d1d';
+  c.fillRect(fx - 28, fy - 52, 56, 54);
+  c.fillStyle = '#991b1b';
+  c.fillRect(fx - 26, fy - 50, 52, 50);
+  c.fillStyle = '#532e16';
+  c.fillRect(fx - 32, fy - 56, 64, 6);
+  c.fillStyle = '#1e1b18';
+  c.fillRect(fx - 18, fy - 28, 36, 28);
+  drawLoadedSprite(c, 'campfireActive', fx - 16, fy - 30, 32, 32, time);
+
+  // Warm Hearth Glow on the Cottage Floor
+  const flicker = Math.sin(time * 7) * 0.06 + 0.28;
+  const hearthGrad = c.createRadialGradient(fx, fy + 6, 4, fx, fy + 6, 68);
+  hearthGrad.addColorStop(0, `rgba(251, 146, 60, ${flicker})`);
+  hearthGrad.addColorStop(1, 'rgba(251, 146, 60, 0)');
+  c.fillStyle = hearthGrad;
+  c.beginPath();
+  c.arc(fx, fy + 6, 68, 0, Math.PI * 2);
+  c.fill();
+
+  // Cozy Braided Rug in Center of Room (LANDMARKS.rug)
+  const rx = LANDMARKS.rug.x;
+  const ry = LANDMARKS.rug.y;
+  c.fillStyle = '#7c2d12';
+  c.fillRect(rx - 32, ry - 18, 64, 36);
+  c.fillStyle = '#b45309';
+  c.fillRect(rx - 28, ry - 14, 56, 28);
+  c.fillStyle = '#fef3c7';
+  c.fillRect(rx - 22, ry - 10, 44, 20);
+
+  // Plush Cat Lounge Bed on Right Side (LANDMARKS.shelter)
+  drawShelterDeck(c);
+}
+
 function drawGardenScene(time = 0) {
   if (!canvas || !ctx) return;
   ctx.imageSmoothingEnabled = false;
@@ -1721,8 +2005,12 @@ function drawGardenScene(time = 0) {
   ctx.scale(scale, scale);
   ctx.translate(-Math.round(camera.x), -Math.round(camera.y));
 
-  drawGardenScenery(ctx, time);
-  drawShelterDeck(ctx);
+  if (world.scene === 'COTTAGE') {
+    drawCottageInteriorScenery(ctx, time);
+  } else {
+    drawGardenScenery(ctx, time);
+    drawShelterDeck(ctx);
+  }
 
   const renderables = [
     {
@@ -1735,12 +2023,15 @@ function drawGardenScene(time = 0) {
     },
     {
       y: 254,
-      draw: () => drawShelterRoofOverhead(ctx, time)
+      draw: () => {
+        if (world.scene !== 'COTTAGE') drawShelterRoofOverhead(ctx, time);
+      }
     },
     {
       // The 1 tree inside the garden (depth-sorted at trunk base y=258)
       y: 258,
       draw: () => {
+        if (world.scene === 'COTTAGE') return;
         ctx.fillStyle = 'rgba(15, 28, 17, 0.28)';
         ctx.fillRect(244, 256, 30, 6);
         if (!drawLoadedSprite(ctx, 'tree1', 226, 185, 66, 77)) {
@@ -1859,6 +2150,12 @@ function handleCanvasTap(clientX, clientY, isTouch = false) {
 
   if (Math.hypot(pt.x - LANDMARKS.bowl.x, pt.y - LANDMARKS.bowl.y) <= LANDMARKS.bowl.radius * touchMult) {
     world.feedBowl();
+    return;
+  }
+
+  // Tapping the top Cottage Door / Gate transitions between Garden & Cottage
+  if (pt.x >= 450 && pt.x <= 510 && pt.y >= 110 && pt.y <= 195) {
+    world.toggleScene();
     return;
   }
 
@@ -2579,6 +2876,39 @@ safeOn('btnPinWindowWidget', 'click', () => {
     window.AndroidBridge.pinWindowWidget();
   } else {
     showToast('Available in Lilo Garden Android APK!', 'grid-2x2');
+  }
+});
+
+safeOn('btnToggleScene', 'click', () => world.toggleScene());
+
+safeOn('btnPinBatteryWidget', 'click', () => {
+  closeModal('widget-choice-modal');
+  if (window.AndroidBridge && typeof window.AndroidBridge.pinBatteryWidget === 'function') {
+    window.AndroidBridge.pinBatteryWidget();
+  } else {
+    showToast('Available in Lilo Garden Android APK!', 'grid-2x2');
+  }
+});
+
+safeOn('btnPinPomodoroWidget', 'click', () => {
+  closeModal('widget-choice-modal');
+  if (window.AndroidBridge && typeof window.AndroidBridge.pinPomodoroWidget === 'function') {
+    window.AndroidBridge.pinPomodoroWidget();
+  } else {
+    showToast('Available in Lilo Garden Android APK!', 'grid-2x2');
+  }
+});
+
+window.addEventListener('focus', () => {
+  if (window.AndroidBridge && typeof window.AndroidBridge.getWidgetBlooms === 'function') {
+    try {
+      const widgetBlooms = Number(window.AndroidBridge.getWidgetBlooms());
+      if (widgetBlooms > world.blooms) {
+        world.blooms = Math.min(24, widgetBlooms);
+        world.save();
+        showToast(`Campfire Focus bloomed ${world.blooms}/24 flowers!`, 'sparkle', '#38bdf8');
+      }
+    } catch (e) {}
   }
 });
 

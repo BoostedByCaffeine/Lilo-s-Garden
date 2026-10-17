@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bat_widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="154dp"
+        android:layout_gravity="center">
+
+        <TextClock
+            android:id="@+id/bat_clock_tick"
+            android:layout_width="1dp"
+            android:layout_height="1dp"
+            android:alpha="0" />
+
+        <!-- LAYER 1: 32-Frame Pixel Animation Loop @ 4 FPS (250ms) -->
+        <ViewFlipper
+            android:id="@+id/bat_flipper"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true"
+            android:autoStart="true"
+            android:flipInterval="250" />
+
+        <!-- LAYER 2: High-Res Solid Typography Overlay -->
+        <ImageView
+            android:id="@+id/bat_hud_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true"
+            android:scaleType="fitCenter" />
+
+        <!-- Interactive Touch Hotspots -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:padding="12dp"
+            android:weightSum="100">
+
+            <!-- Left 46%: Tap Cat Nook to Pet Cat & Refresh Battery -->
+            <FrameLayout
+                android:id="@+id/bat_btn_pet"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="46"
+                android:background="@android:color/transparent" />
+
+            <!-- Right 54%: Top Battery Gauge Opens App, Bottom Row Has Pet & Switch Buttons -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="54"
+                android:orientation="vertical"
+                android:weightSum="100">
+
+                <FrameLayout
+                    android:id="@+id/bat_open_app"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="68"
+                    android:background="@android:color/transparent" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="32"
+                    android:orientation="horizontal"
+                    android:weightSum="100">
+
+                    <FrameLayout
+                        android:id="@+id/bat_status_spacer"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="54"
+                        android:background="@android:color/transparent" />
+
+                    <FrameLayout
+                        android:id="@+id/bat_btn_boost"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="23"
+                        android:background="@android:color/transparent" />
+
+                    <FrameLayout
+                        android:id="@+id/bat_btn_switch_cat"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="23"
+                        android:background="@android:color/transparent" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </RelativeLayout>
+</FrameLayout>

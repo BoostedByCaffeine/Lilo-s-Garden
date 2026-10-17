@@ -60,6 +60,7 @@
       <symbol id="pi-fish" viewBox="0 0 24 24"><path d="M18 19h-6v-2h6v2ZM4 9h2v2H4v2h2v2H4v2H2V7h2v2Zm8 8h-2v-2h2v2Zm8 0h-2v-2h2v2Zm-10-2H8v-2h2v2Zm12 0h-2V9h2v6ZM8 13H6v-2h2v2Zm9-1h-2v-2h2v2Zm-7-1H8V9h2v2Zm2-2h-2V7h2v2Zm8 0h-2V7h2v2Zm-2-2h-6V5h6v2Z"/></symbol>
       <symbol id="pi-users" viewBox="0 0 24 24"><path d="M2 22H0v-4h2v4Zm14 0h-2v-4h2v4Zm8 0h-2v-4h2v4ZM4 18H2v-2h2v2Zm10 0h-2v-2h2v2Zm8 0h-2v-2h2v2Zm-10-2H4v-2h8v2Zm8 0h-4v-2h4v2Zm-9-4H5v-2h6v2Zm8 0h-4v-2h4v2ZM5 10H3V4h2v6Zm8 0h-2V4h2v6Zm8 0h-2V4h2v6ZM11 4H5V2h6v2Zm8 0h-4V2h4v2Z"/></symbol>
       <symbol id="pi-sparkle" viewBox="0 0 24 24"><path d="M13 23h-2v-4h2v4Zm-2-4H9v-4h2v4Zm4 0h-2v-4h2v4Zm-6-4H5v-2h4v2Zm10-2v2h-4v-2h4ZM5 13H1v-2h4v2Zm18 0h-4v-2h4v2ZM9 11H5V9h4v2Zm10 0h-4V9h4v2Zm-8-2H9V5h2v4Zm4 0h-2V5h2v4Zm-2-4h-2V1h2v4Z"/></symbol>
+      <symbol id="pi-coffee" viewBox="0 0 24 24"><path d="M2 19h16v2H2v-2Zm16-2H2V5h16v4h4v6h-4v2Zm0-6h2V7h-2v4Zm-2-4H4v8h12V7Z"/></symbol>
     </defs>
   </svg>
 
@@ -158,6 +159,13 @@
         <svg class="pixel-icon text-sky-200"><use href="#pi-target"/></svg>
       </span>
       <span id="cameraBtnText">Follow Lilo</span>
+    </button>
+
+    <button type="button" id="btnToggleScene"
+      class="stardew-btn rounded-full px-3.5 py-2.5 text-xs sm:text-sm font-bold flex items-center gap-1.5"
+      title="Step inside the Cozy Cottage or back out to the Garden">
+      <svg class="pixel-icon text-amber-900"><use href="#pi-coffee"/></svg>
+      <span id="sceneBtnText">Cottage</span>
     </button>
 
     <button type="button" id="btnOpenFriends"
@@ -560,6 +568,44 @@
             class="w-full stardew-btn-sky py-2.5 px-4 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer">
             <svg class="pixel-icon"><use href="#pi-cloud-sun"/></svg>
             <span>Add Window Peek &amp; Sky Widget</span>
+          </button>
+        </div>
+
+        <!-- Widget Option 4: Purr-cent Battery & Mood Widget (Option A) -->
+        <div class="p-3.5 rounded-lg border-2 border-[#5c3820] bg-[#dcfce7] flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-xs sm:text-sm text-[#3b1d0a] flex items-center gap-1.5">
+              <svg class="pixel-icon text-emerald-700"><use href="#pi-heart-solid"/></svg>
+              Purr-cent Battery &amp; Mood Widget
+            </span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-700 text-white">BATTERY + PET</span>
+          </div>
+          <p class="text-xs text-[#3b1d0a] leading-relaxed">
+            Carved wooden battery gauge where Lilo, Cheeto, or your companion cat has zoomies at 80–100%, grooms at 30–79%, naps below 30%, and warms by a campfire while charging!
+          </p>
+          <button type="button" id="btnPinBatteryWidget"
+            class="w-full stardew-btn-green py-2.5 px-4 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer">
+            <svg class="pixel-icon"><use href="#pi-sparkle"/></svg>
+            <span>Add Purr-cent Battery Widget</span>
+          </button>
+        </div>
+
+        <!-- Widget Option 5: Campfire Focus / Pomodoro Buddy Widget (Option C) -->
+        <div class="p-3.5 rounded-lg border-2 border-[#8f4d22] bg-[#ffedd5] flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-xs sm:text-sm text-[#3b1d0a] flex items-center gap-1.5">
+              <svg class="pixel-icon text-orange-700"><use href="#pi-coffee"/></svg>
+              Campfire Focus &amp; Pomodoro Widget
+            </span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-orange-700 text-white">25:00 TIMER</span>
+          </div>
+          <p class="text-xs text-[#3b1d0a] leading-relaxed">
+            25-minute study &amp; coding focus timer by the crackling campfire with Lilo and Cheeto. Completing a session grows <strong>+1 Forget-Me-Not Bloom</strong> in your sanctuary!
+          </p>
+          <button type="button" id="btnPinPomodoroWidget"
+            class="w-full stardew-btn py-2.5 px-4 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer">
+            <svg class="pixel-icon"><use href="#pi-leaf"/></svg>
+            <span>Add Campfire Focus Widget</span>
           </button>
         </div>
       </div>

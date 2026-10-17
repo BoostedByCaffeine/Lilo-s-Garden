@@ -2,7 +2,7 @@
 
 A single-file HTML5 Canvas, CSS3, and Vanilla JavaScript cozy virtual pet garden sandbox tribute inspired by a minimalist Stardew Valley aesthetic, honoring **Lilo the pure white cat** and **Cheeto the orange tabby**.
 
-Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-tier live local weather, client-side `localStorage` persistence, PWA offline installability, and **3 Authentic Android Home Screen Widgets**.
+Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-tier live local weather, client-side `localStorage` persistence, PWA offline installability, **Cozy Cottage Interior**, and **5 Authentic Android Home Screen Widgets**.
 
 ---
 
@@ -10,10 +10,10 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-t
 
 ### 1. Solid Pixel Typography & Authentic Stardew Styling
 - **Global Solid Pixel Font**:
-  - Imported solid pixel font (`Stardew_Valley.ttf` & `.otf`) applied uniformly across the web application and all 3 Android home screen widgets.
+  - Imported solid pixel font (`Stardew_Valley.ttf` & `.otf`) applied uniformly across the web application and all 5 Android home screen widgets.
   - Specially tuned typography sizes across the HUD, dialogue badges, and polaroid tribute frames for razor-sharp readability on all screen densities.
-- **PWA v6 Offline Cache**:
-  - Service worker precaching updated to `'lilos-garden-pwa-v6'` bundling all core assets and solid typography for full offline playability.
+- **PWA v7 Offline Cache**:
+  - Service worker precaching updated to `'lilos-garden-pwa-v7'` bundling all core assets, solid typography, and interior sprites (`interiors_demo.png` and `tiles and items.png`) for full offline playability.
 
 ---
 
@@ -51,7 +51,23 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-t
 
 ---
 
-### 4. Cozy Animated Bonfire & Camp Nook
+### 4. Cozy Cottage Interior Scene
+- **Seamless Indoor Sanctuary**:
+  - Tap the bottom dock's **Cottage** button (or click the top wooden gate/door) to step inside the warm, candlelit cottage interior.
+  - Rich honey-oak plank flooring (`#9c6234`), wainscoting paneling, and cream plaster walls.
+- **Brick Hearth Fireplace & Mantle Tribute**:
+  - Brick hearth with crackling fire flames (`campfireActive`) casting an animated flickering warmth glow across the room floor.
+  - Serves as the indoor memorial tribute mantle honoring Lilo and Cheeto.
+- **Weather-Reactive Cottage Window**:
+  - Windowpane reflects the phone's live exterior weather — bright sunny daylight, falling raindrops during showers, or deep starry night sky.
+- **Furnishing Showcase & Interactive Elements**:
+  - Showcases pixel interior decor cards (`assets/interior/interiors_demo.png` and `tiles and items.png`).
+  - Warm center braided rug (`LANDMARKS.rug`) and plush velvet cat lounge bed (`LANDMARKS.shelter`) where cats lounge, stretch, and loaf.
+  - Interactive wooden door: Tap or click at any time to step seamlessly back outside into the garden.
+
+---
+
+### 5. Cozy Animated Bonfire & Camp Nook
 - **Weather-Reactive Campfire**:
   - **Sunny & Fair Weather**: Smooth 6-frame active burning flames strip (`campfireActive`) with an animated radial flickering warmth glow (`rgba(251, 146, 60, ...)`).
   - **Rainy Weather**: Automatically switches to the 6-frame extinguished smoldering smoke strip (`campfireSmoke`).
@@ -59,7 +75,7 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-t
 
 ---
 
-### 5. Twin Polaroid Tribute Frame System
+### 6. Twin Polaroid Tribute Frame System
 - **Side-by-Side Cozy Polaroid Frames**:
   - **Lilo's Polaroid**: Tilted `-2.5°`, titled `"Lilo 💙"`, captioned `"Blue Eyes & Blue Collar"`.
   - **Cheeto's Polaroid**: Tilted `+2.5°`, titled `"Cheeto 💙💛"`, captioned `"Blue & Amber Eyes"`.
@@ -71,7 +87,7 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-t
 
 ---
 
-### 6. 3-Tier Live Weather & Covered Gazebo Shelter
+### 7. 3-Tier Live Weather & Covered Gazebo Shelter
 - **3-Tier Live Weather Integration (Fast GPS -> Cached Coords -> Keyless IP Geolocation)**:
   - **Tier 1 (High-Accuracy GPS)**: Fast network geolocation with cached hardware positions.
   - **Tier 2 (Cached Local Coordinates)**: Instant startup restore from persistent cache avoiding network delays.
@@ -90,13 +106,13 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-t
 
 ---
 
-### 7. 3 Android Home Screen Widgets & 2-Layer Compositor Engine
-All 3 Android widgets are powered by a **64-Frame @ 4 FPS (`250ms` per frame = 16-second seamless cycle)** animation engine with a **2-Layer Compositor Architecture**:
-- **Layer 1 (Underneath)**: A 64-frame pixel-art `ViewFlipper` loop running `RGB_565` bitmaps for high performance and minimal memory footprint.
-- **Layer 2 (On Top)**: A single high-res `ARGB_8888` `ImageView` HUD overlay with solid `Stardew_Valley.ttf` typography. Clock and minute ticks update **only** the HUD overlay via `partiallyUpdateAppWidget`, resulting in zero flicker and never interrupting the 64-frame animation loop.
+### 8. 5 Android Home Screen Widgets & 2-Layer Compositor Engine
+All widgets are powered by an animation engine with a **2-Layer Compositor Architecture**:
+- **Layer 1 (Underneath)**: A pixel-art `ViewFlipper` loop running `RGB_565` bitmaps for high performance and minimal memory footprint.
+- **Layer 2 (On Top)**: A single high-res `ARGB_8888` `ImageView` HUD overlay with solid `Stardew_Valley.ttf` typography. Clock and minute ticks update **only** the HUD overlay via `partiallyUpdateAppWidget`, resulting in zero flicker and never interrupting the animation loop.
 - **Background Weather Sync (`WeatherSyncHelper.kt`)**: Automatically synchronizes local weather every 15+ minutes in the background and refreshes all active widgets.
 
-#### The 3 Home Screen Widgets:
+#### The 5 Home Screen Widgets:
 1. **Window Widget (`LiloWindowWidgetProvider.kt`)**:
    - Carved wooden window frame looking out onto the garden with dynamic sky backdrops (Day, Sunset, Starry Night, Rain, Clouds).
    - **Peeking Cat in Bottom-Left Corner** (`cx = 42` at `2.0f` scale) with a 4-stage 16-second routine:
@@ -112,10 +128,22 @@ All 3 Android widgets are powered by a **64-Frame @ 4 FPS (`250ms` per frame = 1
 3. **Garden Sandbox Widget (`LiloWidgetProvider.kt`)**:
    - Miniature living garden sandbox on your home screen with animated walking cats, active campfire/smoke, birdbath ripples, swaying wildflowers, and fluttering butterflies/fireflies.
    - Bottom 4-Button Stardew RPG Hotbar: **Pet**, **Feed**, **Sky / Weather Override**, and **+Cat** to spawn companion friends directly from the launcher.
+4. **Purr-cent Battery & Mood Widget (`LiloBatteryWidgetProvider.kt`)**:
+   - Carved wooden Stardew battery gauge showing real-time device battery percentage and charging state.
+   - Battery-reactive cat mood states:
+     - *Zoomies! (80–100%)*: Energetic hopping animations with floating hearts.
+     - *Cozy (30–79%)*: Content loafing and grooming.
+     - *Sleepy (< 30%)*: Curled loaf napping with floating zzz's.
+     - *Charging (⚡ Plugged)*: Warming cozily beside a crackling animated campfire with golden sparkles.
+   - Interactive hotspots: Tap cat nook or boost button to pet cat; switch active cat between Lilo, Cheeto, and custom companions; tap gauge to launch app.
+5. **Campfire Focus & Pomodoro Buddy Widget (`LiloPomodoroWidgetProvider.kt`)**:
+   - 25-minute study & coding focus timer by the crackling campfire with Lilo and Cheeto cozily resting.
+   - Play/pause toggle and reset buttons with exact countdown ticks managed via `AlarmManager`.
+   - **Forget-Me-Not Bloom Rewards**: Completing a 25-minute focus session awards **+1 Forget-Me-Not Bloom** (up to 24) synchronized directly to the main garden sanctuary app upon opening/focusing.
 
 ---
 
-### 8. Dynamic Camera, Zoom & Follow System
+### 9. Dynamic Camera, Zoom & Follow System
 - **Adaptive Viewport**:
   - Seamlessly scales between desktop monitors and smartphone screens (`100vw x 100dvh`) with zero letterboxing.
 - **Zoom Controls**:
@@ -126,7 +154,7 @@ All 3 Android widgets are powered by a **64-Frame @ 4 FPS (`250ms` per frame = 1
 
 ---
 
-### 9. Synthesized Audio Engine (`CozyAudio`)
+### 10. Synthesized Audio Engine (`CozyAudio`)
 - Web Audio API synthesizer with zero external sound files:
   - Deep modulated cat purr rumbling using carrier + LFO oscillators.
   - Calming ambient rain noise using filtered pink noise with smooth fade-in/fade-out.
@@ -140,6 +168,7 @@ All 3 Android widgets are powered by a **64-Frame @ 4 FPS (`250ms` per frame = 1
 | :--- | :--- | :---: |
 | **Pet Cat** | Tap or click any cat | <kbd>P</kbd> |
 | **Refill Food Bowl** | Tap the ceramic bowl or click **"Fill Bowl"** | <kbd>F</kbd> |
+| **Toggle Cottage / Garden** | Tap **"Cottage"** or tap cottage door | — |
 | **Twin Polaroid Tribute** | Tap the Memorial Stone | — |
 | **Guide Cat / Call Over** | Tap or click any open patch of grass | — |
 | **Cycle Weather Mode** | Tap the Weather Badge | <kbd>W</kbd> |
