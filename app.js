@@ -27,7 +27,7 @@ const LANDMARKS = {
   shrine: { x: 340, y: 240, radius: 28, label: "Memorial Stone for Lilo & Cheeto" },
   bowl: { x: 480, y: 374, radius: 22, label: "Ceramic Cat Bowl" },
   shelter: { x: 620, y: 240, radius: 30, label: "Covered Gazebo Shelter" },
-  porch: { x: 676, y: 378, radius: 26, label: "Covered Campfire Porch" },
+  porch: { x: 682, y: 332, radius: 26, label: "Covered Campfire Porch" },
   pond: { x: 330, y: 380, radius: 24, label: "Birdbath Pond" },
   rug: { x: 550, y: 340, radius: 24, label: "Sunny Nap Rug" }
 };
@@ -795,7 +795,7 @@ const world = {
     const ct = this.caretaker;
     ct.state = 'SEEK_TABLE_MEAL';
     ct.targetX = 364;
-    ct.targetY = 290; // Front-facing chair at top of dining table
+    ct.targetY = 283; // Seated on front-facing chair with full torso above table top edge (y=275)
     ct.labelAlpha = 1.8;
     showToast(`${ct.name} is sitting down at the table to eat!`, 'fish', '#fbbf24');
   },
@@ -1411,7 +1411,7 @@ const world = {
         const dist = Math.hypot(dx, dy);
         if (dist < 3) {
           ct.x = 364;
-          ct.y = 290;
+          ct.y = 283;
           ct.facing = 1;
           ct.state = 'EATING_TABLE';
           ct.stateTimer = 8.0;
@@ -1493,6 +1493,7 @@ const world = {
             ct.targetY = pick.y;
           } else {
             const spots = [
+              { x: 684,               y: 382 },               // Sitting on the Campfire Log
               { x: LANDMARKS.porch.x, y: LANDMARKS.porch.y }, // Covered Campfire Porch
               { x: 545,               y: 340 },               // Picnic Rug
               { x: 475,               y: 285 }                // Garden Path
@@ -1871,7 +1872,6 @@ function getLanternGlowSprite() {
 // 8-BIT CUSTOMIZABLE CARETAKER RENDERER (Scaled at 1.35x to match furniture & cats)
 function drawPixelCaretaker(c, caretaker, time) {
   if (!caretaker) return;
-  // Hide Caretaker in the outdoor Garden while sleeping in the Cottage bed!
   if (world.scene !== 'COTTAGE' && caretaker.state === 'SLEEPING_BED') return;
 
   const x = Math.round(caretaker.x);
@@ -1894,7 +1894,6 @@ function drawPixelCaretaker(c, caretaker, time) {
     c.fillRect(Math.round(rx), Math.round(ry), rw, rh);
   };
 
-  // POSE A: Tucked into the Cottage Bed (SLEEPING_BED) or Napping on the Couch (NAPPING_COUCH)
   if (isSleepingBed || isNappingCouch) {
     const breath = Math.sin(time * 2.2) > 0 ? 1 : 0;
     c.save();
@@ -1902,27 +1901,23 @@ function drawPixelCaretaker(c, caretaker, time) {
     c.scale(1.35, 1.35);
 
     if (isSleepingBed) {
-      // Head resting on bed pillow + warm yellow quilt blanket pulled up over torso
       px(-5, -14, 10, 8, skin);
       px(-5, -16, 10, 3, hair);
       px(-6, -15, 2, 4, hair);
       px(4, -15, 2, 4, hair);
-      // Closed sleeping eyes
       px(-3, -10, 2, 1, '#1e293b');
       px(1, -10, 2, 1, '#1e293b');
-      // Blanket over body
       px(-7, -7 + breath, 14, 9, '#eab308');
       px(-7, -7 + breath, 14, 2, '#fef08a');
     } else {
-      // Curled lounging nap on the right-wall cream sofa
-      px(-5, -6 + breath, 10, 6, outfit);
+      px(-5, -7 + breath, 10, 7, outfit);
       px(-6, -2, 8, 3, pants);
-      px(-5, -14 + breath, 10, 8, skin);
-      px(-5, -16 + breath, 10, 3, hair);
-      px(-3, -10 + breath, 2, 1, '#1e293b');
-      px(1, -10 + breath, 2, 1, '#1e293b');
-      px(-4, -9 + breath, 1, 1, '#fda4af');
-      px(3, -9 + breath, 1, 1, '#fda4af');
+      px(-5, -15 + breath, 10, 8, skin);
+      px(-5, -17 + breath, 10, 3, hair);
+      px(-3, -11 + breath, 2, 1, '#1e293b');
+      px(1, -11 + breath, 2, 1, '#1e293b');
+      px(-4, -10 + breath, 1, 1, '#fda4af');
+      px(3, -10 + breath, 1, 1, '#fda4af');
     }
     c.restore();
     return;
@@ -1943,61 +1938,61 @@ function drawPixelCaretaker(c, caretaker, time) {
     c.scale(-1, 1);
   }
 
-  // 1. Legs / Boots
+  // 1. Taller Legs & Boots (y = -6..0)
   if (isSitting) {
-    px(-5, -4, 10, 3, pants);
+    px(-5, -5, 10, 4, pants);
     px(-6, -2, 4, 2, '#3b1d0a');
     px(2, -2, 4, 2, '#3b1d0a');
   } else if (isWalking) {
     const lA = walkStep === 1 ? -1 : 0;
     const lB = walkStep === 3 ? -1 : 0;
-    px(-4, -5 + lA, 3, 4, pants);
-    px(1, -5 + lB, 3, 4, pants);
+    px(-4, -6 + lA, 3, 5, pants);
+    px(1, -6 + lB, 3, 5, pants);
     px(-4, -2 + lA, 3, 2, '#3b1d0a');
     px(1, -2 + lB, 3, 2, '#3b1d0a');
   } else {
-    px(-4, -5, 3, 4, pants);
-    px(1, -5, 3, 4, pants);
+    px(-4, -6, 3, 5, pants);
+    px(1, -6, 3, 5, pants);
     px(-4, -2, 3, 2, '#3b1d0a');
     px(1, -2, 3, 2, '#3b1d0a');
   }
 
-  // 2. Torso & Arms
+  // 2. Taller Torso / Hoodie & Arms (ty = -15..-6, 9px tall)
   const eatDip = isEatingTable && Math.floor(time * 6) % 2 === 0 ? 1 : 0;
-  const ty = -12 + bobY + eatDip;
-  px(-5, ty, 10, 7, outfit);
-  px(-6, ty + 1, 2, 5, outfit);
-  px(4, ty + 1, 2, 5, outfit);
-  px(-6, ty + 5, 2, 2, skin);
-  px(4, ty + 5, 2, 2, skin);
+  const ty = -15 + bobY + eatDip;
+  px(-5, ty, 10, 9, outfit);
+  px(-6, ty + 1, 2, 6, outfit);
+  px(4, ty + 1, 2, 6, outfit);
+  px(-6, ty + 6, 2, 2, skin);
+  px(4, ty + 6, 2, 2, skin);
 
   // Activity Props
   if (isEatingTable) {
-    // Lifting fork/spoon with warm bite to mouth
-    const handY = eatDip ? ty + 1 : ty + 4;
+    // Animated hand + fork bringing food from plate to mouth
+    const handY = eatDip ? ty + 1 : ty + 5;
     px(2, handY, 2, 2, skin);
-    px(1, handY, 2, 1, '#cbd5e1');
+    px(0, handY, 3, 1, '#cbd5e1');
   } else if (!isWalking && !usesUmbrella) {
     if (act === 'READ') {
-      px(-4, ty + 3, 8, 4, '#991b1b');
-      px(-3, ty + 3, 6, 3, '#fef3c7');
-      px(0, ty + 3, 1, 3, '#d97706');
+      px(-4, ty + 4, 8, 4, '#991b1b');
+      px(-3, ty + 4, 6, 3, '#fef3c7');
+      px(0, ty + 4, 1, 3, '#d97706');
     } else if (act === 'COFFEE') {
       const sip = Math.sin(time * 1.8) > 0.65 ? -2 : 0;
-      px(3, ty + 2 + sip, 4, 4, '#fffbeb');
-      px(4, ty + 3 + sip, 2, 2, '#78350f');
+      px(3, ty + 3 + sip, 4, 4, '#fffbeb');
+      px(4, ty + 4 + sip, 2, 2, '#78350f');
       if (Math.floor(time * 3) % 2 === 0) {
-        px(4, ty - 1 + sip, 1, 2, 'rgba(255,255,255,0.75)');
+        px(4, ty + sip, 1, 2, 'rgba(255,255,255,0.75)');
       }
     } else if (act === 'CODE') {
-      px(-5, ty + 2, 10, 5, '#475569');
-      px(-4, ty + 3, 8, 3, '#38bdf8');
-      px(-1, ty + 4, 2, 1, '#ffffff');
+      px(-5, ty + 3, 10, 5, '#475569');
+      px(-4, ty + 4, 8, 3, '#38bdf8');
+      px(-1, ty + 5, 2, 1, '#ffffff');
     }
   }
 
-  // 3. Head & Face
-  const hy = -20 + bobY + eatDip;
+  // 3. Head & Face (hy = -23..-15)
+  const hy = -23 + bobY + eatDip;
   px(-5, hy, 10, 8, skin);
   px(-5, hy + 7, 10, 1, skinShade);
 
@@ -2048,11 +2043,11 @@ function drawPixelCaretaker(c, caretaker, time) {
     px(-5, hy - 3, 10, 1, '#b91c1c');
   }
 
-  // 6. Rain Umbrella Overhead (When outdoors in RAIN and not under the porch roof!)
+  // 6. Rain Umbrella Overhead
   if (usesUmbrella) {
-    px(4, hy - 7, 1, 15, '#cbd5e1'); // Umbrella shaft
-    px(3, hy + 7, 2, 2, '#78350f');  // Curved handle
-    px(-5, hy - 9, 18, 3, '#e11d48'); // Red canopy
+    px(4, hy - 7, 1, 16, '#cbd5e1');
+    px(3, hy + 8, 2, 2, '#78350f');
+    px(-5, hy - 9, 18, 3, '#e11d48');
     px(-3, hy - 11, 14, 2, '#f43f5e');
     px(1, hy - 12, 6, 1, '#fda4af');
   }
@@ -2067,9 +2062,9 @@ function drawPixelCaretaker(c, caretaker, time) {
     const labelStr = caretaker.name || 'Caretaker';
     const textW = c.measureText(labelStr).width + 8;
     c.fillStyle = 'rgba(24, 16, 10, 0.82)';
-    c.fillRect(Math.round(x - textW / 2), Math.round(y - 36), Math.round(textW), 9);
+    c.fillRect(Math.round(x - textW / 2), Math.round(y - 39), Math.round(textW), 9);
     c.fillStyle = '#fde047';
-    c.fillText(labelStr, Math.round(x), Math.round(y - 29));
+    c.fillText(labelStr, Math.round(x), Math.round(y - 32));
     c.restore();
   }
 }
@@ -2294,6 +2289,7 @@ const GARDEN_BUSHES = [
     const gy = Math.floor(180 + rand() * 280);
     if (Math.hypot(gx - LANDMARKS.pond.x, gy - LANDMARKS.pond.y) < 32) continue;
     if (Math.hypot(gx - LANDMARKS.shelter.x, gy - LANDMARKS.shelter.y) < 40) continue;
+    if (Math.hypot(gx - LANDMARKS.porch.x, gy - LANDMARKS.porch.y) < 34) continue;
     if (Math.hypot(gx - 640, gy - 380) < 35) continue;
     if (Math.hypot(gx - 250, gy - 235) < 36) continue; // Keep clear of the 1 garden tree
     if (Math.hypot(gx - 200, gy - 280) < 22) continue;
@@ -2314,6 +2310,7 @@ const GARDEN_BUSHES = [
     const fy = Math.floor(185 + rand() * 270);
     if (Math.hypot(fx - LANDMARKS.pond.x, fy - LANDMARKS.pond.y) < 34) continue;
     if (Math.hypot(fx - LANDMARKS.shelter.x, fy - LANDMARKS.shelter.y) < 42) continue;
+    if (Math.hypot(fx - LANDMARKS.porch.x, fy - LANDMARKS.porch.y) < 36) continue;
     if (Math.hypot(fx - LANDMARKS.shrine.x, fy - LANDMARKS.shrine.y) < 36) continue;
     if (Math.hypot(fx - 640, fy - 380) < 36) continue;
     if (Math.hypot(fx - 250, fy - 235) < 38) continue; // Keep clear of the 1 garden tree
@@ -2442,6 +2439,7 @@ function ensureGardenStaticCache() {
   }
 
   drawLoadedSprite(c, 'lamp1', 304, 210, 20, 35);
+  drawLoadedSprite(c, 'log1', 668, 376, 34, 21);
   drawShelterDeck(c);
   drawPorchDeck(c);
 
@@ -2572,7 +2570,16 @@ function drawPorchDeck(c) {
   for (let y = py - 7; y < py + 10; y += 5) {
     c.fillRect(px - 21, y, 42, 1);
   }
-  drawLoadedSprite(c, 'log1', px - 16, py - 8, 32, 19);
+  // Built-in wooden porch bench & warm woven mat (leaves the campfire log at 668,376 untouched!)
+  c.fillStyle = '#3b1d0a';
+  c.fillRect(px - 14, py - 8, 28, 8);
+  c.fillStyle = '#a86e42';
+  c.fillRect(px - 13, py - 9, 26, 7);
+  c.fillStyle = '#b45309';
+  c.fillRect(px - 10, py + 1, 20, 6);
+  c.fillStyle = '#fde047';
+  c.fillRect(px - 8, py + 2, 16, 4);
+
   c.fillStyle = '#532e16';
   c.fillRect(px - 20, py - 26, 3, 18);
   c.fillRect(px + 17, py - 26, 3, 18);
@@ -2881,25 +2888,24 @@ function getCottageFurnitureRenderables(ctx, time) {
       draw: () => drawIndividualFurniture(ctx, 'intChairTop', 598, 252, 1.25, true)
     },
     // Left Dining Table Set:
-    // 1. Front-facing chair at top of dining table (y=282) -> Caretaker (y=290) overlays this chair!
+    // 1. Front-facing chair at top of dining table (depth-sort y=278) -> Caretaker (y=283) overlays this chair!
     {
-      y: 282,
-      draw: () => drawIndividualFurniture(ctx, 'intChairTop', 364, 288, 1.35, true)
+      y: 278,
+      draw: () => drawIndividualFurniture(ctx, 'intChairTop', 364, 282, 1.35, true)
     },
-    // 2. Dining Table (y=326) -> Overlays Caretaker's lower body while sitting at y=290!
+    // 2. Dining Table (y=326) -> Overlays only the Caretaker's lower legs below y=275, leaving full torso visible!
     {
       y: 326,
       draw: () => {
         drawIndividualFurniture(ctx, sideChairKey, 392, 316, 1.35, true);
         drawIndividualFurniture(ctx, 'intDiningTable', 364, 326, 1.35, true);
-        // Warm dinner plate when Caretaker is eating at the table!
         if (world.caretaker && world.caretaker.state === 'EATING_TABLE') {
           ctx.fillStyle = '#f8fafc';
-          ctx.fillRect(359, 286, 10, 6);
+          ctx.fillRect(359, 280, 10, 6);
           ctx.fillStyle = '#ea580c';
-          ctx.fillRect(361, 287, 6, 4);
+          ctx.fillRect(361, 281, 6, 4);
           ctx.fillStyle = '#fde047';
-          ctx.fillRect(362, 288, 3, 2);
+          ctx.fillRect(362, 282, 3, 2);
         }
         drawIndividualFurniture(ctx, 'intChairBottom', 364, 340, 1.35, true);
       }
@@ -2986,7 +2992,7 @@ function drawGardenScene(time = 0) {
         draw: () => drawShelterRoofOverhead(ctx, time)
       },
       {
-        y: 392,
+        y: LANDMARKS.porch.y + 14,
         draw: () => drawPorchRoofOverhead(ctx, time)
       },
       {

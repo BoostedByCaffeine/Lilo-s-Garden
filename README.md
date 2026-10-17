@@ -12,8 +12,8 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-t
 - **Global Solid Pixel Font**:
   - Imported solid pixel font (`Stardew_Valley.ttf` & `.otf`) applied uniformly across the web application and all 5 Android home screen widgets.
   - Specially tuned typography sizes across the HUD, dialogue badges, and polaroid tribute frames for razor-sharp readability on all screen densities.
-- **PWA v11 Offline Cache**:
-  - Service worker precaching updated to `'lilos-garden-pwa-v11'` bundling all core assets, solid typography, floating dining table Eat button, and individual interior furniture sprites (`assets/interior/Individual/*.png`) for instant offline playability.
+- **PWA v12 Offline Cache**:
+  - Service worker precaching updated to `'lilos-garden-pwa-v12'` bundling all core assets, solid typography, floating dining table Eat button, and individual interior furniture sprites (`assets/interior/Individual/*.png`) for instant offline playability.
 - **60 FPS Offscreen Canvas Caching**:
   - Pre-renders static scenes (`ensureGardenStaticCache`, `ensureCottageStaticCache`) and dynamic lighting glow sprites (`getFireGlowSprite`, `getLanternGlowSprite`) into offscreen canvases, minimizing draw calls and guaranteeing locked 60 FPS performance on mobile devices.
   - Dirty-checks DOM ticker text updates to completely prevent layout thrashing and reflows.
@@ -22,11 +22,11 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-t
 
 ### 2. 8-Bit Customizable Caretaker Character
 - **Living Pixel Caretaker**:
-  - A customizable 8-bit character (rendered at proportional `1.35x` scale) living alongside Lilo and Cheeto in both the Garden and Cottage.
+  - A customizable 8-bit character rendered with taller proportions (6px legs, 9px torso) living alongside Lilo and Cheeto in both the Garden and Cottage.
   - Interactive cuddles: Tapping the Caretaker in the scene calls the cats over for cuddles and purrs.
   - **Bed Sleep & Morning Wake**: Tapping the double bed tucks the Caretaker into bed (`SLEEPING_BED`) with warm yellow quilt and floating sleep Z's. Hidden when viewing the outdoor Garden, and automatically wakes up in the morning (at daybreak or when the clock reaches 6 AM).
   - **Couch Nap**: Tapping the right-wall sofa curls the Caretaker up for a cozy couch nap (`NAPPING_COUCH`).
-  - **Dining Table Meal**: Tapping the dining table reveals a floating **"Eat"** button; clicking it seats the Caretaker at the table's front chair with a warm plate of food and eating animation.
+  - **Dining Table Meal**: Tapping the dining table reveals a floating **"Eat"** button; clicking it seats the Caretaker at the table's front chair (`y = 283`) with his full torso, arms, and head visible above the table edge with a warm plate of food and animated eating bites.
   - **Rain Reaction & Umbrella**: In rainy weather outdoors, the Caretaker holds a pixel umbrella while walking and seeks refuge under the covered campfire mini-porch roof.
   - **Study Desk Sitting**: Caretaker sits directly on the front-facing chair (`intChairTop`) when reading or coding at the study desk.
   - Cozy animated activities:
@@ -103,12 +103,13 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-t
 
 ### 6. Cozy Animated Bonfire, Covered Campfire Porch & Camp Nook
 - **Covered Campfire Porch**:
-  - A cozy hand-carved wooden mini-porch deck and overhead cedar roof sheltering the campfire log (`LANDMARKS.porch`).
+  - A cozy hand-carved wooden mini-porch deck and overhead cedar roof repositioned to `(x: 682, y: 332)` directly above the campfire (`LANDMARKS.porch`).
+  - Features a built-in wooden bench and warm woven mat, keeping the separate fallen camp log at `(668, 376)` completely untouched.
   - In rainy weather, the Caretaker shelters under the porch roof while sipping coffee.
 - **Weather-Reactive Campfire**:
   - **Sunny & Fair Weather**: Smooth 6-frame active burning flames strip (`campfireActive`) with an animated radial flickering warmth glow (`rgba(251, 146, 60, ...)`).
   - **Rainy Weather**: Automatically switches to the 6-frame extinguished smoldering smoke strip (`campfireSmoke`).
-- **Fallen Camp Log**: Hand-carved wooden seating log (`log1`) nestled right beside the fire pit under the porch roof.
+- **Fallen Camp Log**: Hand-carved wooden seating log (`log1`) nestled right beside the fire pit at `(668, 376)` for cozy campfire sitting.
 
 ---
 
