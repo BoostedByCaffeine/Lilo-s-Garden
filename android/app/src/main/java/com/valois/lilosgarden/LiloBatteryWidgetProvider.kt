@@ -79,7 +79,7 @@ class LiloBatteryWidgetProvider : AppWidgetProvider() {
     companion object {
         const val ACTION_BAT_PET = "com.valois.lilosgarden.ACTION_BAT_PET"
         const val ACTION_BAT_SWITCH_CAT = "com.valois.lilosgarden.ACTION_BAT_SWITCH_CAT"
-        private const val TOTAL_FRAMES = 32
+        private const val TOTAL_FRAMES = 12
 
         data class CatSpec(
             val id: String,
@@ -164,17 +164,16 @@ class LiloBatteryWidgetProvider : AppWidgetProvider() {
             }
         }
 
-        private fun loadPixelTypeface(context: Context): Typeface {
-            try {
-                return Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew_Valley.ttf")
-            } catch (_: Exception) {}
-            try {
-                return Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew_Valley.otf")
-            } catch (_: Exception) {}
-            try {
-                ResourcesCompat.getFont(context, R.font.press_start_2p)?.let { return it }
-            } catch (_: Exception) {}
-            return Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+        fun loadPixelTypeface(context: Context): Typeface {
+            return try {
+                Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew_Valley.ttf")
+            } catch (e1: Exception) {
+                try {
+                    ResourcesCompat.getFont(context, R.font.press_start_2p) ?: Typeface.MONOSPACE
+                } catch (e2: Exception) {
+                    Typeface.MONOSPACE
+                }
+            }
         }
 
         fun updateBatteryWidget(
@@ -251,14 +250,9 @@ class LiloBatteryWidgetProvider : AppWidgetProvider() {
 
                 views.removeAllViews(R.id.bat_flipper)
                 for (f in 0 until TOTAL_FRAMES) {
-                    val raw = drawBatteryHudPixelPass(
+                    val frameBmp = drawBatteryHudPixelPass(
                         f, cat, bat, isPetBoost, grassTileBmp, campfireBmp, bushBmp
                     )
-                    val scaled = Bitmap.createScaledBitmap(raw, 286, 146, false)
-                    raw.recycle()
-                    val frameBmp = scaled.copy(Bitmap.Config.RGB_565, false) ?: scaled
-                    if (frameBmp != scaled) scaled.recycle()
-
                     val frameViews = RemoteViews(context.packageName, R.layout.widget_flipper_frame)
                     frameViews.setImageViewBitmap(R.id.frame_img, frameBmp)
                     views.addView(R.id.bat_flipper, frameViews)
@@ -322,7 +316,7 @@ class LiloBatteryWidgetProvider : AppWidgetProvider() {
         ): Bitmap {
             val w = 220
             val h = 112
-            val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+            val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.RGB_565)
             val c = Canvas(bmp)
             val p = Paint(0).apply {
                 isAntiAlias = false

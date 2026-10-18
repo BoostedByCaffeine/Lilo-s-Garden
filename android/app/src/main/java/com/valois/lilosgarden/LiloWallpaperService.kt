@@ -579,22 +579,135 @@ class LiloWallpaperService : WallpaperService() {
             c.save()
             c.translate((virtWidth / 2f) - camX.roundToInt(), (virtHeight / 2f) - camY.roundToInt())
 
-            // 1. Dynamic Sky Horizon at Very Top (y = -200..135)
+            // 1. Dynamic Sky Overhaul (y = -200..120 across full garden width)
             val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-            val isNightSky = weather == "NIGHT" || hour < 6 || hour >= 19
-            val isSunsetSky = !isNightSky && hour in 17..18
-            val skyHex = when {
-                weather == "RAIN" -> "#1e293b"
-                isNightSky -> "#0f172a"
-                isSunsetSky -> "#9a3412"
-                else -> "#38bdf8"
+            val isRain = weather == "RAIN"
+            val isSunrise = !isRain && hour in 5..6
+            val isSunset = !isRain && hour in 17..18
+            val isNight = !isRain && (weather == "NIGHT" || hour < 5 || hour >= 19)
+            val isDay = !isRain && !isSunrise && !isSunset && !isNight
+
+            val skyBands = when {
+                isRain -> arrayOf("#0f172a", "#1e293b", "#334155", "#475569", "#64748b")
+                isSunrise -> arrayOf("#4a1d4a", "#9d2e43", "#db603c", "#f97316", "#fde047")
+                isSunset -> arrayOf("#2e1035", "#581c3f", "#9a3412", "#f97316", "#fde047")
+                isNight -> arrayOf("#060913", "#0b1120", "#0f172a", "#1e1b4b", "#312e81")
+                else -> arrayOf("#0284c7", "#0ea5e9", "#38bdf8", "#7dd3fc", "#bae6fd")
             }
-            px(0, -200, 960, 340, skyHex)
-            if (isNightSky && weather != "RAIN") {
-                val starCol = if (((time * 2f).toInt() % 2) == 0) "#fde047" else "#ffffff"
-                for (sx in 340..620 step 38) {
-                    px(sx, 40 + (sx % 50), 2, 2, starCol)
+            val bandHeight = 64
+            for (i in 0 until 5) {
+                px(0, -200 + i * bandHeight, 960, bandHeight, skyBands[i])
+            }
+
+            // Celestial Bodies
+            if (isDay) {
+                // Bright Day Sun with Pulsing Outer Glow Rays in Upper-Right Sky
+                val sunX = 550
+                val sunY = -120
+                val rayPulse = (sin(time * 2f) * 2f).roundToInt()
+                // Pulsing cross rays
+                px(sunX - 16 - rayPulse, sunY + 6, 6 + rayPulse, 4, "#fef08a", 130)
+                px(sunX + 26, sunY + 6, 6 + rayPulse, 4, "#fef08a", 130)
+                px(sunX + 6, sunY - 16 - rayPulse, 4, 6 + rayPulse, "#fef08a", 130)
+                px(sunX + 6, sunY + 26, 4, 6 + rayPulse, "#fef08a", 130)
+                // Diagonal rays
+                px(sunX - 10, sunY - 10, 5, 5, "#fde047", 100)
+                px(sunX + 21, sunY - 10, 5, 5, "#fde047", 100)
+                px(sunX - 10, sunY + 21, 5, 5, "#fde047", 100)
+                px(sunX + 21, sunY + 21, 5, 5, "#fde047", 100)
+                // Corona and core
+                px(sunX - 4, sunY - 4, 24, 24, "#fde047", 180)
+                px(sunX, sunY, 16, 16, "#ffffff")
+                px(sunX + 2, sunY + 2, 12, 12, "#fffbeb")
+            } else if (isSunrise) {
+                // Rising Golden Sun near horizon
+                val riseX = 510
+                val riseY = 65
+                px(riseX - 14, riseY - 14, 52, 44, "#ea580c", 75)
+                px(riseX - 8, riseY - 8, 40, 36, "#f59e0b", 140)
+                px(riseX, riseY, 24, 24, "#fef08a")
+                px(riseX + 4, riseY + 4, 16, 16, "#fffbeb")
+            } else if (isSunset) {
+                // Large Glowing Crimson-Gold Setting Sun sinking behind fence
+                val sunsetX = 470
+                val sunsetY = 60
+                px(sunsetX - 16, sunsetY - 16, 56, 46, "#ea580c", 80)
+                px(sunsetX - 8, sunsetY - 8, 40, 38, "#f97316", 150)
+                px(sunsetX, sunsetY, 24, 24, "#fbbf24")
+                px(sunsetX + 4, sunsetY + 4, 16, 16, "#fef08a")
+            } else if (isNight) {
+                // Glowing Pixel Crescent Moon
+                val moonX = 420
+                val moonY = -110
+                px(moonX - 6, moonY - 6, 28, 28, "#bae6fd", 45)
+                // Moon silver body
+                px(moonX + 3, moonY, 10, 2, "#e0f2fe")
+                px(moonX + 1, moonY + 2, 14, 2, "#f0f9ff")
+                px(moonX, moonY + 4, 16, 8, "#ffffff")
+                px(moonX + 1, moonY + 12, 14, 2, "#f0f9ff")
+                px(moonX + 3, moonY + 14, 10, 2, "#e0f2fe")
+                // Crescent inner dark cutout
+                val cutoutCol = "#0b1120"
+                px(moonX + 6, moonY + 2, 10, 2, cutoutCol)
+                px(moonX + 5, moonY + 4, 12, 8, cutoutCol)
+                px(moonX + 6, moonY + 12, 10, 2, cutoutCol)
+
+                // 28 Twinkling Pixel Stars
+                val nightStars = arrayOf(
+                    Triple(352, -160, 0), Triple(388, -145, 1), Triple(412, -170, 2), Triple(445, -150, 3),
+                    Triple(480, -175, 4), Triple(515, -140, 5), Triple(550, -165, 0), Triple(585, -152, 1),
+                    Triple(610, -172, 2), Triple(360, -110, 3), Triple(395, -95, 4),  Triple(470, -90, 5),
+                    Triple(530, -105, 0), Triple(575, -90, 1),  Triple(605, -115, 2), Triple(350, -60, 3),
+                    Triple(385, -45, 4),  Triple(430, -55, 5),  Triple(490, -40, 0),  Triple(535, -50, 1),
+                    Triple(565, -35, 2),  Triple(615, -60, 3),  Triple(370, -10, 4),  Triple(420, 15, 5),
+                    Triple(465, 5, 0),    Triple(510, 20, 1),   Triple(555, -5, 2),   Triple(595, 25, 3)
+                )
+                for ((sx, sy, phase) in nightStars) {
+                    val twinkle = (sin(time * 3f + phase.toFloat() * 1.3f) > 0.1f)
+                    val starCol = if (twinkle) "#fef08a" else "#94a3b8"
+                    val size = if (phase % 2 == 0 && twinkle) 2 else 1
+                    px(sx, sy, size, size, starCol, if (twinkle) 255 else 160)
                 }
+            }
+
+            // 4 Fluffy Pixel-Art Clouds Drifting Smoothly
+            fun drawPixelCloud(cx: Int, cy: Int, cw: Int, mainCol: String, shadeCol: String, hiCol: String, alpha: Int = 255) {
+                px(cx + 8, cy - 5, cw - 16, 5, hiCol, alpha)
+                px(cx, cy, cw, 10, mainCol, alpha)
+                px(cx + 2, cy + 8, cw - 4, 3, shadeCol, alpha)
+                px(cx + 4, cy - 2, cw - 10, 3, hiCol, alpha)
+            }
+
+            val cMain: String
+            val cShade: String
+            val cHi: String
+            val cAlpha: Int
+            when {
+                isRain -> {
+                    cMain = "#334155"; cShade = "#1e293b"; cHi = "#475569"; cAlpha = 230
+                }
+                isSunset -> {
+                    cMain = "#fed7aa"; cShade = "#fb923c"; cHi = "#fef08a"; cAlpha = 240
+                }
+                isSunrise -> {
+                    cMain = "#fed7aa"; cShade = "#f472b6"; cHi = "#fffbeb"; cAlpha = 240
+                }
+                isNight -> {
+                    cMain = "#1e293b"; cShade = "#0f172a"; cHi = "#334155"; cAlpha = 140
+                }
+                else -> {
+                    cMain = "#f8fafc"; cShade = "#e2e8f0"; cHi = "#ffffff"; cAlpha = 250
+                }
+            }
+
+            val baseCloudX = arrayOf(340f, 490f, 310f, 560f)
+            val cloudY = arrayOf(-140, -85, -30, 20)
+            val cloudSpeed = arrayOf(3.5f, 5.0f, 2.5f, 4.2f)
+            val cloudW = arrayOf(46, 58, 38, 50)
+            val span = 420f
+            for (ci in 0 until 4) {
+                val cxVal = ((baseCloudX[ci] + time * cloudSpeed[ci] - 260f) % span + span) % span + 260f - 40f
+                drawPixelCloud(cxVal.roundToInt(), cloudY[ci], cloudW[ci], cMain, cShade, cHi, cAlpha)
             }
 
             // 2. Full-Viewport Seamless Tiled Garden Lawn using FieldsTile_38.png (Covers All Phone Aspect Ratios)

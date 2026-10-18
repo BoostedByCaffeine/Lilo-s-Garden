@@ -7,4 +7,6 @@
     <string name="pomodoro_widget_name">Lilo\'s Campfire Focus &amp; Pomodoro Widget</string>
     <string name="wallpaper_name">Lilo\'s Garden Live Wallpaper</string>
     <string name="wallpaper_description">Interactive cozy pixel sanctuary with Lilo and Cheeto wandering under open sky.</string>
+    <string name="notes_widget_name">Lilo\'s Cozy Tasks &amp; Notes Widget</string>
+    <string name="music_widget_name">Lilo\'s Vinyl &amp; Spotify Widget</string>
 </resources>

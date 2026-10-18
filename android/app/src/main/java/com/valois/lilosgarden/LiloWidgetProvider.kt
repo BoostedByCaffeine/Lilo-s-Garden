@@ -116,7 +116,7 @@ class LiloWidgetProvider : AppWidgetProvider() {
         const val ACTION_ADD_CAT = "com.valois.lilosgarden.ACTION_WIDGET_ADD_CAT"
         const val ACTION_WIDGET_TICK = "com.valois.lilosgarden.ACTION_WIDGET_TICK"
 
-        private const val TOTAL_FRAMES = 64
+        private const val TOTAL_FRAMES = 12
 
         data class WidgetCat(
             val name: String,
@@ -220,17 +220,16 @@ class LiloWidgetProvider : AppWidgetProvider() {
             } catch (e: Exception) {}
         }
 
-        private fun loadPixelTypeface(context: Context): Typeface {
-            try {
-                return Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew_Valley.ttf")
-            } catch (e: Exception) {}
-            try {
-                return Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew_Valley.otf")
-            } catch (e: Exception) {}
-            try {
-                ResourcesCompat.getFont(context, R.font.press_start_2p)?.let { return it }
-            } catch (e: Exception) {}
-            return Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+        fun loadPixelTypeface(context: Context): Typeface {
+            return try {
+                Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew_Valley.ttf")
+            } catch (e1: Exception) {
+                try {
+                    ResourcesCompat.getFont(context, R.font.press_start_2p) ?: Typeface.MONOSPACE
+                } catch (e2: Exception) {
+                    Typeface.MONOSPACE
+                }
+            }
         }
 
         fun updateAppWidget(
@@ -316,12 +315,7 @@ class LiloWidgetProvider : AppWidgetProvider() {
 
                 views.removeAllViews(R.id.widget_flipper)
                 for (frameIdx in 0 until TOTAL_FRAMES) {
-                    val raw = drawStardewGardenFrame(frameIdx, mode, activeWeather, blooms, stepTick, cats, sprites)
-                    val scaled = Bitmap.createScaledBitmap(raw, 280, 156, false)
-                    raw.recycle()
-                    val frameBmp = scaled.copy(Bitmap.Config.RGB_565, false) ?: scaled
-                    if (frameBmp != scaled) scaled.recycle()
-
+                    val frameBmp = drawStardewGardenFrame(frameIdx, mode, activeWeather, blooms, stepTick, cats, sprites)
                     val frameViews = RemoteViews(context.packageName, R.layout.widget_flipper_frame)
                     frameViews.setImageViewBitmap(R.id.frame_img, frameBmp)
                     views.addView(R.id.widget_flipper, frameViews)
@@ -501,7 +495,7 @@ class LiloWidgetProvider : AppWidgetProvider() {
         ): Bitmap {
             val w = 200
             val h = 112
-            val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+            val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.RGB_565)
             val c = Canvas(bmp)
             val p = Paint(0).apply {
                 isAntiAlias = false

@@ -23,7 +23,7 @@
             android:layout_height="match_parent"
             android:layout_centerInParent="true"
             android:autoStart="true"
-            android:flipInterval="250" />
+            android:flipInterval="300" />
 
         <!-- LAYER 2: High-Res Solid Typography Overlay -->
         <ImageView

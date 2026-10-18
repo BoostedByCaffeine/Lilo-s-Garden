@@ -109,7 +109,7 @@ const COTTAGE_BOUNDS = {
 const COTTAGE_SPOTS = {
   hearth: { x: 544, y: 224, radius: 32, label: 'Memorial Bookcase & Tribute' },
   sofa:   { x: 608, y: 334, radius: 30, label: 'Cozy Cream Sofa' },
-  bed:    { x: 476, y: 232, radius: 32, label: 'Cozy Yellow Quilt Bed' },
+  bed:    { x: 464, y: 218, radius: 32, label: 'Cozy Yellow Quilt Bed' },
   desk:   { x: 598, y: 248, radius: 26, label: 'Wooden Study Desk' },
   rug:    { x: 476, y: 266, radius: 28, label: 'Warm Crimson Bedside Rug' },
   table:  { x: 364, y: 312, radius: 32, label: 'Dining Table' },
@@ -678,6 +678,12 @@ const world = {
   skyDesc: 'Sunny Sky',
   tempC: 24,
   tributeNote: "Forever loved, forever missed. Enjoy the endless sunshine, crunchy kibble, and cozy gazebo naps, sweet Lilo and Cheeto.",
+  tasks: [
+    { id: 'task-1', text: 'Pet Lilo & Cheeto', done: false },
+    { id: 'task-2', text: 'Relax by the porch deck', done: false },
+    { id: 'task-3', text: 'Water forget-me-not blooms', done: false }
+  ],
+  stickyNote: 'Take a deep breath and listen to the birds.',
   cats: [],
   particles: [],
   critters: [],
@@ -976,6 +982,8 @@ const world = {
       this.blooms = typeof saved.blooms === 'number' ? Math.max(1, Math.min(24, saved.blooms)) : 8;
       this.bowlLevel = typeof saved.bowlLevel === 'number' ? Math.max(0, Math.min(3, saved.bowlLevel)) : 3;
       if (saved.tributeNote) this.tributeNote = String(saved.tributeNote);
+      if (Array.isArray(saved.tasks)) this.tasks = saved.tasks;
+      if (typeof saved.stickyNote === 'string') this.stickyNote = saved.stickyNote;
       if (saved.weatherMode) this.weatherMode = saved.weatherMode;
       if (saved.caretaker && typeof saved.caretaker === 'object') {
         this.caretaker = {
@@ -1028,6 +1036,8 @@ const world = {
       weather: this.weather,
       tempC: this.tempC,
       tributeNote: this.tributeNote,
+      tasks: this.tasks || [],
+      stickyNote: this.stickyNote || '',
       caretaker: this.caretaker ? {
         name: this.caretaker.name,
         skinColor: this.caretaker.skinColor,
@@ -1743,6 +1753,13 @@ function invalidateSceneCaches() {
   });
 })();
 
+function areAllSpritesLoaded() {
+  return Object.keys(SPRITE_BANK).every((k) => {
+    const img = loadedSprites[k];
+    return img && img.complete && img.naturalWidth > 0;
+  });
+}
+
 // Automatically crops transparent padding around any Individual/*.png sprite
 // so every piece renders at its exact 1:1 pixel ratio and position!
 function getTrimmedSprite(key) {
@@ -1901,14 +1918,18 @@ function drawPixelCaretaker(c, caretaker, time) {
     c.scale(1.35, 1.35);
 
     if (isSleepingBed) {
-      px(-5, -14, 10, 8, skin);
-      px(-5, -16, 10, 3, hair);
-      px(-6, -15, 2, 4, hair);
-      px(4, -15, 2, 4, hair);
-      px(-3, -10, 2, 1, '#1e293b');
-      px(1, -10, 2, 1, '#1e293b');
-      px(-7, -7 + breath, 14, 9, '#eab308');
-      px(-7, -7 + breath, 14, 2, '#fef08a');
+      // Head resting on the left white pillow of DoubleBed
+      px(-5, -13, 10, 7, skin);
+      px(-5, -15, 10, 3, hair);
+      px(-6, -14, 2, 4, hair);
+      px(4, -14, 2, 4, hair);
+      // Closed peaceful eyes
+      px(-3, -9, 2, 1, '#1e293b');
+      px(1, -9, 2, 1, '#1e293b');
+      // Folded quilt collar & warm blanket matching the bed mattress
+      px(-8, -6 + breath, 16, 2, '#fef08a');
+      px(-8, -4 + breath, 16, 7, '#eab308');
+      px(-8, 1 + breath, 16, 2, '#ca8a04');
     } else {
       px(-5, -7 + breath, 10, 7, outfit);
       px(-6, -2, 8, 3, pants);
@@ -2443,7 +2464,9 @@ function ensureGardenStaticCache() {
   drawShelterDeck(c);
   drawPorchDeck(c);
 
-  gardenStaticCache = off;
+  if (areAllSpritesLoaded()) {
+    gardenStaticCache = off;
+  }
   return off;
 }
 
@@ -2560,45 +2583,55 @@ function drawShelterRoofOverhead(c, time) {
 function drawPorchDeck(c) {
   const px = LANDMARKS.porch.x;
   const py = LANDMARKS.porch.y;
+  // Spacious 64x28 cedar porch deck
   c.fillStyle = 'rgba(15, 28, 17, 0.38)';
-  c.fillRect(px - 24, py - 8, 48, 24);
+  c.fillRect(px - 34, py - 10, 68, 28);
   c.fillStyle = '#532e16';
-  c.fillRect(px - 22, py - 9, 44, 22);
+  c.fillRect(px - 32, py - 11, 64, 26);
   c.fillStyle = '#78431e';
-  c.fillRect(px - 21, py - 10, 42, 21);
+  c.fillRect(px - 30, py - 12, 60, 25);
   c.fillStyle = '#452310';
-  for (let y = py - 7; y < py + 10; y += 5) {
-    c.fillRect(px - 21, y, 42, 1);
+  for (let y = py - 8; y < py + 12; y += 5) {
+    c.fillRect(px - 30, y, 60, 1);
   }
-  // Built-in wooden porch bench & warm woven mat (leaves the campfire log at 668,376 untouched!)
+  // Cozy back bench & woven rug
   c.fillStyle = '#3b1d0a';
-  c.fillRect(px - 14, py - 8, 28, 8);
+  c.fillRect(px - 18, py - 10, 36, 8);
   c.fillStyle = '#a86e42';
-  c.fillRect(px - 13, py - 9, 26, 7);
+  c.fillRect(px - 17, py - 11, 34, 7);
   c.fillStyle = '#b45309';
-  c.fillRect(px - 10, py + 1, 20, 6);
+  c.fillRect(px - 12, py + 2, 24, 7);
   c.fillStyle = '#fde047';
-  c.fillRect(px - 8, py + 2, 16, 4);
+  c.fillRect(px - 10, py + 3, 20, 5);
 
+  // Lower base of the tall porch posts
   c.fillStyle = '#532e16';
-  c.fillRect(px - 20, py - 26, 3, 18);
-  c.fillRect(px + 17, py - 26, 3, 18);
+  c.fillRect(px - 28, py - 38, 4, 30);
+  c.fillRect(px + 24, py - 38, 4, 30);
 }
 
 function drawPorchRoofOverhead(c, time) {
   const px = LANDMARKS.porch.x;
   const py = LANDMARKS.porch.y;
+  // Upper posts extending up to py - 38 (well above the Caretaker's head at py - 34!)
   c.fillStyle = '#532e16';
-  c.fillRect(px - 20, py - 10, 3, 20);
-  c.fillRect(px + 17, py - 10, 3, 20);
+  c.fillRect(px - 28, py - 38, 4, 42);
+  c.fillRect(px + 24, py - 38, 4, 42);
+  c.fillStyle = '#8c5832';
+  c.fillRect(px - 27, py - 38, 2, 42);
+  c.fillRect(px + 25, py - 38, 2, 42);
+
+  // High Cedar Shingle Roof (py - 56 to py - 38) -> Never clips the Caretaker's head!
   c.fillStyle = '#452310';
-  c.fillRect(px - 25, py - 32, 50, 12);
+  c.fillRect(px - 34, py - 44, 68, 8);
   c.fillStyle = '#6e3818';
-  c.fillRect(px - 23, py - 35, 46, 11);
+  c.fillRect(px - 31, py - 48, 62, 7);
   c.fillStyle = '#8c4820';
-  c.fillRect(px - 19, py - 38, 38, 9);
+  c.fillRect(px - 26, py - 52, 52, 6);
   c.fillStyle = '#a85828';
-  c.fillRect(px - 12, py - 41, 24, 6);
+  c.fillRect(px - 18, py - 55, 36, 5);
+  c.fillStyle = '#c86f34';
+  c.fillRect(px - 10, py - 57, 20, 4);
 }
 
 function drawMemorialStone(c, time, hovered) {
@@ -2807,7 +2840,9 @@ function ensureCottageStaticCache() {
   // Single Ornate Red Carpet Under the 1 Double Bed
   drawIndividualFurniture(c, 'intCarpet', 476, 276, 1.38, true);
 
-  cottageStaticCache = off;
+  if (areAllSpritesLoaded()) {
+    cottageStaticCache = off;
+  }
   return off;
 }
 
@@ -3988,6 +4023,12 @@ safeOn('btnOpenApkTutorial', 'click', () => {
   openModal('apk-tutorial-modal');
 });
 
+// Choice C: Open iOS (iPhone & iPad) Tutorial Modal
+safeOn('btnOpenIosTutorial', 'click', () => {
+  closeModal('install-choice-modal');
+  openModal('ios-tutorial-modal');
+});
+
 // 3. Inside Tutorial Modal: Direct 1-Tap APK Download from GitHub Release (or local ./lilos-garden.apk)
 safeOn('btnProceedApkDownload', 'click', async () => {
   const urls = getGitHubUrls();
@@ -4109,6 +4150,24 @@ safeOn('btnPinPomodoroWidget', 'click', () => {
   }
 });
 
+safeOn('btnPinNotesWidget', 'click', () => {
+  closeModal('widget-choice-modal');
+  if (window.AndroidBridge && typeof window.AndroidBridge.pinNotesWidget === 'function') {
+    window.AndroidBridge.pinNotesWidget();
+  } else {
+    showToast('Available in Lilo Garden Android APK!', 'grid-2x2');
+  }
+});
+
+safeOn('btnPinMusicWidget', 'click', () => {
+  closeModal('widget-choice-modal');
+  if (window.AndroidBridge && typeof window.AndroidBridge.pinMusicWidget === 'function') {
+    window.AndroidBridge.pinMusicWidget();
+  } else {
+    showToast('Available in Lilo Garden Android APK!', 'grid-2x2');
+  }
+});
+
 window.addEventListener('focus', () => {
   if (window.AndroidBridge && typeof window.AndroidBridge.getWidgetBlooms === 'function') {
     try {
@@ -4137,6 +4196,137 @@ safeOn('btnPetLiloNow', 'click', () => {
   world.cats.slice(0, 2).forEach((c) => world.petCat(c));
   closeModal('tribute-modal');
 });
+
+// ==================== COZY TASKS & STICKY NOTES MANAGER ====================
+function renderTasksUI() {
+  const listEl = document.getElementById('tasksList');
+  const badgeEl = document.getElementById('taskProgressBadge');
+  const noteEl = document.getElementById('textareaStickyNote');
+
+  if (noteEl && typeof world.stickyNote === 'string') {
+    noteEl.value = world.stickyNote;
+  }
+
+  if (!listEl) return;
+  listEl.innerHTML = '';
+
+  const tasks = world.tasks || [];
+  const completedCount = tasks.filter((t) => t.done).length;
+  if (badgeEl) {
+    badgeEl.textContent = `${completedCount}/${tasks.length}`;
+  }
+
+  if (tasks.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'text-xs text-[#7c624c] italic py-2 text-center';
+    empty.textContent = 'No tasks yet. Add one above!';
+    listEl.appendChild(empty);
+    return;
+  }
+
+  tasks.forEach((task) => {
+    const item = document.createElement('div');
+    item.className = `task-item ${task.done ? 'done' : ''}`;
+
+    const left = document.createElement('div');
+    left.className = 'flex items-center gap-2 flex-1 cursor-pointer';
+
+    const check = document.createElement('span');
+    check.className = `task-checkbox ${task.done ? 'checked' : ''}`;
+    check.innerHTML = task.done ? '&#10003;' : '';
+
+    const text = document.createElement('span');
+    text.className = 'flex-1 font-semibold';
+    text.textContent = task.text;
+
+    left.appendChild(check);
+    left.appendChild(text);
+
+    left.addEventListener('click', () => {
+      task.done = !task.done;
+      world.save();
+      renderTasksUI();
+    });
+
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'task-del-btn';
+    del.title = 'Delete Task';
+    del.innerHTML = '&times;';
+    del.addEventListener('click', (e) => {
+      e.stopPropagation();
+      world.tasks = world.tasks.filter((t) => t.id !== task.id);
+      world.save();
+      renderTasksUI();
+    });
+
+    item.appendChild(left);
+    item.appendChild(del);
+    listEl.appendChild(item);
+  });
+}
+
+safeOn('btnOpenTasks', 'click', () => {
+  renderTasksUI();
+  openModal('modalTasks');
+});
+
+safeOn('formAddTask', 'submit', (e) => {
+  e.preventDefault();
+  const inp = document.getElementById('inputNewTask');
+  if (!inp) return;
+  const val = inp.value.trim();
+  if (!val) return;
+  if (!world.tasks) world.tasks = [];
+  world.tasks.push({ id: 'task-' + Date.now(), text: val, done: false });
+  inp.value = '';
+  world.save();
+  renderTasksUI();
+  showToast('Task added!', 'check');
+});
+
+safeOn('btnSaveTasksAndNote', 'click', () => {
+  const noteEl = document.getElementById('textareaStickyNote');
+  if (noteEl) {
+    world.stickyNote = noteEl.value.trim();
+  }
+  world.save();
+  closeModal('modalTasks');
+  showToast('Tasks & Note synced to Home Screen!', 'sparkle');
+});
+
+// Unlock WebAudio on first user interaction for iOS Safari & WebViews
+const unlockAudio = () => {
+  sound.init();
+  window.removeEventListener('touchstart', unlockAudio);
+  window.removeEventListener('click', unlockAudio);
+};
+window.addEventListener('touchstart', unlockAudio, { passive: true });
+window.addEventListener('click', unlockAudio, { passive: true });
+
+// Lifecycle listeners: restore environment and reload missing bitmaps on resume
+function restoreEnvironmentOnResume() {
+  invalidateSceneCaches();
+  Object.entries(SPRITE_BANK).forEach(([key, src]) => {
+    const img = loadedSprites[key];
+    if (!img || !img.complete || img.naturalWidth === 0) {
+      const retryImg = new Image();
+      retryImg.onload = () => {
+        loadedSprites[key] = retryImg;
+        invalidateSceneCaches();
+      };
+      retryImg.src = encodeURI(src);
+    }
+  });
+  updateCanvasResolution();
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    restoreEnvironmentOnResume();
+  }
+});
+window.addEventListener('pageshow', restoreEnvironmentOnResume);
 
 /********************************************************************
  * 11. MAIN GAME LOOP & INITIALIZATION
@@ -4171,6 +4361,7 @@ function initGame() {
   initCustomizerUI();
   initCaretakerCustomizerUI();
   world.init();
+  renderTasksUI();
   updateCanvasResolution();
   updateCameraBtnUI();
   renderIntroCanvas();

@@ -98,7 +98,7 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
         const val ACTION_COMP_SWITCH_CAT = "com.valois.lilosgarden.ACTION_COMP_SWITCH_CAT"
         const val ACTION_COMP_TICK = "com.valois.lilosgarden.ACTION_COMP_TICK"
 
-        private const val TOTAL_FRAMES = 64
+        private const val TOTAL_FRAMES = 12
 
         data class CatSpec(
             val id: String,
@@ -199,17 +199,16 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
             }
         }
 
-        private fun loadPixelTypeface(context: Context): Typeface {
-            try {
-                return Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew_Valley.ttf")
-            } catch (e: Exception) {}
-            try {
-                return Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew_Valley.otf")
-            } catch (e: Exception) {}
-            try {
-                ResourcesCompat.getFont(context, R.font.press_start_2p)?.let { return it }
-            } catch (e: Exception) {}
-            return Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+        fun loadPixelTypeface(context: Context): Typeface {
+            return try {
+                Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew_Valley.ttf")
+            } catch (e1: Exception) {
+                try {
+                    ResourcesCompat.getFont(context, R.font.press_start_2p) ?: Typeface.MONOSPACE
+                } catch (e2: Exception) {
+                    Typeface.MONOSPACE
+                }
+            }
         }
 
         fun updateCompanionWidget(
@@ -238,9 +237,6 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                 val tempC = prefs.getInt("tempC", if (isNight) 24 else 29)
 
                 val nowDate = Date()
-                val is24Hour = DateFormat.is24HourFormat(context)
-                val timePattern = if (is24Hour) "HH:mm" else "hh:mm a"
-                val timeStr = SimpleDateFormat(timePattern, Locale.getDefault()).format(nowDate).uppercase(Locale.getDefault())
                 val dateStr = SimpleDateFormat("EEE, MMM d", Locale.getDefault()).format(nowDate)
 
                 val pixelFont = loadPixelTypeface(context)
@@ -265,13 +261,7 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                 tp.textAlign = Paint.Align.LEFT
                 hudCanvas.drawText("${cat.name} • $poseLabel", 232f, 40f, tp)
 
-                // 2. Solid Bold Pixel Clock Time & Date inside Parchment Plaque
-                tp.textSize = 31f
-                tp.color = Color.parseColor("#ffefc7")
-                hudCanvas.drawText(timeStr, 230f, 102f, tp)
-                tp.color = Color.parseColor("#3b1d0a")
-                hudCanvas.drawText(timeStr, 228f, 100f, tp)
-
+                // 2. Solid Bold Pixel Date inside Parchment Plaque (Time is handled by native TextClock)
                 tp.textSize = 17f
                 tp.color = Color.parseColor("#ffefc7")
                 hudCanvas.drawText(dateStr, 230f, 128f, tp)
@@ -310,15 +300,10 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
 
                 views.removeAllViews(R.id.comp_flipper)
                 for (f in 0 until TOTAL_FRAMES) {
-                    val raw = drawStardewCompanionHudPixelPass(
+                    val frameBmp = drawStardewCompanionHudPixelPass(
                         f, cat, pose, weather,
                         grassTileBmp, bushBmp, flowerBmp, stoneBmp
                     )
-                    val scaled = Bitmap.createScaledBitmap(raw, 286, 146, false)
-                    raw.recycle()
-                    val frameBmp = scaled.copy(Bitmap.Config.RGB_565, false) ?: scaled
-                    if (frameBmp != scaled) scaled.recycle()
-
                     val frameViews = RemoteViews(context.packageName, R.layout.widget_flipper_frame)
                     frameViews.setImageViewBitmap(R.id.frame_img, frameBmp)
                     views.addView(R.id.comp_flipper, frameViews)
@@ -386,7 +371,7 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
         ): Bitmap {
             val w = 220
             val h = 112
-            val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+            val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.RGB_565)
             val c = Canvas(bmp)
             val p = Paint(0).apply {
                 isAntiAlias = false

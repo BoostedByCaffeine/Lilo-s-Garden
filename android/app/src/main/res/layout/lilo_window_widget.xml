@@ -10,20 +10,14 @@
         android:layout_height="154dp"
         android:layout_gravity="center">
 
-        <TextClock
-            android:id="@+id/win_clock"
-            android:layout_width="1dp"
-            android:layout_height="1dp"
-            android:alpha="0" />
-
-        <!-- LAYER 1: 64-Frame Pixel Animation Loop @ 4 FPS (250ms per frame = 16s seamless cycle) -->
+        <!-- LAYER 1: 12-Frame Pixel Animation Loop @ 3.3 FPS (300ms) -->
         <ViewFlipper
             android:id="@+id/win_flipper"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_centerInParent="true"
             android:autoStart="true"
-            android:flipInterval="250" />
+            android:flipInterval="300" />
 
         <!-- LAYER 2: High-Res Solid Typography Overlay (Updated independently on minute ticks) -->
         <ImageView
@@ -57,7 +51,21 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="65"
-                    android:background="@android:color/transparent" />
+                    android:background="@android:color/transparent">
+
+                    <TextClock
+                        android:id="@+id/win_clock"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical|start"
+                        android:layout_marginLeft="4dp"
+                        android:alpha="1"
+                        android:textColor="#3B1D0A"
+                        android:fontFamily="@font/press_start_2p"
+                        android:format12Hour="hh:mm a"
+                        android:format24Hour="HH:mm"
+                        android:textSize="11sp" />
+                </FrameLayout>
 
                 <FrameLayout
                     android:id="@+id/win_btn_weather"

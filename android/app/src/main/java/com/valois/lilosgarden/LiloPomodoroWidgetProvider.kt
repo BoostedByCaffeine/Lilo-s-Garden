@@ -119,7 +119,7 @@ class LiloPomodoroWidgetProvider : AppWidgetProvider() {
         const val ACTION_POMO_RESET = "com.valois.lilosgarden.ACTION_POMO_RESET"
         const val ACTION_POMO_TICK = "com.valois.lilosgarden.ACTION_POMO_TICK"
         private const val DEFAULT_DURATION_MS = 25 * 60 * 1000L
-        private const val TOTAL_FRAMES = 24
+        private const val TOTAL_FRAMES = 12
 
         fun scheduleNextPomodoroTick(context: Context, delayMs: Long) {
             try {
@@ -175,17 +175,16 @@ class LiloPomodoroWidgetProvider : AppWidgetProvider() {
             }
         }
 
-        private fun loadPixelTypeface(context: Context): Typeface {
-            try {
-                return Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew_Valley.ttf")
-            } catch (_: Exception) {}
-            try {
-                return Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew_Valley.otf")
-            } catch (_: Exception) {}
-            try {
-                ResourcesCompat.getFont(context, R.font.press_start_2p)?.let { return it }
-            } catch (_: Exception) {}
-            return Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+        fun loadPixelTypeface(context: Context): Typeface {
+            return try {
+                Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew_Valley.ttf")
+            } catch (e1: Exception) {
+                try {
+                    ResourcesCompat.getFont(context, R.font.press_start_2p) ?: Typeface.MONOSPACE
+                } catch (e2: Exception) {
+                    Typeface.MONOSPACE
+                }
+            }
         }
 
         fun updatePomodoroWidget(
@@ -261,14 +260,9 @@ class LiloPomodoroWidgetProvider : AppWidgetProvider() {
 
                 views.removeAllViews(R.id.pomo_flipper)
                 for (f in 0 until TOTAL_FRAMES) {
-                    val raw = drawPomodoroCampfirePixelPass(
+                    val frameBmp = drawPomodoroCampfirePixelPass(
                         f, running, grassTileBmp, logBmp, fireActiveBmp, fireSmokeBmp
                     )
-                    val scaled = Bitmap.createScaledBitmap(raw, 286, 146, false)
-                    raw.recycle()
-                    val frameBmp = scaled.copy(Bitmap.Config.RGB_565, false) ?: scaled
-                    if (frameBmp != scaled) scaled.recycle()
-
                     val frameViews = RemoteViews(context.packageName, R.layout.widget_flipper_frame)
                     frameViews.setImageViewBitmap(R.id.frame_img, frameBmp)
                     views.addView(R.id.pomo_flipper, frameViews)
@@ -334,7 +328,7 @@ class LiloPomodoroWidgetProvider : AppWidgetProvider() {
         ): Bitmap {
             val w = 220
             val h = 112
-            val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+            val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.RGB_565)
             val c = Canvas(bmp)
             val p = Paint(0).apply {
                 isAntiAlias = false

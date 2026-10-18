@@ -67,6 +67,21 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        checkIntentModal()
+    }
+
+    private fun checkIntentModal() {
+        val modal = intent?.getStringExtra("open_modal")
+        if (modal == "modalTasks" || intent?.action == "com.valois.lilosgarden.OPEN_TASKS") {
+            webView.post {
+                webView.evaluateJavascript("if (typeof openModal === 'function') { if (typeof renderTasksUI === 'function') renderTasksUI(); openModal('modalTasks'); }", null)
+            }
+        }
+    }
+
     private fun hideSystemUI() {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -98,7 +113,8 @@ class MainActivity : AppCompatActivity() {
         settings.allowFileAccess = true
         settings.allowContentAccess = true
         settings.mediaPlaybackRequiresUserGesture = false
-        settings.cacheMode = WebSettings.LOAD_DEFAULT
+        settings.cacheMode = WebSettings.LOAD_NO_CACHE
+        webView.clearCache(true)
         settings.useWideViewPort = true
         settings.loadWithOverviewMode = true
         settings.setSupportZoom(true)
@@ -108,6 +124,11 @@ class MainActivity : AppCompatActivity() {
         webView.addJavascriptInterface(AndroidBridge(this), "AndroidBridge")
 
         webView.webViewClient = object : WebViewClient() {
+            override fun onPageFinished(view: WebView?, url: String?) {
+                super.onPageFinished(view, url)
+                checkIntentModal()
+            }
+
             override fun shouldOverrideUrlLoading(
                 view: WebView?,
                 request: WebResourceRequest?
@@ -206,12 +227,19 @@ class MainActivity : AppCompatActivity() {
                 if (stats != null) {
                     editor.putInt("pets", stats.optInt("pets", 8))
                 }
+                if (obj.has("tasks")) {
+                    editor.putString("tasks_json", obj.optJSONArray("tasks")?.toString() ?: "[]")
+                }
+                if (obj.has("stickyNote")) {
+                    editor.putString("sticky_note", obj.optString("stickyNote", ""))
+                }
                 editor.apply()
                 LiloWidgetProvider.refreshAllWidgets(activity)
                 LiloCompanionWidgetProvider.refreshAllCompanionWidgets(activity)
                 LiloWindowWidgetProvider.refreshAllWindowWidgets(activity)
                 LiloBatteryWidgetProvider.refreshAllBatteryWidgets(activity)
                 LiloPomodoroWidgetProvider.refreshAllPomodoroWidgets(activity)
+                LiloNotesWidgetProvider.refreshAllNotesWidgets(activity)
             } catch (e: Exception) {}
         }
 
@@ -363,6 +391,48 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(
                     activity,
                     "Long-press Home Screen -> Widgets -> Lilo's Campfire Focus Widget",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+
+        @JavascriptInterface
+        fun pinNotesWidget() {
+            activity.runOnUiThread {
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        val appWidgetManager = AppWidgetManager.getInstance(activity)
+                        val widgetProvider = ComponentName(activity, LiloNotesWidgetProvider::class.java)
+                        if (appWidgetManager.isRequestPinAppWidgetSupported) {
+                            appWidgetManager.requestPinAppWidget(widgetProvider, null, null)
+                            return@runOnUiThread
+                        }
+                    }
+                } catch (_: Exception) {}
+                Toast.makeText(
+                    activity,
+                    "Long-press Home Screen -> Widgets -> Lilo's Cozy Tasks & Notes",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+
+        @JavascriptInterface
+        fun pinMusicWidget() {
+            activity.runOnUiThread {
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        val appWidgetManager = AppWidgetManager.getInstance(activity)
+                        val widgetProvider = ComponentName(activity, LiloMusicWidgetProvider::class.java)
+                        if (appWidgetManager.isRequestPinAppWidgetSupported) {
+                            appWidgetManager.requestPinAppWidget(widgetProvider, null, null)
+                            return@runOnUiThread
+                        }
+                    }
+                } catch (_: Exception) {}
+                Toast.makeText(
+                    activity,
+                    "Long-press Home Screen -> Widgets -> Lilo's Vinyl & Spotify Widget",
                     Toast.LENGTH_LONG
                 ).show()
             }

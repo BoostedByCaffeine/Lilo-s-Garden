@@ -2,7 +2,7 @@
 
 A single-file HTML5 Canvas, CSS3, and Vanilla JavaScript cozy virtual pet garden sandbox tribute inspired by a minimalist Stardew Valley aesthetic, honoring **Lilo the pure white cat** and **Cheeto the orange tabby**.
 
-Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-tier live local weather, client-side `localStorage` persistence, PWA offline installability, **Cozy Cottage Interior**, **8-Bit Customizable Caretaker**, and **5 Authentic Android Home Screen Widgets**.
+Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-tier live local weather, client-side `localStorage` persistence, PWA offline installability with **iOS Web App Support**, **Cozy Cottage Interior**, **8-Bit Customizable Caretaker**, **Cozy Tasks & Sticky Notes**, and **7 Authentic Android Home Screen Widgets**.
 
 ---
 
@@ -10,10 +10,11 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-t
 
 ### 1. Solid Pixel Typography & Authentic Stardew Styling
 - **Global Solid Pixel Font**:
-  - Imported solid pixel font (`Stardew_Valley.ttf` & `.otf`) applied uniformly across the web application and all 5 Android home screen widgets.
+  - Imported solid pixel font (`Stardew_Valley.ttf` & `.otf`) applied uniformly across the web application and all 7 Android home screen widgets.
   - Specially tuned typography sizes across the HUD, dialogue badges, and polaroid tribute frames for razor-sharp readability on all screen densities.
-- **PWA v12 Offline Cache**:
-  - Service worker precaching updated to `'lilos-garden-pwa-v12'` bundling all core assets, solid typography, floating dining table Eat button, and individual interior furniture sprites (`assets/interior/Individual/*.png`) for instant offline playability.
+- **PWA v13 Offline Cache**:
+  - Service worker precaching updated to `'lilos-garden-pwa-v13'` bundling all core assets, solid typography, floating dining table Eat button, individual interior furniture sprites (`assets/interior/Individual/*.png`), and all 30 environment tileset sprites with `ignoreSearch: true` for 100% offline playability.
+  - Automatic environment asset restoration on minimize/resume (`areAllSpritesLoaded()`, `restoreEnvironmentOnResume`, `visibilitychange`, `pageshow`, and `focus` listeners) preventing blank tiles when switching apps.
 - **60 FPS Offscreen Canvas Caching**:
   - Pre-renders static scenes (`ensureGardenStaticCache`, `ensureCottageStaticCache`) and dynamic lighting glow sprites (`getFireGlowSprite`, `getLanternGlowSprite`) into offscreen canvases, minimizing draw calls and guaranteeing locked 60 FPS performance on mobile devices.
   - Dirty-checks DOM ticker text updates to completely prevent layout thrashing and reflows.
@@ -24,10 +25,10 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-t
 - **Living Pixel Caretaker**:
   - A customizable 8-bit character rendered with taller proportions (6px legs, 9px torso) living alongside Lilo and Cheeto in both the Garden and Cottage.
   - Interactive cuddles: Tapping the Caretaker in the scene calls the cats over for cuddles and purrs.
-  - **Bed Sleep & Morning Wake**: Tapping the double bed tucks the Caretaker into bed (`SLEEPING_BED`) with warm yellow quilt and floating sleep Z's. Hidden when viewing the outdoor Garden, and automatically wakes up in the morning (at daybreak or when the clock reaches 6 AM).
+  - **Bed Sleep & Morning Wake**: Tapping the double bed tucks the Caretaker into bed (`SLEEPING_BED`) with his head resting directly on the white left pillow of `DoubleBed.png` (`COTTAGE_SPOTS.bed = { x: 464, y: 218 }`) and body under a matching folded yellow quilt blanket with floating sleep Z's. Hidden when viewing the outdoor Garden, and automatically wakes up in the morning (at daybreak or when the clock reaches 6 AM).
   - **Couch Nap**: Tapping the right-wall sofa curls the Caretaker up for a cozy couch nap (`NAPPING_COUCH`).
   - **Dining Table Meal**: Tapping the dining table reveals a floating **"Eat"** button; clicking it seats the Caretaker at the table's front chair (`y = 283`) with his full torso, arms, and head visible above the table edge with a warm plate of food and animated eating bites.
-  - **Rain Reaction & Umbrella**: In rainy weather outdoors, the Caretaker holds a pixel umbrella while walking and seeks refuge under the covered campfire mini-porch roof.
+  - **Rain Reaction, Porch Deck & Umbrella**: In rainy weather outdoors, the Caretaker holds a pixel umbrella while walking and seeks refuge on the spacious 64x28 cedar porch deck (`drawPorchDeck`) with 42px tall posts and elevated cedar roof (`drawPorchRoofOverhead`), ensuring the Caretaker's head and dialogue name tag are 100% visible underneath without clipping.
   - **Study Desk Sitting**: Caretaker sits directly on the front-facing chair (`intChairTop`) when reading or coding at the study desk.
   - Cozy animated activities:
     - **Reading**: Holding a cozy red storybook while seated at the desk or rug.
@@ -144,44 +145,80 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-t
 
 ---
 
-### 9. 5 Android Home Screen Widgets & 2-Layer Compositor Engine
+### 9. iOS Web App Port & Safari Install Guide
+- **Full-Screen Offline iOS Sanctuary**:
+  - Full standalone Web App support on iPhone and iPad with `<meta name="apple-mobile-web-app-capable" content="yes">`, `<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">`, and Apple touch icon definitions.
+  - Safe-area inset protection (`env(safe-area-inset-top)`, `env(safe-area-inset-bottom)`) for seamless rendering around the Dynamic Island and bottom gesture bars.
+  - Interactive **3-Step Safari Install Guide Modal (`#ios-tutorial-modal`)** accessible from the Install Sanctuary choice modal:
+    1. Tap Safari's **Share** button (`[↑]`).
+    2. Scroll down and select **"Add to Home Screen"**.
+    3. Tap **"Add"** in the top-right corner to launch full-screen with offline caching.
+  - Automatic WebAudio synthesizer unlock on initial user touch gesture.
+
+---
+
+### 10. Cozy Tasks & Sticky Notes Manager (`#modalTasks`)
+- **Stardew Bulletin Notice Board Interface**:
+  - Direct access from the top whisper status pill via the **Notes/Tasks button** (`#btnOpenTasks`).
+  - Warm Stardew wood-framed bulletin board with a yellow sticky note memo area and an interactive to-do task list.
+  - Interactive checkbox completions (`completed: true/false`), custom task entry form with autofocus, and instant item deletion.
+  - Client-side persistence in `localStorage` and real-time serialization into the garden save object.
+  - **Android Native Two-Way Sync**: Automatically synchronizes `tasks_json` and `sticky_note` strings to Android `SharedPreferences` (`lilo_widget_prefs`), instantly refreshing the home screen notice board widget.
+
+---
+
+### 11. 7 Android Home Screen Widgets & 2-Layer Compositor Engine
 All widgets are powered by an animation engine with a **2-Layer Compositor Architecture**:
-- **Layer 1 (Underneath)**: A pixel-art `ViewFlipper` loop running `RGB_565` bitmaps for high performance and minimal memory footprint.
-- **Layer 2 (On Top)**: A single high-res `ARGB_8888` `ImageView` HUD overlay with solid `Stardew_Valley.ttf` typography. Clock and minute ticks update **only** the HUD overlay via `partiallyUpdateAppWidget`, resulting in zero flicker and never interrupting the animation loop.
+- **Layer 1 (Underneath)**: A pixel-art `ViewFlipper` loop running compact `RGB_565` bitmaps (~220x112 / 200x120) for high performance and minimal memory footprint.
+- **Layer 2 (On Top)**: A single high-res `ARGB_8888` `ImageView` HUD overlay with solid `Stardew_Valley.ttf` typography.
+- **Real-Time Accuracy via Native `<TextClock>`**: Companion and Window widgets feature native Android `<TextClock>` controls with pixel font styling, eliminating clock drift caused by battery optimization throttling while using zero polling battery power.
+- **Zero-Crash Binder Payloads**: Animation loops reduced from 64/32/24 frames to 12 frames at 3.3 FPS (`flipInterval="300"`), dropping uncompressed Binder payloads under 160 KB and completely eliminating `TransactionTooLargeException` crashes across Samsung, Xiaomi, Oppo, Vivo, and Google Pixel launchers.
+- **Safe 3-Tier Typeface Fallback**: `assets/fonts/Stardew_Valley.ttf` → `R.font.press_start_2p` → `Typeface.MONOSPACE`.
 - **Background Weather Sync (`WeatherSyncHelper.kt`)**: Automatically synchronizes local weather every 15+ minutes in the background and refreshes all active widgets.
 
-#### The 5 Home Screen Widgets:
+#### The 7 Home Screen Widgets:
 1. **Window Widget (`LiloWindowWidgetProvider.kt`)**:
    - Carved wooden window frame looking out onto the garden with dynamic sky backdrops (Day, Sunset, Starry Night, Rain, Clouds).
-   - **Peeking Cat in Bottom-Left Corner** (`cx = 42` at `2.0f` scale) with a 4-stage 16-second routine:
-     - *Stage 1 (Frames 0–19)*: Curious looks left and right with ear twitches.
-     - *Stage 2 (Frames 20–35)*: Paw-lick grooming animation and blushing cheeks.
-     - *Stage 3 (Frames 36–51)*: Excited bobbing watching butterflies or fireflies with a floating heart.
-     - *Stage 4 (Frames 52–63)*: Cozy windowsill rest and slow peaceful blinking.
-   - **Seamless 224px Wrap-Around Clouds**: Perfect circular wrap domain (`(20 + frame * 7 / 2) % 224`) eliminating sawtooth animation jumps.
+   - **Native `<TextClock>` & Bold Live Temperature Display**.
+   - **Peeking Cat in Bottom-Left Corner** (`cx = 42` at `2.0f` scale) with curious looking, paw-lick grooming, flutter-watching, and peaceful napping.
+   - **Seamless 224px Wrap-Around Clouds** eliminating sawtooth animation jumps.
    - Interactive hotspots: Pet cat, switch active cat, toggle weather override, and open app.
 2. **Stardew Companion Widget (`LiloCompanionWidgetProvider.kt`)**:
-   - Split-panel Stardew HUD: Left patio sanctuary with velvet cat bed, post-free glowing lantern, and garden bushes; right parchment HUD with live bold clock, date, and weather badge.
+   - Split-panel Stardew HUD: Left patio sanctuary with velvet cat bed, post-free glowing lantern, and garden bushes; right parchment HUD with native `<TextClock>`, date, and weather badge.
    - Cat pose switcher (<kbd>Grooming</kbd> / <kbd>Sleeping</kbd> / <kbd>Lounging</kbd>) and cat roster carousel.
 3. **Garden Sandbox Widget (`LiloWidgetProvider.kt`)**:
    - Miniature living garden sandbox on your home screen with animated walking cats, active campfire/smoke, birdbath ripples, swaying wildflowers, and fluttering butterflies/fireflies.
    - Bottom 4-Button Stardew RPG Hotbar: **Pet**, **Feed**, **Sky / Weather Override**, and **+Cat** to spawn companion friends directly from the launcher.
 4. **Purr-cent Battery & Mood Widget (`LiloBatteryWidgetProvider.kt`)**:
    - Carved wooden Stardew battery gauge showing real-time device battery percentage and charging state.
-   - Battery-reactive cat mood states:
-     - *Zoomies! (80–100%)*: Energetic hopping animations with floating hearts.
-     - *Cozy (30–79%)*: Content loafing and grooming.
-     - *Sleepy (< 30%)*: Curled loaf napping with floating zzz's.
-     - *Charging (⚡ Plugged)*: Warming cozily beside a crackling animated campfire with golden sparkles.
+   - Battery-reactive cat mood states: *Zoomies!* (80–100%), *Cozy* (30–79%), *Sleepy* (< 30%), and *Charging* (⚡ Plugged warming by campfire).
    - Interactive hotspots: Tap cat nook or boost button to pet cat; switch active cat between Lilo, Cheeto, and custom companions; tap gauge to launch app.
 5. **Campfire Focus & Pomodoro Buddy Widget (`LiloPomodoroWidgetProvider.kt`)**:
    - 25-minute study & coding focus timer by the crackling campfire with Lilo and Cheeto cozily resting.
    - Play/pause toggle and reset buttons with exact countdown ticks managed via `AlarmManager`.
-   - **Forget-Me-Not Bloom Rewards**: Completing a 25-minute focus session awards **+1 Forget-Me-Not Bloom** (up to 24) synchronized directly to the main garden sanctuary app upon opening/focusing.
+   - **Forget-Me-Not Bloom Rewards**: Completing a 25-minute focus session awards **+1 Forget-Me-Not Bloom** (up to 24) synchronized directly to the main garden sanctuary app.
+6. **Cozy Tasks & Sticky Notes Widget (`LiloNotesWidgetProvider.kt`)**:
+   - Wooden notice board widget rendering your personal yellow sticky note and active to-do tasks.
+   - Top task interactive completion toggle (`ACTION_NOTES_TOGGLE_TOP`): tap the checkbox on your home screen to check/uncheck tasks instantly without opening the app.
+   - Tap the notice board body to launch the Cozy Tasks & Notes manager directly in the app.
+7. **Spotify & Media Now-Playing Widget (`LiloMusicWidgetProvider.kt`)**:
+   - Live music companion widget with 12-frame spinning vinyl record and head-bobbing Lilo & Cheeto wearing headphones with floating musical notes.
+   - Real-time track title and artist display synchronized via `LiloMediaListenerService.kt` (Spotify broadcast receiver & NotificationListenerService).
+   - Interactive media controls: Previous Track, Play/Pause toggle, and Next Track dispatching system media key events.
 
 ---
 
-### 10. Dynamic Camera, Zoom & Follow System
+### 12. Dynamic Celestial Sky Overhaul for Live Wallpaper (`LiloWallpaperService.kt`)
+- Full-screen parallax sky rendered across 5 vertical gradient bands with real-time time-phase and weather reactions:
+  - **Sunrise (5–6 AM)**: Warm peach-gold gradient (`#4a1d4a` → `#db603c` → `#fde047`) and golden rising sun near the fence horizon.
+  - **Day (7 AM–4 PM)**: Vibrant sky blue gradient (`#0284c7` → `#bae6fd`), bright pixel Sun with pulsing outer glow rays in the upper-right sky, and 4 fluffy white drifting clouds with smooth wrap-around.
+  - **Sunset (5–6 PM)**: Rich twilight gradient (`#2e1035` → `#9a3412` → `#f97316` → `#fde047`), large glowing crimson-gold Setting Sun sinking behind the fence, and rose-tinted drifting clouds.
+  - **Night (7 PM–4 AM / Night Weather)**: Deep midnight obsidian gradient (`#060913` → `#312e81`), glowing silver Crescent Moon with inner cutout, 28 twinkling pixel stars, and soft night clouds.
+  - **Rain**: Atmospheric stormy slate gradient (`#0f172a` → `#64748b`) with dark rain clouds.
+
+---
+
+### 13. Dynamic Camera, Zoom & Follow System
 - **Adaptive Viewport**:
   - Seamlessly scales between desktop monitors and smartphone screens (`100vw x 100dvh`) with zero letterboxing.
 - **Zoom Controls**:
@@ -192,11 +229,12 @@ All widgets are powered by an animation engine with a **2-Layer Compositor Archi
 
 ---
 
-### 11. Synthesized Audio Engine (`CozyAudio`)
+### 14. Synthesized Audio Engine (`CozyAudio`)
 - Web Audio API synthesizer with zero external sound files:
   - Deep modulated cat purr rumbling using carrier + LFO oscillators.
   - Calming ambient rain noise using filtered pink noise with smooth fade-in/fade-out.
   - Ascending chime melodies when refilling the ceramic food bowl.
+  - Immediate WebAudio touch unlock on iOS Safari and mobile browsers.
 
 ---
 
@@ -210,6 +248,7 @@ All widgets are powered by an animation engine with a **2-Layer Compositor Archi
 | **Bed Sleep / Wake** | Tap the Double Bed in the Cottage | — |
 | **Couch Nap** | Tap the Cream Sofa in the Cottage | — |
 | **Dining Table Meal** | Tap Dining Table → Tap floating **"Eat"** | — |
+| **Cozy Tasks & Notes** | Tap Note Icon on Whisper Pill | <kbd>T</kbd> |
 | **Refill Food Bowls** | Tap any personal cat bowl or **"Fill Bowl"** | <kbd>F</kbd> |
 | **Toggle Cottage / Garden** | Tap **"Cottage"** or entrance hallway / gate | — |
 | **Twin Polaroid Tribute** | Tap Memorial Stone (Garden) or Bookcase (Cottage) | — |

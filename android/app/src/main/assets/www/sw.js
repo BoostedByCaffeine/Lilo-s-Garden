@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lilos-garden-pwa-v12';
+const CACHE_NAME = 'lilos-garden-pwa-v13';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -12,6 +12,36 @@ const CORE_ASSETS = [
   './assets/icon-512.png',
   './assets/fonts/Stardew_Valley.ttf',
   './assets/fonts/Stardew_Valley.otf',
+  './assets/sprites/tileSprite/1 Tiles/FieldsTile_38.png',
+  './assets/sprites/tileSprite/2 Objects/7 Decor/Tree1.png',
+  './assets/sprites/tileSprite/2 Objects/9 Bush/1.png',
+  './assets/sprites/tileSprite/2 Objects/9 Bush/2.png',
+  './assets/sprites/tileSprite/2 Objects/9 Bush/3.png',
+  './assets/sprites/tileSprite/2 Objects/9 Bush/4.png',
+  './assets/sprites/tileSprite/2 Objects/4 Stone/7.png',
+  './assets/sprites/tileSprite/2 Objects/4 Stone/8.png',
+  './assets/sprites/tileSprite/2 Objects/5 Grass/1.png',
+  './assets/sprites/tileSprite/2 Objects/5 Grass/2.png',
+  './assets/sprites/tileSprite/2 Objects/5 Grass/3.png',
+  './assets/sprites/tileSprite/2 Objects/5 Grass/4.png',
+  './assets/sprites/tileSprite/2 Objects/5 Grass/5.png',
+  './assets/sprites/tileSprite/2 Objects/5 Grass/6.png',
+  './assets/sprites/tileSprite/2 Objects/6 Flower/1.png',
+  './assets/sprites/tileSprite/2 Objects/6 Flower/2.png',
+  './assets/sprites/tileSprite/2 Objects/6 Flower/3.png',
+  './assets/sprites/tileSprite/2 Objects/6 Flower/4.png',
+  './assets/sprites/tileSprite/2 Objects/6 Flower/5.png',
+  './assets/sprites/tileSprite/2 Objects/6 Flower/6.png',
+  './assets/sprites/tileSprite/2 Objects/6 Flower/7.png',
+  './assets/sprites/tileSprite/2 Objects/6 Flower/8.png',
+  './assets/sprites/tileSprite/2 Objects/6 Flower/9.png',
+  './assets/sprites/tileSprite/2 Objects/6 Flower/10.png',
+  './assets/sprites/tileSprite/2 Objects/6 Flower/11.png',
+  './assets/sprites/tileSprite/2 Objects/6 Flower/12.png',
+  './assets/sprites/tileSprite/2 Objects/7 Decor/Lamp1.png',
+  './assets/sprites/tileSprite/2 Objects/7 Decor/Log1.png',
+  './assets/sprites/tileSprite/3 Animated Objects/2 Campfire/2.png',
+  './assets/sprites/tileSprite/3 Animated Objects/2 Campfire/1.png',
   './assets/interior/Individual/Bedside Table.png',
   './assets/interior/Individual/Book.png',
   './assets/interior/Individual/bookcase.png',
@@ -85,7 +115,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    caches.match(request).then((cachedResponse) => {
+    caches.match(request, { ignoreSearch: true }).then((cachedResponse) => {
       const networkFetch = fetch(request)
         .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
