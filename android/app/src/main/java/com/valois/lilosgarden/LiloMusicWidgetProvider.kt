@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
@@ -16,6 +17,7 @@ import android.os.Bundle
 import android.os.SystemClock
 import android.view.KeyEvent
 import android.widget.RemoteViews
+import org.json.JSONObject
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -79,6 +81,14 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
                 sendMediaKey(context, KeyEvent.KEYCODE_MEDIA_NEXT)
                 refreshAllMusicWidgets(context)
             }
+            ACTION_MUSIC_SWITCH_CAT -> {
+                val prefs = context.getSharedPreferences("lilo_widget_prefs", Context.MODE_PRIVATE)
+                val roster = getWindowCatRoster(prefs)
+                val curIdx = prefs.getInt("music_cat_idx", 0)
+                val nextIdx = (curIdx + 1) % roster.size
+                prefs.edit().putInt("music_cat_idx", nextIdx).apply()
+                refreshAllMusicWidgets(context)
+            }
             "com.spotify.music.metadatachanged", "com.android.music.metadatachanged" -> {
                 val track = intent.getStringExtra("track")
                 val artist = intent.getStringExtra("artist")
@@ -129,8 +139,52 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
         const val ACTION_MUSIC_PLAY_PAUSE = "com.valois.lilosgarden.ACTION_MUSIC_PLAY_PAUSE"
         const val ACTION_MUSIC_PREV = "com.valois.lilosgarden.ACTION_MUSIC_PREV"
         const val ACTION_MUSIC_NEXT = "com.valois.lilosgarden.ACTION_MUSIC_NEXT"
+        const val ACTION_MUSIC_SWITCH_CAT = "com.valois.lilosgarden.ACTION_MUSIC_SWITCH_CAT"
         const val ACTION_MUSIC_REFRESH = "com.valois.lilosgarden.ACTION_MUSIC_REFRESH"
         private const val TOTAL_FRAMES = 12
+
+        data class PeekCatSpec(
+            val id: String,
+            val name: String,
+            val coat: String,
+            val shade: String,
+            val eyeLeft: String,
+            val eyeRight: String,
+            val collar: String?,
+            val pattern: String
+        )
+
+        fun getWindowCatRoster(prefs: SharedPreferences): List<PeekCatSpec> {
+            val list = mutableListOf(
+                PeekCatSpec("lilo", "Lilo", "#ffffff", "#dbe7f5", "#29b6f6", "#29b6f6", "#1e88e5", "solid"),
+                PeekCatSpec("cheeto", "Cheeto", "#ffffff", "#eee8dc", "#ffb300", "#29b6f6", null, "solid")
+            )
+            val jsonStr = prefs.getString("garden_json", null)
+            if (!jsonStr.isNullOrEmpty()) {
+                try {
+                    val obj = JSONObject(jsonStr)
+                    val arr = obj.optJSONArray("companions")
+                    if (arr != null) {
+                        for (i in 0 until arr.length()) {
+                            val c = arr.getJSONObject(i)
+                            list.add(
+                                PeekCatSpec(
+                                    c.optString("id", "cat_$i"),
+                                    c.optString("name", "Mochi"),
+                                    c.optString("coatColor", "#f59e42"),
+                                    c.optString("shadeColor", "#c96f18"),
+                                    c.optString("eyeColor", "#4ade80"),
+                                    c.optString("eyeColorRight", c.optString("eyeColor", "#4ade80")),
+                                    null,
+                                    c.optString("pattern", "solid")
+                                )
+                            )
+                        }
+                    }
+                } catch (_: Exception) {}
+            }
+            return list
+        }
 
         fun hasNotificationAccess(context: Context): Boolean {
             return try {
@@ -171,6 +225,11 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
             try {
                 val hasAccess = hasNotificationAccess(context)
                 val prefs = context.getSharedPreferences("lilo_music_prefs", Context.MODE_PRIVATE)
+                val widgetPrefs = context.getSharedPreferences("lilo_widget_prefs", Context.MODE_PRIVATE)
+                val roster = getWindowCatRoster(widgetPrefs)
+                val catIdx = widgetPrefs.getInt("music_cat_idx", 0) % roster.size
+                val activeCat = roster[catIdx]
+
                 val track = prefs.getString("track_title", prefs.getString("music_title", if (hasAccess) "Cozy Garden Melodies" else "TAP TO LINK SPOTIFY")) ?: "Cozy Garden Melodies"
                 val artist = prefs.getString("artist_name", prefs.getString("music_artist", if (hasAccess) "Lilo & Cheeto Sanctuary" else "Notification Access Required")) ?: "Lilo & Cheeto Sanctuary"
                 val album = prefs.getString("album_name", prefs.getString("music_album", if (hasAccess) "Reunited Forever" else "Settings Permission")) ?: "Reunited Forever"
@@ -183,14 +242,16 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
                 views.removeAllViews(R.id.music_flipper)
                 val frameCount = if (isPlaying) 12 else 1
                 for (f in 0 until frameCount) {
-                    val bmp = renderTurntableFrame(f, isPlaying)
+                    val bmp = renderTurntableFrame(f, isPlaying, activeCat)
                     val frameViews = RemoteViews(context.packageName, R.layout.widget_flipper_frame)
                     frameViews.setImageViewBitmap(R.id.frame_img, bmp)
                     views.addView(R.id.music_flipper, frameViews)
                 }
 
-                // 2. LAYER 2: High-Res Solid Track Typography & Button Sprites (440x236 ARGB_8888, exact 2.0x scale of 220x118)
-                val hudBmp = renderHudBitmap(context, track, artist, album, isPlaying, hasAccess)
+                // 2. LAYER 2: High-Res Solid Track Typography & Button Sprites (scaled to 330x177 ARGB_8888 for safe Binder payload)
+                val rawHudBmp = renderHudBitmap(context, track, artist, album, isPlaying, hasAccess)
+                val hudBmp = Bitmap.createScaledBitmap(rawHudBmp, 330, 177, true)
+                rawHudBmp.recycle()
                 views.setImageViewBitmap(R.id.music_hud_overlay, hudBmp)
 
                 // 3. Hotspots
@@ -236,6 +297,21 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
                     )
                 )
 
+                // Tapping the bottom-left cat area switches active cat
+                val switchIntent = Intent(context, LiloMusicWidgetProvider::class.java).apply {
+                    action = ACTION_MUSIC_SWITCH_CAT
+                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                }
+                views.setOnClickPendingIntent(
+                    R.id.music_btn_switch_cat,
+                    PendingIntent.getBroadcast(
+                        context,
+                        appWidgetId * 100 + 14,
+                        switchIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
+                )
+
                 // Tapping track info or turntable opens Settings (if no access) or Spotify / MainActivity
                 val launchIntent = if (!hasAccess) {
                     Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).apply {
@@ -262,7 +338,7 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
             }
         }
 
-        private fun renderTurntableFrame(frameIdx: Int, isPlaying: Boolean): Bitmap {
+        private fun renderTurntableFrame(frameIdx: Int, isPlaying: Boolean, activeCat: PeekCatSpec): Bitmap {
             val w = 220
             val h = 118
             val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.RGB_565)
@@ -278,85 +354,250 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
             px(0, 0, w, h, "#3b1d0a")
             px(2, 2, w - 4, h - 4, "#532e16")
             px(4, 4, w - 8, h - 8, "#8c5832")
-            px(6, 6, w - 12, h - 12, "#1e1b18") // Dark velvet interior
+            px(6, 6, w - 12, h - 12, "#181412") // Dark cozy interior
 
-            // Turntable Platter (cx = 52, cy = 50, r = 34)
-            val cx = 52f
-            val cy = 50f
-            val r = 34f
-            p.color = Color.parseColor("#18181b") // Vinyl Black
+            // Turntable Deck Bay on Left (x = 8..72, y = 8..66)
+            px(8, 8, 64, 58, "#261c14") // Warm walnut base
+            px(9, 9, 62, 56, "#14100d") // Recessed deck plate
+
+            val cx = 38f
+            val cy = 37f
+            val r = 25f
+
+            // Metallic Platter Bezel
+            p.color = Color.parseColor("#52525b")
+            c.drawCircle(cx, cy, r + 1f, p)
+
+            // Vinyl Record Disc (Black)
+            p.color = Color.parseColor("#18181b")
             c.drawCircle(cx, cy, r, p)
-            p.color = Color.parseColor("#27272a")
-            c.drawCircle(cx, cy, 28f, p)
-            p.color = Color.parseColor("#3f3f46")
-            c.drawCircle(cx, cy, 20f, p)
 
-            // Spinning Vinyl Center Label & Grooves
-            val angle = if (isPlaying) (frameIdx * 30.0 * Math.PI / 180.0) else 0.0
-            p.color = Color.parseColor("#eab308") // Gold label
+            // Vinyl Grooves
+            p.color = Color.parseColor("#27272a")
+            c.drawCircle(cx, cy, 21f, p)
+            p.color = Color.parseColor("#1f1f23")
+            c.drawCircle(cx, cy, 17f, p)
+            p.color = Color.parseColor("#27272a")
+            c.drawCircle(cx, cy, 13f, p)
+            p.color = Color.parseColor("#18181b")
             c.drawCircle(cx, cy, 10f, p)
-            p.color = Color.parseColor("#ca8a04")
+
+            // Gold Center Label
+            p.color = Color.parseColor("#f59e0b")
+            c.drawCircle(cx, cy, 8f, p)
+            p.color = Color.parseColor("#d97706")
             c.drawCircle(cx, cy, 5f, p)
-            p.color = Color.parseColor("#09090b") // Center spindle
+            p.color = Color.parseColor("#09090b") // Spindle hole
             c.drawCircle(cx, cy, 2f, p)
 
-            // Spinning shine dot on vinyl
-            val shineX = cx + (cos(angle) * 16).toFloat()
-            val shineY = cy + (sin(angle) * 16).toFloat()
-            px(shineX.toInt(), shineY.toInt(), 3, 3, "#ffffff")
-
-            // Brass Tone Arm
-            p.color = Color.parseColor("#eab308")
-            p.strokeWidth = 2f
-            c.drawLine(82f, 20f, 62f, 44f, p)
-            px(80, 18, 5, 5, "#ca8a04") // Tone arm base
-
-            // Cats Sitting Underneath the Vinyl on the Left (x < 76):
-            // Lilo at (cx = 36, cy = 104) and Cheeto at (cx = 68, cy = 104)
-            val bobL = if (isPlaying && (frameIdx % 4 in 1..2)) -2 else 0
-            val bobC = if (isPlaying && (frameIdx % 4 in 2..3)) -2 else 0
-
-            // 1. Lilo (cx = 36, cy = 104)
-            val ly = 104 - 18 + bobL
-            px(36 - 5, ly, 3, 4, "#2c1d11") // Left Ear
-            px(36 + 2, ly, 3, 4, "#2c1d11") // Right Ear
-            px(36 - 6, ly + 2, 12, 8, "#ffeedb") // Cream Head
-            px(36 - 4, ly + 4, 8, 5, "#422817") // Mask
+            // Dynamic Vinyl Rotation Shine
             if (isPlaying) {
-                px(36 - 3, ly + 5, 2, 1, "#1e293b")
-                px(36 + 1, ly + 5, 2, 1, "#1e293b")
+                val angle = frameIdx * (Math.PI / 6.0)
+                val shine1X = cx + (cos(angle) * 16.0).toFloat()
+                val shine1Y = cy + (sin(angle) * 16.0).toFloat()
+                px(shine1X.toInt(), shine1Y.toInt(), 2, 2, "#e4e4e7")
+
+                val shine2X = cx - (cos(angle) * 16.0).toFloat()
+                val shine2Y = cy - (sin(angle) * 16.0).toFloat()
+                px(shine2X.toInt(), shine2Y.toInt(), 2, 2, "#a1a1aa")
+
+                // Label spinning notch
+                val notchX = cx + (cos(angle) * 6.0).toFloat()
+                val notchY = cy + (sin(angle) * 6.0).toFloat()
+                px(notchX.toInt(), notchY.toInt(), 1, 1, "#ffffff")
             } else {
-                px(36 - 3, ly + 5, 2, 2, "#38bdf8")
-                px(36 + 1, ly + 5, 2, 2, "#38bdf8")
+                px((cx - 11).toInt(), (cy - 11).toInt(), 2, 2, "#52525b")
+                px((cx + 11).toInt(), (cy + 11).toInt(), 2, 2, "#52525b")
             }
-            px(36 - 7, 104 - 9, 14, 11, "#ffeedb") // Body
 
-            // 2. Cheeto (cx = 68, cy = 104)
-            val cyPos = 104 - 18 + bobC
-            px(68 - 5, cyPos, 3, 4, "#c2410c") // Left Ear
-            px(68 + 2, cyPos, 3, 4, "#c2410c") // Right Ear
-            px(68 - 6, cyPos + 2, 12, 8, "#f97316") // Orange Head
-            px(68 - 2, cyPos + 3, 1, 3, "#c2410c") // Stripes
-            px(68 + 1, cyPos + 3, 1, 3, "#c2410c")
+            // Dynamic Tonearm & Rest Cradle
+            val pivotX = 64f
+            val pivotY = 16f
+
+            // Brass pivot gimbal mount
+            p.color = Color.parseColor("#3b1d0a")
+            c.drawCircle(pivotX, pivotY, 3.5f, p)
+            p.color = Color.parseColor("#ca8a04")
+            c.drawCircle(pivotX, pivotY, 2.5f, p)
+            p.color = Color.parseColor("#fde047")
+            c.drawCircle(pivotX, pivotY, 1f, p)
+
+            // Rest Cradle clip on the deck edge (x = 66, y = 38)
+            px(65, 37, 3, 4, "#ca8a04")
+            px(66, 38, 1, 2, "#181412")
+
             if (isPlaying) {
-                px(68 - 3, cyPos + 5, 2, 1, "#431407")
-                px(68 + 1, cyPos + 5, 2, 1, "#431407")
+                // PLAYING: Tonearm placed on the vinyl grooves!
+                val needleJitter = if (frameIdx % 2 == 0) 0f else 0.5f
+                val needleX = 46f
+                val needleY = 41f + needleJitter
+
+                // Brass Arm
+                p.color = Color.parseColor("#eab308")
+                p.strokeWidth = 1.8f
+                c.drawLine(pivotX, pivotY, needleX, needleY, p)
+                // Highlight
+                p.color = Color.parseColor("#fef08a")
+                p.strokeWidth = 0.8f
+                c.drawLine(pivotX - 0.5f, pivotY - 0.5f, needleX - 0.5f, needleY - 0.5f, p)
+
+                // Headshell Cartridge
+                p.color = Color.parseColor("#18181b")
+                c.drawRect(needleX - 2f, needleY - 2f, needleX + 2f, needleY + 2f, p)
+                // Needle point
+                p.color = Color.parseColor("#fde047")
+                c.drawRect(needleX - 0.5f, needleY + 1f, needleX + 0.5f, needleY + 2.5f, p)
+
+                // Floating Music Notes
+                val notePhase = (frameIdx % 6)
+                val noteY = 28 - notePhase * 4
+                val noteX = 48 + (frameIdx % 4) * 3
+                drawPixelMusicNote(c, p, noteX, noteY, if (frameIdx % 2 == 0) "#c084fc" else "#38bdf8")
             } else {
-                px(68 - 3, cyPos + 5, 2, 2, "#22c55e")
-                px(68 + 1, cyPos + 5, 2, 2, "#22c55e")
-            }
-            px(68 - 7, 104 - 9, 14, 11, "#ea580c") // Body
+                // PAUSED / NOT PLAYING: Tonearm detaches and rests in cradle completely off the vinyl!
+                p.color = Color.parseColor("#ca8a04")
+                p.strokeWidth = 1.8f
+                c.drawLine(pivotX, pivotY, 66f, 38f, p)
+                p.color = Color.parseColor("#fde047")
+                p.strokeWidth = 0.8f
+                c.drawLine(pivotX - 0.5f, pivotY - 0.5f, 65.5f, 38f, p)
 
-            // Floating Music Notes when playing
-            if (isPlaying) {
-                val noteY = 20 + (frameIdx % 6) * -2
-                val noteX = 70 + (frameIdx % 4) * 2
-                px(noteX, noteY, 2, 4, "#c084fc")
-                px(noteX + 2, noteY, 3, 2, "#c084fc")
-                px(noteX + 4, noteY, 2, 4, "#c084fc")
+                // Cartridge in rest
+                p.color = Color.parseColor("#18181b")
+                c.drawRect(65f, 37f, 68f, 41f, p)
             }
+
+            // Wooden Window Sill for Peeking Cat at bottom (y = 112)
+            px(8, 112, 64, 4, "#532e16")
+            px(8, 112, 64, 1, "#8c5832")
+
+            // Peeking Cat Animation (cx = 40, sillY = 112)
+            drawPeekingCat(c, p, cx = 40, sillY = 112, frameIdx = frameIdx, isPlaying = isPlaying, cat = activeCat)
 
             return bmp
+        }
+
+        private fun drawPeekingCat(
+            c: Canvas,
+            p: Paint,
+            cx: Int,
+            sillY: Int,
+            frameIdx: Int,
+            isPlaying: Boolean,
+            cat: PeekCatSpec
+        ) {
+            val bobY = if (isPlaying) {
+                when (frameIdx % 4) {
+                    1 -> -1
+                    2 -> -2
+                    3 -> -1
+                    else -> 0
+                }
+            } else 0
+
+            val earTwitch = if (isPlaying && (frameIdx % 6 == 2)) 1 else 0
+
+            c.save()
+            c.translate(cx.toFloat(), sillY.toFloat())
+            c.scale(2.0f, 2.0f)
+
+            fun r(rx: Int, ry: Int, rw: Int, rh: Int, hex: String) {
+                p.color = Color.parseColor(hex)
+                c.drawRect(rx.toFloat(), ry.toFloat(), (rx + rw).toFloat(), (ry + rh).toFloat(), p)
+            }
+
+            // Upper shoulders peeking just above sill
+            r(-6, -3 + bobY, 12, 4, cat.shade)
+            r(-5, -4 + bobY, 10, 4, cat.coat)
+            if (cat.pattern == "tuxedo") {
+                r(-2, -3 + bobY, 4, 3, "#ffffff")
+            }
+
+            // Collar & Gold Bell (Lilo's royal blue collar)
+            if (cat.collar != null) {
+                r(-4, -3 + bobY, 8, 1, cat.collar)
+                r(-1, -2 + bobY, 2, 2, "#fde047")
+            }
+
+            // Head
+            val hy = -11 + bobY
+            r(-5, hy, 10, 8, cat.coat)
+            r(-4, hy - 1, 8, 1, cat.coat)
+            r(-5, hy + 7, 10, 1, cat.shade)
+
+            // Pointy Ears + Pink Inner Ears
+            r(-5, hy - 3 + earTwitch, 3, 3, cat.coat)
+            r(2, hy - 3, 3, 3, cat.coat)
+            r(-4, hy - 2 + earTwitch, 1, 2, "#ff9ebb")
+            r(3, hy - 2, 1, 2, "#ff9ebb")
+
+            // Forehead Markings (Tabby / Patches / Tuxedo)
+            if (cat.pattern == "tabby") {
+                r(-1, hy - 1, 2, 3, cat.shade)
+                r(-4, hy + 1, 2, 1, cat.shade)
+                r(2, hy + 1, 2, 1, cat.shade)
+            } else if (cat.pattern == "patches") {
+                r(-5, hy - 1, 4, 4, "#e07a2b")
+                r(2, hy, 3, 3, "#374151")
+            } else if (cat.pattern == "tuxedo") {
+                r(-2, hy + 4, 4, 4, "#ffffff")
+            }
+
+            // Eyes:
+            // When playing: happy blissfully closed smiling eyes listening to music!
+            // When paused: curious open eyes looking up towards the vinyl!
+            if (isPlaying) {
+                r(-3, hy + 3, 2, 1, "#1e293b")
+                r(1, hy + 3, 2, 1, "#1e293b")
+            } else {
+                r(-3, hy + 2, 2, 2, cat.eyeLeft)
+                r(1, hy + 2, 2, 2, cat.eyeRight)
+                r(-3, hy + 2, 1, 1, "#ffffff")
+                r(1, hy + 2, 1, 1, "#ffffff")
+            }
+
+            // Pink Nose
+            r(-1, hy + 5, 2, 1, "#ff9ebb")
+
+            // Blushing Cheeks when enjoying music
+            if (isPlaying) {
+                r(-4, hy + 5, 1, 1, "#fda4af")
+                r(3, hy + 5, 1, 1, "#fda4af")
+            }
+
+            // Cute Front Paws Resting Over the Sill (tapping along when playing!)
+            val pawCol = if (cat.pattern == "tuxedo") "#ffffff" else cat.coat
+            val tapLeft = if (isPlaying && (frameIdx % 4 == 1)) -1 else 0
+            val tapRight = if (isPlaying && (frameIdx % 4 == 3)) -1 else 0
+            r(-6, -1 + tapLeft, 3, 3, pawCol)
+            r(-6, 1 + tapLeft, 3, 1, cat.shade)
+            r(3, -1 + tapRight, 3, 3, pawCol)
+            r(3, 1 + tapRight, 3, 1, cat.shade)
+
+            c.restore()
+
+            // Floating Heart or Music Note above Cat when Playing
+            if (isPlaying) {
+                val heartCol = if (cat.id == "cheeto") "#ffb300" else "#fb7185"
+                val rise = (frameIdx % 6) * 2
+                drawPixelHeart(c, p, cx + 12, sillY - 26 - rise, heartCol)
+            }
+        }
+
+        private fun drawPixelMusicNote(c: Canvas, p: Paint, x: Int, y: Int, colHex: String) {
+            p.color = Color.parseColor(colHex)
+            c.drawRect(x.toFloat(), (y + 3).toFloat(), (x + 3).toFloat(), (y + 5).toFloat(), p)
+            c.drawRect((x + 2).toFloat(), y.toFloat(), (x + 3).toFloat(), (y + 4).toFloat(), p)
+            c.drawRect((x + 3).toFloat(), y.toFloat(), (x + 5).toFloat(), (y + 1).toFloat(), p)
+        }
+
+        private fun drawPixelHeart(c: Canvas, p: Paint, x: Int, y: Int, hex: String) {
+            p.color = Color.parseColor(hex)
+            c.drawRect((x - 2).toFloat(), (y - 2).toFloat(), x.toFloat(), y.toFloat(), p)
+            c.drawRect((x + 1).toFloat(), (y - 2).toFloat(), (x + 3).toFloat(), y.toFloat(), p)
+            c.drawRect((x - 3).toFloat(), (y - 1).toFloat(), (x + 4).toFloat(), (y + 1).toFloat(), p)
+            c.drawRect((x - 2).toFloat(), (y + 1).toFloat(), (x + 3).toFloat(), (y + 2).toFloat(), p)
+            c.drawRect((x - 1).toFloat(), (y + 2).toFloat(), (x + 2).toFloat(), (y + 3).toFloat(), p)
         }
 
         private fun renderHudBitmap(

@@ -32,13 +32,28 @@
             android:padding="10dp"
             android:weightSum="100">
 
-            <!-- Left 34%: Vinyl Turntable & Cats -->
-            <FrameLayout
-                android:id="@+id/music_open_app"
+            <!-- Left 34%: Vinyl Turntable (Top 58%) & Peeking Cat (Bottom 42%) -->
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="34"
-                android:background="@android:color/transparent" />
+                android:orientation="vertical"
+                android:weightSum="100">
+
+                <FrameLayout
+                    android:id="@+id/music_open_app"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="58"
+                    android:background="@android:color/transparent" />
+
+                <FrameLayout
+                    android:id="@+id/music_btn_switch_cat"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="42"
+                    android:background="@android:color/transparent" />
+            </LinearLayout>
 
             <!-- Right 66%: Top 64% Track Info Card, Bottom 36% Media Control Buttons -->
             <LinearLayout
