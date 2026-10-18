@@ -12,9 +12,10 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-t
 - **Global Solid Pixel Font**:
   - Imported solid pixel font (`Stardew_Valley.ttf` & `.otf`) applied uniformly across the web application and all 7 Android home screen widgets.
   - Specially tuned typography sizes across the HUD, dialogue badges, and polaroid tribute frames for razor-sharp readability on all screen densities.
-- **PWA v15 Offline Cache**:
-  - Service worker precaching updated to `'lilos-garden-pwa-v15'` bundling all core assets, solid typography, floating dining table Eat button, individual interior furniture sprites (`assets/interior/Individual/*.png`), and all 30 environment tileset sprites with `ignoreSearch: true` for 100% offline playability.
+- **PWA v16 Offline Cache**:
+  - Service worker precaching updated to `'lilos-garden-pwa-v16'` bundling all core assets, solid typography, floating dining table Eat button, individual interior furniture sprites (`assets/interior/Individual/*.png`), and all 30 environment tileset sprites with `ignoreSearch: true` for 100% offline playability.
   - Automatic environment asset restoration on minimize/resume (`areAllSpritesLoaded()`, `restoreEnvironmentOnResume`, `visibilitychange`, `pageshow`, and `focus` listeners) preventing blank tiles when switching apps.
+  - Pixel-perfect WebView integration with un-tainted canvas pixel manipulation and unified viewport scaling matching PWA (`#garden-stage` with bottom dock clearance).
 - **60 FPS Offscreen Canvas Caching**:
   - Pre-renders static scenes (`ensureGardenStaticCache`, `ensureCottageStaticCache`) and dynamic lighting glow sprites (`getFireGlowSprite`, `getLanternGlowSprite`) into offscreen canvases, minimizing draw calls and guaranteeing locked 60 FPS performance on mobile devices.
   - Dirty-checks DOM ticker text updates to completely prevent layout thrashing and reflows.
@@ -177,8 +178,12 @@ All widgets are powered by an animation engine with a **2-Layer Compositor Archi
 1. **Window Widget (`LiloWindowWidgetProvider.kt`)**:
    - Carved wooden window frame looking out onto the garden with dynamic sky backdrops (Day, Sunset, Starry Night, Rain, Clouds).
    - **Live Custom Pixel Clock**: Pixel time rendered with `WidgetFontHelper` directly onto high-res HUD canvas with dark drop shadows, synchronized via `ACTION_TIME_TICK` and exact `AlarmManager` minute ticks.
-   - **Peeking Cat in Bottom-Left Corner** (`cx = 42` at `2.0f` scale) with curious looking, paw-lick grooming, flutter-watching, and peaceful napping.
-   - **Seamless 12-Frame Periodic Cloud Wrap**: Two symmetric cloud pairs spaced 120px apart over a 240px domain advancing by 10px per frame (`12 frames * 10px = 120px` exact period) completely eliminating sawtooth jumps and visual resets.
+   - **4-Stage Lively Peeking Cat Animation Loop (20 Frames, 180x98 RGB_565)**:
+     - `0..4`: Curious look left (`eyeOffsetX = -1`), ear twitch, cute slow blink, look right (`eyeOffsetX = +1`) with tail sway.
+     - `5..9`: Paw-lick grooming (`pawRaiseY`) with happy closed eyes (`^ ^`) and floating pink pixel heart rising above head.
+     - `10..14`: Watching fluttering butterfly (daytime) or glowing golden firefly (nighttime) with playful head bob and wide sparkling eyes tracking across an arc.
+     - `15..19`: Cozy window sill loaf nap with gentle breathing (`breathY`) and floating pixel `Z` drifting upward.
+   - **Seamless 20-Frame Periodic Cloud Wrap**: Two symmetric cloud pairs spaced 120px apart over a 240px domain advancing by 6px per frame (`20 frames * 6px = 120px` exact period) completely eliminating sawtooth jumps and visual resets.
    - Interactive hotspots: Pet cat, switch active cat, toggle weather override, and open app.
 2. **Stardew Companion Widget (`LiloCompanionWidgetProvider.kt`)**:
    - Split-panel Stardew HUD: Left patio sanctuary with velvet cat bed, post-free glowing lantern, and garden bushes; right parchment HUD with live pixel clock rendered using `WidgetFontHelper`, date, and weather badge.
@@ -195,7 +200,8 @@ All widgets are powered by an animation engine with a **2-Layer Compositor Archi
    - Play/pause toggle and reset buttons with exact countdown ticks managed via `AlarmManager`.
    - **Forget-Me-Not Bloom Rewards**: Completing a 25-minute focus session awards **+1 Forget-Me-Not Bloom** (up to 24) synchronized directly to the main garden sanctuary app.
 6. **Cozy Tasks & Sticky Notes Widget (`LiloNotesWidgetProvider.kt`)**:
-   - High-res anti-aliased `520x300` wooden notice board widget (`4x3` cells, `195dp` height) with full-width brown title banner (`RectF(18f, 18f, W - 18f, 54f)`) and upscaled `21f` bold typography.
+   - High-res anti-aliased `520x300` wooden notice board widget (`4x3` cells, `195dp` height) rendered directly onto a single unified canvas, completely eliminating ViewFlipper ratio mismatch and frame overflow.
+   - Full-width brown title banner (`RectF(18f, 18f, W - 18f, 54f)`) with upscaled `21f` bold typography.
    - **Upscaled Task Rows**: Large `26x26` px checkboxes with `3f` stroke border and `24f` bold task text; `+ Tap here to add custom tasks` empty prompt at `22f` bold.
    - **Taller Sticky Note Card (`stickyTop = 182f`)**: Warm `#FEF08A` card with top-center red pin, `"📌 STICKY NOTE:"` label at `16f` bold, and user note text at `24f` bold with automatic 2-line wrapping for long notes.
    - **Individual Row Toggles**: Clickable hotspots (`@+id/notes_row_0`, `@+id/notes_row_1`, `@+id/notes_row_2`) toggle completion of each specific task without auto-resetting all completed tasks.
@@ -203,10 +209,12 @@ All widgets are powered by an animation engine with a **2-Layer Compositor Archi
    - **Two-Way Synchronization**: Toggling tasks on the widget immediately updates `SharedPreferences` and synchronizes back to `world.tasks` in the app's WebView when resumed.
    - System text-share receiver (`ACTION_SEND`, `text/plain`) allowing you to share notes from any Android app directly into your sticky note board, plus clipboard sync.
 7. **Spotify & Media Now-Playing Widget (`LiloMusicWidgetProvider.kt`)**:
-   - Live music companion widget (`4x2` cells, `185dp` height) with 12-frame spinning vinyl record on the upper-left (`cx = 92, cy = 104, r = 64`) and bobbing cats Lilo (`62, 236`) & Cheeto (`114, 236`) seated underneath the vinyl on the left side, completely eliminating overlap with media buttons.
-   - High-res `520x270` HUD with live Track Title (`24f` bold), Artist & Album (`18f` bold), and status badge (`▶ PLAYING` vs `⏸ PAUSED` at `16f` bold).
+   - Live music companion widget (`4x2` cells, `185dp` height) with 12-frame spinning turntable loop rendered at `220x118` `RGB_565` (<620 KB Binder payload) and high-res `440x236` `ARGB_8888` HUD overlay.
+   - Spinning vinyl record on the upper-left (`cx = 52, cy = 50, r = 34`) and bobbing cats Lilo (`36, 104`) & Cheeto (`68, 104`) seated underneath the vinyl on the left side, completely clear of media buttons.
+   - Live Track Title (`21f` bold), Artist & Album (`16f` bold), and status badge (`▶ PLAYING` vs `⏸ PAUSED` at `14f` bold).
    - **Zero-Blinking Media Engine (`LiloMediaListenerService`)**: Replaced periodic polling loops with event-driven notifications; playback state derived strictly from `MediaController.playbackState` and notification actions rather than misleading `isOngoing` flags; update debouncing eliminates 100% of widget blinking, with `last_manual_toggle_ms` protection for responsive button clicks.
    - **Pure Percentage Touch Layout (`lilo_music_widget.xml`)**: 34% left turntable area and 66% right side split into 64% info card and 36% media buttons (`music_btn_prev`, `music_btn_play_pause`, `music_btn_next`), ensuring button clicks never accidentally launch the app.
+   - **Zero ActionException Risk**: Eliminated all unsupported `ViewFlipper` remote calls (`setAutoStart`, `stopFlipping`, `startFlipping`) preventing launcher crashes.
    - Notification listener access detection with a prominent **"TAP TO LINK SPOTIFY"** prompt that directly routes to Android settings if permission is missing.
 
 ---

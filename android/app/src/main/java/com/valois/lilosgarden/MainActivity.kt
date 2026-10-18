@@ -193,20 +193,25 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun configureWebView() {
-        val settings = webView.settings
-        settings.javaScriptEnabled = true
-        settings.domStorageEnabled = true
-        settings.databaseEnabled = true
-        settings.allowFileAccess = true
-        settings.allowContentAccess = true
-        settings.mediaPlaybackRequiresUserGesture = false
-        settings.cacheMode = WebSettings.LOAD_NO_CACHE
+        webView.settings.apply {
+            javaScriptEnabled = true
+            domStorageEnabled = true
+            databaseEnabled = true
+            allowFileAccess = true
+            allowContentAccess = true
+            @Suppress("DEPRECATION")
+            allowFileAccessFromFileURLs = true
+            @Suppress("DEPRECATION")
+            allowUniversalAccessFromFileURLs = true
+            mediaPlaybackRequiresUserGesture = false
+            cacheMode = WebSettings.LOAD_NO_CACHE
+            useWideViewPort = true
+            loadWithOverviewMode = true
+            setSupportZoom(true)
+            builtInZoomControls = false
+            displayZoomControls = false
+        }
         webView.clearCache(true)
-        settings.useWideViewPort = true
-        settings.loadWithOverviewMode = true
-        settings.setSupportZoom(true)
-        settings.builtInZoomControls = false
-        settings.displayZoomControls = false
 
         webView.addJavascriptInterface(AndroidBridge(this), "AndroidBridge")
 

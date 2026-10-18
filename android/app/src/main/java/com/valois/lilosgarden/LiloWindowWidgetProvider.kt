@@ -101,7 +101,7 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
         const val ACTION_WIN_WEATHER = "com.valois.lilosgarden.ACTION_WIN_WEATHER"
         const val ACTION_WIN_TICK = "com.valois.lilosgarden.ACTION_WIN_TICK"
 
-        private const val TOTAL_FRAMES = 12
+        private const val TOTAL_FRAMES = 20
 
         data class PeekCatSpec(
             val id: String,
@@ -274,9 +274,9 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
 
                 val pixelFont = WidgetFontHelper.loadPixelTypeface(context)
 
-                // LAYER 2: High-Res Solid Typography Overlay (400x240 ARGB_8888, 1 single bitmap)
-                val hudBmp = Bitmap.createBitmap(400, 240, Bitmap.Config.ARGB_8888)
-                val hudCanvas = Canvas(hudBmp)
+                // LAYER 2: High-Res Solid Typography Overlay (300x180 ARGB_8888, 1 single bitmap, ~216 KB)
+                val rawHudBmp = Bitmap.createBitmap(400, 240, Bitmap.Config.ARGB_8888)
+                val hudCanvas = Canvas(rawHudBmp)
                 val tp = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                     typeface = pixelFont
                     isFakeBoldText = true
@@ -307,6 +307,8 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
                 tp.color = Color.parseColor("#ffefc7")
                 hudCanvas.drawText("${activeCat.name} (${catIdx + 1}/${roster.size})", 24f, 222f, tp)
 
+                val hudBmp = Bitmap.createScaledBitmap(rawHudBmp, 300, 180, true)
+                rawHudBmp.recycle()
                 views.setImageViewBitmap(R.id.win_hud_overlay, hudBmp)
 
                 // If this is just a 1-minute clock tick and the phase hasn't changed, partially update ONLY the HUD overlay!
@@ -462,7 +464,7 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
                 px(129, 57 + sunBob, 14, 12, "#fef08a")
             }
 
-            // Seamless 12-frame cloud wrap: 12 frames * 10px = 120px (exact distance between cloud pairs!)
+            // Seamless 20-frame cloud wrap: 20 frames * 6px = 120px (exact distance between cloud pairs!)
             if (!isNight || isRain || isCloudy) {
                 val cCol = when {
                     isRain -> "#64748b"
@@ -471,7 +473,7 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
                     else -> "#f0f9ff"
                 }
                 val cShade = if (isRain) "#475569" else if (isCloudy) "#cbd5e1" else null
-                val shift = frame * 10
+                val shift = frame * 6
                 for (pair in 0..2) {
                     val baseX = pair * 120 + shift
                     val cxTop = (baseX % 240) - 32
@@ -561,14 +563,15 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
             px(4, h - 6, 2, 2, "#fde047")
             px(w - 6, h - 6, 2, 2, "#fde047")
 
-            // 6. PEEKING CAT IN BOTTOM-LEFT WINDOW CORNER (cx = 42, scale = 2.0f, 64-Frame Rich Routine)
+            // 6. PEEKING CAT IN BOTTOM-LEFT WINDOW CORNER (cx = 42, scale = 2.0f, 20-Frame 4-Pose Routine)
             drawPeekingCatHeadAndPaws(
                 c, p,
                 cx = 42,
                 sillY = 94,
                 frame = frame,
                 cat = activeCat,
-                isPetted = isPetted
+                isPetted = isPetted,
+                isNight = isNight
             )
 
             // 7. COMPACT PIXEL SWITCH-CAT ICON BUTTON ON RIGHT SIDE OF SILL
@@ -580,7 +583,12 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
             px(swX + 1, swY + 14, 17, 2, "#9c5a2d")
             drawPixelSwitchIcon(c, p, swX + 5, swY + 5, "#3b1d0a")
 
-            return bmp
+            // Scale to 180x98 RGB_565 (20 frames = 705 KB, 100% safe for Binder!)
+            val scaledBmp = Bitmap.createBitmap(180, 98, Bitmap.Config.RGB_565)
+            val scCanvas = Canvas(scaledBmp)
+            scCanvas.drawBitmap(bmp, Rect(0, 0, w, h), Rect(0, 0, 180, 98), Paint(Paint.FILTER_BITMAP_FLAG))
+            bmp.recycle()
+            return scaledBmp
         }
 
         private fun drawPeekingCatHeadAndPaws(
@@ -590,28 +598,30 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
             sillY: Int,
             frame: Int,
             cat: PeekCatSpec,
-            isPetted: Boolean
+            isPetted: Boolean,
+            isNight: Boolean
         ) {
-            // 4-Stage 64-Frame Routine:
-            // 0..19: Curious Look Left/Right
-            // 20..35: Grooming Paw Lick + Blush
-            // 36..51: Excited Bob Watching Butterfly/Firefly + Floating Heart
-            // 52..63: Cozy Sill Rest & Slow Blink
-            val isGroomingStage = frame in 20..35
-            val isExcitedStage = frame in 36..51
-            val isRestingStage = frame in 52..63
+            // 4-Stage 20-Frame Routine (frame = 0..19):
+            // 0..4: Curious Look Left / Blink / Look Right
+            // 5..9: Paw-Lick Grooming + Floating Heart
+            // 10..14: Watching Fluttering Butterfly / Glowing Firefly
+            // 15..19: Cozy Window Sill Loaf Nap + Floating Z
+            val isCuriousStage = frame in 0..4
+            val isGroomingStage = frame in 5..9
+            val isCritterStage = frame in 10..14
+            val isLoafStage = frame in 15..19
 
             val bobY = when {
-                isExcitedStage -> if (frame % 2 == 0) -1 else 0
-                isRestingStage -> 1
-                isGroomingStage -> if ((frame / 2) % 2 == 1) 1 else 0
-                else -> if ((frame / 4) % 2 == 1) -1 else 0
+                isCritterStage -> if (frame % 2 == 0) -1 else 0
+                isLoafStage -> if (frame % 2 == 0) 0 else 1
+                isGroomingStage -> if (frame % 2 == 0) 0 else 1
+                else -> 0
             }
 
             val eyeShiftX = when {
-                frame in 4..9 -> -1
-                frame in 12..17 -> 1
-                isExcitedStage -> 1
+                frame in 0..1 -> -1
+                frame in 3..4 -> 1
+                isCritterStage -> 1
                 else -> 0
             }
 
@@ -624,8 +634,13 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
                 c.drawRect(rx.toFloat(), ry.toFloat(), (rx + rw).toFloat(), (ry + rh).toFloat(), p)
             }
 
-            r(-6, -3 + bobY, 12, 4, cat.shade)
-            r(-5, -4 + bobY, 10, 4, cat.coat)
+            if (isLoafStage) {
+                r(-6, -2 + bobY, 12, 3, cat.shade)
+                r(-5, -3 + bobY, 10, 3, cat.coat)
+            } else {
+                r(-6, -3 + bobY, 12, 4, cat.shade)
+                r(-5, -4 + bobY, 10, 4, cat.coat)
+            }
             if (cat.pattern == "tuxedo") {
                 r(-2, -3 + bobY, 4, 3, "#ffffff")
             }
@@ -640,8 +655,8 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
             r(-4, hy - 1, 8, 1, cat.coat)
             r(-5, hy + 7, 10, 1, cat.shade)
 
-            val earLeftTwitch = if (frame == 6 || frame == 25 || frame == 42) 1 else 0
-            val earRightTwitch = if (frame == 14 || frame == 39) 1 else 0
+            val earLeftTwitch = if (frame == 1) 1 else 0
+            val earRightTwitch = if (frame == 1) 1 else 0
             r(-5, hy - 3 + earLeftTwitch, 3, 3, cat.coat)
             r(2, hy - 3 + earRightTwitch, 3, 3, cat.coat)
             r(-4, hy - 2 + earLeftTwitch, 1, 2, "#ff9ebb")
@@ -658,10 +673,7 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
                 r(-2, hy + 4, 4, 4, "#ffffff")
             }
 
-            val isBlinking = isPetted ||
-                frame in intArrayOf(10, 18, 34, 46) ||
-                (isGroomingStage && frame % 4 < 2) ||
-                (isRestingStage && frame >= 56)
+            val isBlinking = isPetted || frame == 2 || isGroomingStage || isLoafStage
 
             if (isBlinking) {
                 r(-3, hy + 3, 2, 1, "#334155")
@@ -674,31 +686,72 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
             }
 
             r(-1, hy + 5, 2, 1, "#ff9ebb")
-            if (isPetted || isGroomingStage || isExcitedStage) {
+            if (isPetted || isGroomingStage || isCritterStage) {
                 r(-4, hy + 5, 1, 1, "#fda4af")
                 r(3, hy + 5, 1, 1, "#fda4af")
             }
 
             val pawCol = if (cat.pattern == "tuxedo") "#ffffff" else cat.coat
-            r(-6, -1, 3, 3, pawCol)
-            r(-6, 1, 3, 1, cat.shade)
-
-            // Right paw raises to cheek during grooming stage!
-            if (isGroomingStage && (frame % 4 == 1 || frame % 4 == 2)) {
-                r(3, hy + 4, 3, 3, pawCol)
-                r(4, hy + 5, 1, 1, "#ff9ebb")
+            if (isLoafStage) {
+                r(-5, 0, 10, 2, pawCol)
+                r(-5, 1, 10, 1, cat.shade)
+            } else if (isGroomingStage) {
+                r(-6, -1, 3, 3, pawCol)
+                r(-6, 1, 3, 1, cat.shade)
+                val pawRaiseY = if (frame % 2 == 0) -2 else 0
+                r(3, hy + 6 + pawRaiseY, 3, 3, pawCol)
+                r(4, hy + 7 + pawRaiseY, 1, 1, "#ff9ebb")
             } else {
+                r(-6, -1, 3, 3, pawCol)
+                r(-6, 1, 3, 1, cat.shade)
                 r(3, -1, 3, 3, pawCol)
                 r(3, 1, 3, 1, cat.shade)
             }
 
+            if (frame in 3..4) {
+                val tailY = if (frame == 3) -5 else -7
+                r(6, tailY, 2, 4, cat.coat)
+                r(7, tailY - 1, 2, 2, cat.shade)
+            }
+
             c.restore()
 
-            if (isPetted || isExcitedStage) {
+            if (isPetted || isGroomingStage) {
                 val heartCol = if (cat.id == "cheeto") "#ffb300" else "#fb7185"
-                val rise = (frame % 8) * 2
-                drawPixelHeart(c, p, cx, sillY - 26 - rise, heartCol)
+                val heartRise = if (isGroomingStage) (frame - 5) * 2 else ((frame % 5) * 2)
+                drawPixelHeart(c, p, cx + 14, sillY - 22 - heartRise, heartCol)
             }
+
+            if (isCritterStage) {
+                val critterX = cx + 10 + (frame - 10) * 5
+                val critterY = sillY - 18 + ((frame % 2) * 3)
+                p.color = Color.parseColor(if (isNight) "#fde047" else "#f472b6")
+                if (isNight) {
+                    c.drawRect(critterX.toFloat(), critterY.toFloat(), (critterX + 2).toFloat(), (critterY + 2).toFloat(), p)
+                    p.color = Color.parseColor("#fef08a")
+                    c.drawRect((critterX - 1).toFloat(), critterY.toFloat(), critterX.toFloat(), (critterY + 2).toFloat(), p)
+                } else {
+                    val wingW = if (frame % 2 == 0) 3 else 1
+                    c.drawRect(critterX.toFloat(), critterY.toFloat(), (critterX + wingW).toFloat(), (critterY + 2).toFloat(), p)
+                    p.color = Color.parseColor("#f9a8d4")
+                    val wingTipX = critterX + (if (frame % 2 == 0) 1 else 0)
+                    c.drawRect(wingTipX.toFloat(), (critterY - 1).toFloat(), (wingTipX + 1).toFloat(), critterY.toFloat(), p)
+                }
+            }
+
+            if (isLoafStage) {
+                val zX = cx + 12 + (frame - 15)
+                val zY = sillY - 20 - (frame - 15) * 2
+                drawPixelZ(c, p, zX, zY, "#93c5fd")
+            }
+        }
+
+        private fun drawPixelZ(c: Canvas, p: Paint, x: Int, y: Int, hex: String) {
+            p.color = Color.parseColor(hex)
+            c.drawRect((x - 2).toFloat(), (y - 2).toFloat(), (x + 3).toFloat(), (y - 1).toFloat(), p)
+            c.drawRect((x + 1).toFloat(), (y - 1).toFloat(), (x + 2).toFloat(), y.toFloat(), p)
+            c.drawRect(x.toFloat(), y.toFloat(), (x + 1).toFloat(), (y + 1).toFloat(), p)
+            c.drawRect((x - 2).toFloat(), (y + 1).toFloat(), (x + 3).toFloat(), (y + 2).toFloat(), p)
         }
 
         private fun drawWeatherIconSunny(c: Canvas, p: Paint, x: Int, y: Int) {

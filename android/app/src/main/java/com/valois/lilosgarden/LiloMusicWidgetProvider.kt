@@ -178,26 +178,19 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
 
                 val views = RemoteViews(context.packageName, R.layout.lilo_music_widget)
 
-                // 1. LAYER 1: If playing, 12-Frame Spinning Turntable & Bobbing Cats (260x135 RGB_565). If paused, exactly 1 static frame!
+                // 1. LAYER 1: 12 frames (playing) or 1 frame (paused) at 220x118 RGB_565 (< 620 KB Binder memory)
+                // NO setAutoStart, stopFlipping, or startFlipping calls on RemoteViews to prevent launcher ActionException!
                 views.removeAllViews(R.id.music_flipper)
-                if (isPlaying) {
-                    views.setBoolean(R.id.music_flipper, "setAutoStart", true)
-                    for (f in 0 until TOTAL_FRAMES) {
-                        val frameBmp = renderMusicFrame(f, true)
-                        val frameView = RemoteViews(context.packageName, R.layout.widget_flipper_frame)
-                        frameView.setImageViewBitmap(R.id.frame_img, frameBmp)
-                        views.addView(R.id.music_flipper, frameView)
-                    }
-                } else {
-                    views.setBoolean(R.id.music_flipper, "setAutoStart", false)
-                    val frameBmp = renderMusicFrame(0, false)
-                    val frameView = RemoteViews(context.packageName, R.layout.widget_flipper_frame)
-                    frameView.setImageViewBitmap(R.id.frame_img, frameBmp)
-                    views.addView(R.id.music_flipper, frameView)
+                val frameCount = if (isPlaying) 12 else 1
+                for (f in 0 until frameCount) {
+                    val bmp = renderTurntableFrame(f, isPlaying)
+                    val frameViews = RemoteViews(context.packageName, R.layout.widget_flipper_frame)
+                    frameViews.setImageViewBitmap(R.id.frame_img, bmp)
+                    views.addView(R.id.music_flipper, frameViews)
                 }
 
-                // 2. LAYER 2: High-Res Solid Track Typography & Button Sprites (520x270 ARGB_8888)
-                val hudBmp = renderMusicHud(context, track, artist, album, isPlaying, hasAccess)
+                // 2. LAYER 2: High-Res Solid Track Typography & Button Sprites (440x236 ARGB_8888, exact 2.0x scale of 220x118)
+                val hudBmp = renderHudBitmap(context, track, artist, album, isPlaying, hasAccess)
                 views.setImageViewBitmap(R.id.music_hud_overlay, hudBmp)
 
                 // 3. Hotspots
@@ -264,120 +257,109 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
                 views.setOnClickPendingIntent(R.id.music_open_app, launchPending)
 
                 appWidgetManager.updateAppWidget(appWidgetId, views)
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
 
-        private fun renderMusicFrame(frameIdx: Int, isPlaying: Boolean): Bitmap {
-            val w = 260
-            val h = 135
+        private fun renderTurntableFrame(frameIdx: Int, isPlaying: Boolean): Bitmap {
+            val w = 220
+            val h = 118
             val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.RGB_565)
             val c = Canvas(bmp)
             val p = Paint().apply { isAntiAlias = true }
-            c.scale(w / 520f, h / 270f)
 
             fun px(x: Int, y: Int, rw: Int, rh: Int, colHex: String) {
                 p.color = Color.parseColor(colHex)
                 c.drawRect(x.toFloat(), y.toFloat(), (x + rw).toFloat(), (y + rh).toFloat(), p)
             }
 
-            // Stardew Wooden Frame
-            px(0, 0, 520, 270, "#3b1d0a")
-            px(4, 4, 512, 262, "#532e16")
-            px(10, 10, 500, 250, "#8c5832")
-            px(14, 14, 492, 242, "#1e1b18") // Dark velvet interior
+            // Stardew Wooden Frame (220 x 118)
+            px(0, 0, w, h, "#3b1d0a")
+            px(2, 2, w - 4, h - 4, "#532e16")
+            px(4, 4, w - 8, h - 8, "#8c5832")
+            px(6, 6, w - 12, h - 12, "#1e1b18") // Dark velvet interior
 
-            // Turntable Platter (upper-left: cx = 92, cy = 104, r = 64)
-            val cx = 92f
-            val cy = 104f
-            val r = 64f
+            // Turntable Platter (cx = 52, cy = 50, r = 34)
+            val cx = 52f
+            val cy = 50f
+            val r = 34f
             p.color = Color.parseColor("#18181b") // Vinyl Black
             c.drawCircle(cx, cy, r, p)
             p.color = Color.parseColor("#27272a")
-            c.drawCircle(cx, cy, 52f, p)
+            c.drawCircle(cx, cy, 28f, p)
             p.color = Color.parseColor("#3f3f46")
-            c.drawCircle(cx, cy, 38f, p)
+            c.drawCircle(cx, cy, 20f, p)
 
             // Spinning Vinyl Center Label & Grooves
             val angle = if (isPlaying) (frameIdx * 30.0 * Math.PI / 180.0) else 0.0
             p.color = Color.parseColor("#eab308") // Gold label
-            c.drawCircle(cx, cy, 20f, p)
-            p.color = Color.parseColor("#ca8a04")
             c.drawCircle(cx, cy, 10f, p)
+            p.color = Color.parseColor("#ca8a04")
+            c.drawCircle(cx, cy, 5f, p)
             p.color = Color.parseColor("#09090b") // Center spindle
-            c.drawCircle(cx, cy, 4f, p)
+            c.drawCircle(cx, cy, 2f, p)
 
             // Spinning shine dot on vinyl
-            val shineX = cx + (cos(angle) * 32).toFloat()
-            val shineY = cy + (sin(angle) * 32).toFloat()
-            px((shineX - 2).toInt(), (shineY - 2).toInt(), 5, 5, "#ffffff")
+            val shineX = cx + (cos(angle) * 16).toFloat()
+            val shineY = cy + (sin(angle) * 16).toFloat()
+            px(shineX.toInt(), shineY.toInt(), 3, 3, "#ffffff")
 
             // Brass Tone Arm
             p.color = Color.parseColor("#eab308")
-            p.strokeWidth = 3f
-            c.drawLine(156f, 42f, (cx + 22).toFloat(), (cy - 12).toFloat(), p)
-            px(152, 38, 9, 9, "#ca8a04") // Tone arm base
+            p.strokeWidth = 2f
+            c.drawLine(82f, 20f, 62f, 44f, p)
+            px(80, 18, 5, 5, "#ca8a04") // Tone arm base
 
-            // Cats Sitting Underneath the Vinyl on the Left: Lilo (cx = 62, cy = 236) & Cheeto (cx = 114, cy = 236)
-            val bobL = if (isPlaying && (frameIdx % 4 in 1..2)) -3 else 0
+            // Cats Sitting Underneath the Vinyl on the Left (x < 76):
+            // Lilo at (cx = 36, cy = 104) and Cheeto at (cx = 68, cy = 104)
+            val bobL = if (isPlaying && (frameIdx % 4 in 1..2)) -2 else 0
+            val bobC = if (isPlaying && (frameIdx % 4 in 2..3)) -2 else 0
 
-            // 1. Lilo (cx = 62, cy = 236)
-            val lx = 62
-            val ly = 236 + bobL
-            // Ears
-            px(lx - 10, ly - 28, 6, 9, "#2c1d11")
-            px(lx + 4, ly - 28, 6, 9, "#2c1d11")
-            // Cream Head
-            px(lx - 11, ly - 22, 22, 17, "#ffeedb")
-            // Mask
-            px(lx - 7, ly - 18, 14, 10, "#422817")
-            // Eyes
+            // 1. Lilo (cx = 36, cy = 104)
+            val ly = 104 - 18 + bobL
+            px(36 - 5, ly, 3, 4, "#2c1d11") // Left Ear
+            px(36 + 2, ly, 3, 4, "#2c1d11") // Right Ear
+            px(36 - 6, ly + 2, 12, 8, "#ffeedb") // Cream Head
+            px(36 - 4, ly + 4, 8, 5, "#422817") // Mask
             if (isPlaying) {
-                px(lx - 5, ly - 14, 3, 2, "#1e293b")
-                px(lx + 2, ly - 14, 3, 2, "#1e293b")
+                px(36 - 3, ly + 5, 2, 1, "#1e293b")
+                px(36 + 1, ly + 5, 2, 1, "#1e293b")
             } else {
-                px(lx - 5, ly - 15, 4, 4, "#38bdf8")
-                px(lx + 1, ly - 15, 4, 4, "#38bdf8")
+                px(36 - 3, ly + 5, 2, 2, "#38bdf8")
+                px(36 + 1, ly + 5, 2, 2, "#38bdf8")
             }
-            // Body
-            px(lx - 14, ly - 5, 28, 26, "#ffeedb")
+            px(36 - 7, 104 - 9, 14, 11, "#ffeedb") // Body
 
-            // 2. Cheeto (cx = 114, cy = 236)
-            val bobC = if (isPlaying && (frameIdx % 4 in 2..3)) -3 else 0
-            val cx2 = 114
-            val cy2 = 236 + bobC
-            // Ears
-            px(cx2 - 10, cy2 - 28, 6, 9, "#c2410c")
-            px(cx2 + 4, cy2 - 28, 6, 9, "#c2410c")
-            // Orange Head
-            px(cx2 - 11, cy2 - 22, 22, 17, "#f97316")
-            // Stripes
-            px(cx2 - 4, cy2 - 20, 2, 6, "#c2410c")
-            px(cx2, cy2 - 20, 2, 6, "#c2410c")
-            px(cx2 + 4, cy2 - 20, 2, 6, "#c2410c")
-            // Eyes
+            // 2. Cheeto (cx = 68, cy = 104)
+            val cyPos = 104 - 18 + bobC
+            px(68 - 5, cyPos, 3, 4, "#c2410c") // Left Ear
+            px(68 + 2, cyPos, 3, 4, "#c2410c") // Right Ear
+            px(68 - 6, cyPos + 2, 12, 8, "#f97316") // Orange Head
+            px(68 - 2, cyPos + 3, 1, 3, "#c2410c") // Stripes
+            px(68 + 1, cyPos + 3, 1, 3, "#c2410c")
             if (isPlaying) {
-                px(cx2 - 5, cy2 - 14, 3, 2, "#431407")
-                px(cx2 + 2, cy2 - 14, 3, 2, "#431407")
+                px(68 - 3, cyPos + 5, 2, 1, "#431407")
+                px(68 + 1, cyPos + 5, 2, 1, "#431407")
             } else {
-                px(cx2 - 5, cy2 - 15, 4, 4, "#22c55e") // Green eyes
-                px(cx2 + 1, cy2 - 15, 4, 4, "#22c55e")
+                px(68 - 3, cyPos + 5, 2, 2, "#22c55e")
+                px(68 + 1, cyPos + 5, 2, 2, "#22c55e")
             }
-            // Body
-            px(cx2 - 14, cy2 - 5, 28, 26, "#ea580c")
+            px(68 - 7, 104 - 9, 14, 11, "#ea580c") // Body
 
             // Floating Music Notes when playing
             if (isPlaying) {
-                val noteY = 40 + (frameIdx % 6) * -4
-                val noteX = 140 + (frameIdx % 4) * 4
-                px(noteX, noteY, 4, 8, "#c084fc")
-                px(noteX + 4, noteY, 6, 4, "#c084fc")
-                px(noteX + 10, noteY, 4, 10, "#c084fc")
+                val noteY = 20 + (frameIdx % 6) * -2
+                val noteX = 70 + (frameIdx % 4) * 2
+                px(noteX, noteY, 2, 4, "#c084fc")
+                px(noteX + 2, noteY, 3, 2, "#c084fc")
+                px(noteX + 4, noteY, 2, 4, "#c084fc")
             }
 
             return bmp
         }
 
-        private fun renderMusicHud(
+        private fun renderHudBitmap(
             context: Context,
             track: String,
             artist: String,
@@ -385,8 +367,8 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
             isPlaying: Boolean,
             hasAccess: Boolean
         ): Bitmap {
-            val w = 520
-            val h = 270
+            val w = 440
+            val h = 236
             val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
             val c = Canvas(bmp)
             val font = loadPixelTypeface(context)
@@ -397,105 +379,108 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
                 isSubpixelText = true
             }
 
-            // Right Area: Music Information Card (x = 206..502, y = 14..156)
+            // Right Area: Music Information Card (RectF(152f, 18f, 422f, 146f))
             p.color = Color.parseColor("#3b1d0a")
-            c.drawRect(206f, 14f, 502f, 158f, p)
+            c.drawRect(152f, 18f, 422f, 146f, p)
             p.color = Color.parseColor("#532e16")
-            c.drawRect(208f, 16f, 500f, 156f, p)
+            c.drawRect(154f, 20f, 420f, 144f, p)
             p.color = Color.parseColor("#ffefc7") // Warm parchment card
-            c.drawRect(210f, 18f, 498f, 154f, p)
+            c.drawRect(156f, 22f, 418f, 142f, p)
 
             if (!hasAccess) {
-                // Header Tag: "CONNECT SPOTIFY"
+                // Amber pill badge: "CONNECT SPOTIFY"
                 p.color = Color.parseColor("#b45309")
-                c.drawRect(218f, 24f, 386f, 44f, p)
+                c.drawRect(162f, 26f, 286f, 44f, p)
                 p.color = Color.parseColor("#ffffff")
-                p.textSize = 14f
+                p.textSize = 12f
                 p.textAlign = Paint.Align.LEFT
-                c.drawText("CONNECT SPOTIFY", 226f, 40f, p)
+                c.drawText("CONNECT SPOTIFY", 168f, 40f, p)
 
                 // Bold Prompt: "TAP TO LINK SPOTIFY" @ 20f bold
                 p.textSize = 20f
                 p.color = Color.parseColor("#3b1d0a")
-                c.drawText("TAP TO LINK SPOTIFY", 218f, 78f, p)
+                c.drawText("TAP TO LINK SPOTIFY", 162f, 74f, p)
 
                 // Subtitle
                 p.textSize = 14f
                 p.color = Color.parseColor("#8f4d22")
-                c.drawText("Notification access needed for live track sync", 218f, 108f, p)
+                c.drawText("Tap card to open settings \u2192", 162f, 102f, p)
 
-                // Status label
+                // Status
                 p.textSize = 14f
                 p.color = Color.parseColor("#b45309")
-                c.drawText("Tap card to enable in Settings \u2192", 218f, 136f, p)
+                c.drawText("Notification access needed", 162f, 130f, p)
             } else {
-                // Header Tag: "SPOTIFY / LIVE"
+                // Green pill badge: "SPOTIFY LIVE" (RectF(162f, 26f, 276f, 44f)), text 12f bold white
                 p.color = Color.parseColor("#15803d")
-                c.drawRect(218f, 24f, 370f, 44f, p)
+                c.drawRect(162f, 26f, 276f, 44f, p)
                 p.color = Color.parseColor("#ffffff")
-                p.textSize = 14f
+                p.textSize = 12f
                 p.textAlign = Paint.Align.LEFT
-                c.drawText("SPOTIFY LIVE", 226f, 40f, p)
+                c.drawText("SPOTIFY LIVE", 168f, 40f, p)
 
-                // Track Title @ 24f bold (#3B1D0A)
-                p.textSize = 24f
+                // Track Title at (162f, 74f) in 21f bold Stardew_Valley.ttf (#3B1D0A, max 20 chars)
+                p.textSize = 21f
                 p.color = Color.parseColor("#3b1d0a")
                 val truncatedTrack = truncate(track, 20)
-                c.drawText(truncatedTrack, 218f, 78f, p)
+                c.drawText(truncatedTrack, 162f, 74f, p)
 
-                // Artist & Album @ 18f bold (#6E3F1D)
-                p.textSize = 18f
+                // Artist & Album at (162f, 102f) in 15f bold (#6E3F1D)
+                p.textSize = 15f
                 p.color = Color.parseColor("#6e3f1d")
                 val artistAlbumStr = if (album.isNotBlank()) "$artist - $album" else artist
                 val truncatedArtist = truncate(artistAlbumStr, 26)
-                c.drawText(truncatedArtist, 218f, 108f, p)
+                c.drawText(truncatedArtist, 162f, 102f, p)
 
-                // Status Badge @ 16f bold (PLAYING in emerald #15803D or PAUSED in amber #B45309)
-                p.textSize = 16f
+                // Status text at (162f, 130f) in 15f bold: "▶ PLAYING" (#15803D) if isPlaying else "⏸ PAUSED" (#B45309)
+                p.textSize = 15f
                 p.color = if (isPlaying) Color.parseColor("#15803d") else Color.parseColor("#b45309")
                 val badgeText = if (isPlaying) "\u25B6 PLAYING" else "\u23F8 PAUSED"
-                c.drawText(badgeText, 218f, 136f, p)
+                c.drawText(badgeText, 162f, 130f, p)
             }
 
-            // 3 Oversized Tactile Stardew Buttons (90x52 px each, icons @ 24f bold)
-            // Button 1: Previous (x = 210..300, y = 174..226)
-            drawPixelMediaButton(c, 210f, 174f, 90f, 52f, "|<<", p, isHighlight = false)
+            // 3 Tactile Media Control Buttons on bottom-right (y = 158f..214f)
+            // Button 1: Previous (RectF(152f, 158f, 234f, 214f))
+            drawPixelMediaButton(c, 152f, 158f, 234f, 214f, "|<<", p, isHighlight = false)
 
-            // Button 2: Play / Pause (x = 308..398, y = 174..226)
+            // Button 2: Play / Pause (RectF(244f, 158f, 330f, 214f))
             val playIcon = if (isPlaying) "||" else "\u25B6"
-            drawPixelMediaButton(c, 308f, 174f, 90f, 52f, playIcon, p, isHighlight = true)
+            drawPixelMediaButton(c, 244f, 158f, 330f, 214f, playIcon, p, isHighlight = true)
 
-            // Button 3: Next (x = 406..496, y = 174..226)
-            drawPixelMediaButton(c, 406f, 174f, 90f, 52f, ">>|", p, isHighlight = false)
+            // Button 3: Next (RectF(340f, 158f, 422f, 214f))
+            drawPixelMediaButton(c, 340f, 158f, 422f, 214f, ">>|", p, isHighlight = false)
 
             return bmp
         }
 
         private fun drawPixelMediaButton(
             c: Canvas,
-            x: Float,
-            y: Float,
-            w: Float,
-            h: Float,
+            left: Float,
+            top: Float,
+            right: Float,
+            bottom: Float,
             label: String,
             p: Paint,
             isHighlight: Boolean = false
         ) {
+            val w = right - left
+            val h = bottom - top
+
             // Button border
             p.color = Color.parseColor("#3b1d0a")
-            c.drawRect(x, y, x + w, y + h, p)
+            c.drawRect(left, top, right, bottom, p)
 
             // Button gradient fill
             p.color = if (isHighlight) Color.parseColor("#68b82e") else Color.parseColor("#ffe08a")
-            c.drawRect(x + 2f, y + 2f, x + w - 2f, y + h - 2f, p)
+            c.drawRect(left + 2f, top + 2f, right - 2f, bottom - 2f, p)
             p.color = if (isHighlight) Color.parseColor("#3d7a14") else Color.parseColor("#dca03a")
-            c.drawRect(x + 2f, y + h / 2f, x + w - 2f, y + h - 2f, p)
+            c.drawRect(left + 2f, top + h / 2f, right - 2f, bottom - 2f, p)
 
-            // Button label (24f bold)
+            // Button label (22f bold)
             p.color = if (isHighlight) Color.parseColor("#ffffff") else Color.parseColor("#3b1d0a")
-            p.textSize = 24f
+            p.textSize = 22f
             p.textAlign = Paint.Align.CENTER
-            c.drawText(label, x + w / 2f, y + h / 2f + 8f, p)
+            c.drawText(label, (left + right) / 2f, top + 36f, p)
         }
 
         private fun truncate(str: String, maxLen: Int): String {

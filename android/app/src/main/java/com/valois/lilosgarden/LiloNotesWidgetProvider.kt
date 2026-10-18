@@ -308,14 +308,8 @@ class LiloNotesWidgetProvider : AppWidgetProvider() {
                     } catch (_: Exception) {}
                 }
 
-                // 2. LAYER 1: Animation Frames Loop (12 frames @ 220x110 RGB_565)
+                // 2. LAYER 1: Clear flipper to prevent aspect ratio conflict
                 views.removeAllViews(R.id.notes_flipper)
-                for (f in 0 until TOTAL_FRAMES) {
-                    val frameBmp = renderNoticeBoardFrame(f)
-                    val frameView = RemoteViews(context.packageName, R.layout.widget_flipper_frame)
-                    frameView.setImageViewBitmap(R.id.frame_img, frameBmp)
-                    views.addView(R.id.notes_flipper, frameView)
-                }
 
                 // 3. LAYER 2: High-Res Solid Notice Board & Typography Overlay (520x300 ARGB_8888)
                 val hudBmp = renderNoticeBoardHud(context, tasksList, stickyNote, recentNotes)
@@ -386,33 +380,6 @@ class LiloNotesWidgetProvider : AppWidgetProvider() {
             } catch (_: Exception) {}
         }
 
-        private fun renderNoticeBoardFrame(frameIdx: Int): Bitmap {
-            val w = 220
-            val h = 110
-            val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.RGB_565)
-            val c = Canvas(bmp)
-            val p = Paint().apply { isAntiAlias = false }
-
-            fun px(x: Int, y: Int, rw: Int, rh: Int, colHex: String) {
-                p.color = Color.parseColor(colHex)
-                c.drawRect(x.toFloat(), y.toFloat(), (x + rw).toFloat(), (y + rh).toFloat(), p)
-            }
-
-            // Stardew Wooden Board Outer Frame
-            px(0, 0, w, h, "#3b1d0a")
-            px(2, 2, w - 4, h - 4, "#532e16")
-            px(5, 5, w - 10, h - 10, "#8c5832")
-            px(8, 8, w - 16, h - 16, "#fef3c7") // Parchment base
-
-            // Corner decorative brass pins
-            px(3, 3, 3, 3, "#fbbf24")
-            px(w - 6, 3, 3, 3, "#fbbf24")
-            px(3, h - 6, 3, 3, "#fbbf24")
-            px(w - 6, h - 6, 3, 3, "#fbbf24")
-
-            return bmp
-        }
-
         private fun renderNoticeBoardHud(
             context: Context,
             tasks: List<Pair<String, Boolean>>,
@@ -431,103 +398,123 @@ class LiloNotesWidgetProvider : AppWidgetProvider() {
                 isSubpixelText = true
             }
 
-            // 1. Board Title Bar across full width (RectF(18f, 18f, w - 18f, 54f))
+            // 1. Outer Wooden Frame (0..520 x 0..300)
             p.color = Color.parseColor("#3b1d0a")
-            c.drawRect(18f, 18f, w - 18f, 54f, p)
+            c.drawRect(0f, 0f, 520f, 300f, p)
             p.color = Color.parseColor("#8f4d22")
-            c.drawRect(20f, 20f, w - 20f, 52f, p)
+            c.drawRect(6f, 6f, 514f, 294f, p)
+            p.color = Color.parseColor("#c87d3b")
+            c.drawRect(12f, 12f, 508f, 288f, p)
+            p.color = Color.parseColor("#3b1d0a")
+            c.drawRect(18f, 18f, 502f, 282f, p)
 
-            p.color = Color.parseColor("#ffffff")
-            p.textSize = 21f
+            // 4 gold corner studs (#FDE047, 8x8 px) at (10, 10), (502, 10), (10, 282), (502, 282)
+            p.color = Color.parseColor("#fde047")
+            c.drawRect(10f, 10f, 18f, 18f, p)
+            c.drawRect(502f, 10f, 510f, 18f, p)
+            c.drawRect(10f, 282f, 18f, 290f, p)
+            c.drawRect(502f, 282f, 510f, 290f, p)
+
+            // 2. Inner Parchment (22..498 x 22..278)
+            p.color = Color.parseColor("#fff9ea")
+            c.drawRect(22f, 22f, 498f, 278f, p)
+
+            // 3. Top Brown Header Banner (22..498 x 22..60)
+            p.color = Color.parseColor("#78350f")
+            c.drawRect(22f, 22f, 498f, 60f, p)
+            p.color = Color.parseColor("#3b1d0a")
+            c.drawRect(22f, 58f, 498f, 62f, p)
+
+            p.color = Color.parseColor("#fef3c7")
+            p.textSize = 20f
             p.textAlign = Paint.Align.LEFT
-            c.drawText("MY TASKS & STICKY NOTE", 30f, 43f, p)
+            c.drawText("MY TASKS & STICKY NOTE", 34f, 48f, p)
 
-            // 2. Custom Task Rows (i = 0..2, rowY = 64f + i * 38f)
+            // 4. 3 Custom Task Rows (y = 68..178, strictly inside x = 34..486)
             if (tasks.isEmpty()) {
-                p.color = Color.parseColor("#78350f")
-                p.textSize = 22f
+                p.color = Color.parseColor("#7c624c")
+                p.textSize = 20f
                 p.textAlign = Paint.Align.LEFT
-                c.drawText("+ Tap here to add custom tasks", 34f, 115f, p)
+                c.drawText("+ Tap here to add custom tasks", 38f, 122f, p)
             } else {
                 val maxTasks = minOf(3, tasks.size)
                 for (i in 0 until maxTasks) {
-                    val rowY = 64f + i * 38f
+                    val rowY = 70f + i * 35f
                     val (taskText, isDone) = tasks[i]
 
-                    // 26x26 Checkbox with 3f stroke border
-                    val cbLeft = 30f
+                    // Checkbox RectF(34f, rowY, 58f, rowY + 24f) with 2.5f #3B1D0A border
+                    val cbLeft = 34f
                     val cbTop = rowY
-                    val cbRight = 56f
-                    val cbBottom = rowY + 26f
+                    val cbRight = 58f
+                    val cbBottom = rowY + 24f
 
                     p.color = Color.parseColor("#3b1d0a")
                     c.drawRect(cbLeft, cbTop, cbRight, cbBottom, p)
 
                     if (isDone) {
-                        p.color = Color.parseColor("#15803d")
-                        c.drawRect(cbLeft + 3f, cbTop + 3f, cbRight - 3f, cbBottom - 3f, p)
+                        p.color = Color.parseColor("#16a34a")
+                        c.drawRect(cbLeft + 2.5f, cbTop + 2.5f, cbRight - 2.5f, cbBottom - 2.5f, p)
                         // White checkmark
                         p.color = Color.parseColor("#ffffff")
-                        p.textSize = 19f
+                        p.textSize = 18f
                         p.textAlign = Paint.Align.CENTER
-                        c.drawText("\u2713", cbLeft + 13f, cbTop + 20f, p)
+                        c.drawText("\u2713", cbLeft + 12f, cbTop + 18f, p)
                     } else {
-                        p.color = Color.parseColor("#fffbeb")
-                        c.drawRect(cbLeft + 3f, cbTop + 3f, cbRight - 3f, cbBottom - 3f, p)
+                        p.color = Color.parseColor("#ffffff")
+                        c.drawRect(cbLeft + 2.5f, cbTop + 2.5f, cbRight - 2.5f, cbBottom - 2.5f, p)
                     }
 
-                    // Task Text @ 24f bold
-                    p.textSize = 24f
+                    // Task text at (70f, rowY + 19f) in 21f bold
+                    p.textSize = 21f
                     p.textAlign = Paint.Align.LEFT
                     val truncated = truncate(taskText, 25)
                     if (isDone) {
                         p.color = Color.parseColor("#64748b")
-                        c.drawText(truncated, 68f, rowY + 21f, p)
+                        c.drawText(truncated, 70f, rowY + 19f, p)
                         // Strikethrough line
                         val textW = p.measureText(truncated)
                         p.color = Color.parseColor("#94a3b8")
-                        c.drawRect(68f, rowY + 12f, 68f + textW, rowY + 15f, p)
+                        c.drawRect(70f, rowY + 11f, 70f + textW, rowY + 14f, p)
                     } else {
                         p.color = Color.parseColor("#3b1d0a")
-                        c.drawText(truncated, 68f, rowY + 21f, p)
+                        c.drawText(truncated, 70f, rowY + 19f, p)
                     }
                 }
             }
 
-            // 3. Taller Cozy Sticky Note at Bottom (stickyTop = 182f)
-            val stickyTop = 182f
-            p.color = Color.parseColor("#b45309")
-            c.drawRect(22f, stickyTop, w - 22f, h - 22f, p)
+            // 5. Bottom Sticky Note Box (22..498 x 184..278)
+            p.color = Color.parseColor("#d97706")
+            c.drawRect(22f, 182f, 498f, 185f, p) // Top divider
             p.color = Color.parseColor("#fef08a")
-            c.drawRect(24f, stickyTop + 2f, w - 24f, h - 24f, p)
+            c.drawRect(22f, 185f, 498f, 278f, p) // Warm yellow card
 
-            // Red Pin at sticky note top-center
+            // Red push-pin circle at (260f, 191f, radius = 4.5f)
             p.color = Color.parseColor("#dc2626")
-            c.drawCircle(w / 2f, stickyTop + 6f, 4.5f, p)
+            c.drawCircle(260f, 191f, 4.5f, p)
 
-            // Label: "📌 STICKY NOTE:" @ 16f bold (#B45309) at (32f, 206f)
+            // Label: "STICKY NOTE:" @ 14f bold (#B45309) at (34f, 206f)
             p.color = Color.parseColor("#b45309")
-            p.textSize = 16f
+            p.textSize = 14f
             p.textAlign = Paint.Align.LEFT
-            c.drawText("📌 STICKY NOTE:", 32f, 206f, p)
+            c.drawText("STICKY NOTE:", 34f, 206f, p)
 
-            // User's sticky note text @ 24f bold (#3B1D0A) at (32f, 240f) (wrap to y=268f if > 28 chars)
+            // User note text at (34f, 234f) (and line 2 at 260f) in 21f bold (#3B1D0A)
             val primaryNote = if (recentNotes.isNotEmpty()) recentNotes[0] else stickyNote
             val noteDisplay = if (primaryNote.isNotBlank()) primaryNote else "Take a deep breath and listen to the birds."
 
             p.color = Color.parseColor("#3b1d0a")
-            p.textSize = 24f
+            p.textSize = 21f
             p.textAlign = Paint.Align.LEFT
             if (noteDisplay.length <= 28) {
-                c.drawText(noteDisplay, 32f, 240f, p)
+                c.drawText(noteDisplay, 34f, 234f, p)
             } else {
                 var splitIdx = 28
                 val lastSpace = noteDisplay.substring(0, 28).lastIndexOf(' ')
                 if (lastSpace > 16) splitIdx = lastSpace
                 val line1 = noteDisplay.substring(0, splitIdx).trim()
                 val line2 = truncate(noteDisplay.substring(splitIdx).trim(), 28)
-                c.drawText(line1, 32f, 240f, p)
-                c.drawText(line2, 32f, 268f, p)
+                c.drawText(line1, 34f, 234f, p)
+                c.drawText(line2, 34f, 260f, p)
             }
 
             return bmp

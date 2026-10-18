@@ -1619,18 +1619,18 @@ function clampCamera() {
 
 function updateCanvasResolution() {
   if (!canvas) return;
-  const vp = window.visualViewport;
-  const w = Math.round(vp ? vp.width : window.innerWidth);
-  const h = Math.round(vp ? vp.height : window.innerHeight);
+  const stage = document.getElementById('garden-stage');
+  const rect = stage ? stage.getBoundingClientRect() : null;
+  const w = Math.round(rect && rect.width > 0 ? rect.width : window.innerWidth);
+  const h = Math.round(rect && rect.height > 0 ? rect.height : window.innerHeight - 48);
   canvas.width = w;
   canvas.height = h;
 
-  // Lock camera baseScale to a uniform 360x640 (portrait) or 540x360 (landscape) virtual frame
   const isPortrait = h >= w;
   if (isPortrait) {
-    camera.baseScale = Math.max(2.0, Math.min(w / 260, h / 420));
+    camera.baseScale = Math.max(2.2, w / 270);
   } else {
-    camera.baseScale = Math.max(1.8, Math.min(w / 520, h / 340));
+    camera.baseScale = Math.max(1.8, Math.min(w / 540, h / 340));
   }
   clampCamera();
 }
