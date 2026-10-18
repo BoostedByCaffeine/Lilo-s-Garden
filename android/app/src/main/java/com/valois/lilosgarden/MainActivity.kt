@@ -93,6 +93,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        if (::webView.isInitialized) webView.onResume()
         window.decorView.post { hideSystemUI() }
         syncTasksFromWidget()
     }
@@ -275,11 +276,6 @@ class MainActivity : AppCompatActivity() {
                 grantResults[0] == PackageManager.PERMISSION_GRANTED
             pendingGeoCallback?.invoke(pendingGeoOrigin, granted, false)
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (::webView.isInitialized) webView.onResume()
     }
 
     override fun onPause() {
