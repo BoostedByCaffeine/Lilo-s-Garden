@@ -141,6 +141,9 @@
             android:label="@string/notes_widget_name">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.valois.lilosgarden.ACTION_NOTES_TOGGLE_ROW_0" />
+                <action android:name="com.valois.lilosgarden.ACTION_NOTES_TOGGLE_ROW_1" />
+                <action android:name="com.valois.lilosgarden.ACTION_NOTES_TOGGLE_ROW_2" />
                 <action android:name="com.valois.lilosgarden.ACTION_NOTES_TOGGLE_TOP" />
                 <action android:name="com.valois.lilosgarden.ACTION_NOTES_REFRESH" />
                 <action android:name="com.valois.lilosgarden.ACTION_NOTES_OPEN_DEFAULT_APP" />

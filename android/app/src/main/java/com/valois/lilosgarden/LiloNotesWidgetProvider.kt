@@ -10,13 +10,10 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.Rect
-import android.graphics.RectF
 import android.graphics.Typeface
 import android.os.Bundle
 import android.widget.RemoteViews
 import android.widget.Toast
-import androidx.core.content.res.ResourcesCompat
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -45,6 +42,18 @@ class LiloNotesWidgetProvider : AppWidgetProvider() {
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
         when (intent.action) {
+            ACTION_NOTES_TOGGLE_ROW_0 -> {
+                toggleTaskRow(context, 0)
+                refreshAllNotesWidgets(context)
+            }
+            ACTION_NOTES_TOGGLE_ROW_1 -> {
+                toggleTaskRow(context, 1)
+                refreshAllNotesWidgets(context)
+            }
+            ACTION_NOTES_TOGGLE_ROW_2 -> {
+                toggleTaskRow(context, 2)
+                refreshAllNotesWidgets(context)
+            }
             ACTION_NOTES_TOGGLE_TOP -> {
                 toggleTopTask(context)
                 refreshAllNotesWidgets(context)
@@ -104,71 +113,115 @@ class LiloNotesWidgetProvider : AppWidgetProvider() {
         }
     }
 
-    private fun toggleTopTask(context: Context) {
+    private fun toggleTaskRow(context: Context, rowIndex: Int) {
         try {
             val prefs = context.getSharedPreferences("lilo_widget_prefs", Context.MODE_PRIVATE)
+            val gardenPrefs = context.getSharedPreferences("lilos_garden_prefs", Context.MODE_PRIVATE)
             var tasksJsonStr = prefs.getString("tasks_json", null)
+                ?: gardenPrefs.getString("tasks_json", null)
             if (tasksJsonStr.isNullOrEmpty()) {
-                val gJson = prefs.getString("garden_json", null)
+                val gJson = prefs.getString("garden_json", null) ?: gardenPrefs.getString("garden_json", null)
                 if (!gJson.isNullOrEmpty()) {
                     val gObj = JSONObject(gJson)
                     tasksJsonStr = gObj.optJSONArray("tasks")?.toString()
                 }
             }
 
-            val tasksArray = if (!tasksJsonStr.isNullOrEmpty()) JSONArray(tasksJsonStr) else JSONArray()
-            if (tasksArray.length() == 0) {
-                // Add default tasks
-                tasksArray.put(JSONObject().apply {
-                    put("id", "t1")
-                    put("text", "Pet Lilo & Cheeto")
-                    put("done", true)
-                })
-                tasksArray.put(JSONObject().apply {
-                    put("id", "t2")
-                    put("text", "Relax on porch deck")
-                    put("done", false)
-                })
+            if (tasksJsonStr.isNullOrEmpty()) return
+
+            val rawArray = JSONArray(tasksJsonStr)
+            val customTasks = mutableListOf<JSONObject>()
+            for (i in 0 until rawArray.length()) {
+                val obj = rawArray.optJSONObject(i) ?: continue
+                val id = obj.optString("id", "")
+                if (id != "task-1" && id != "task-2" && id != "task-3") {
+                    customTasks.add(obj)
+                }
             }
 
-            // Find first incomplete task
+            if (rowIndex in 0 until customTasks.size) {
+                val targetObj = customTasks[rowIndex]
+                val wasDone = targetObj.optBoolean("done", false)
+                val newDone = !wasDone
+                targetObj.put("done", newDone)
+                val taskText = targetObj.optString("text", "Task")
+
+                if (newDone) {
+                    Toast.makeText(context, "Completed: $taskText! \u2713", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, "Unchecked: $taskText", Toast.LENGTH_SHORT).show()
+                }
+
+                val updatedArray = JSONArray()
+                for (t in customTasks) {
+                    updatedArray.put(t)
+                }
+                val newJson = updatedArray.toString()
+
+                prefs.edit().putString("tasks_json", newJson).apply()
+                gardenPrefs.edit().putString("tasks_json", newJson).apply()
+
+                // Keep garden_json in sync
+                listOf(prefs, gardenPrefs).forEach { p ->
+                    val gJson = p.getString("garden_json", null)
+                    if (!gJson.isNullOrEmpty()) {
+                        try {
+                            val gObj = JSONObject(gJson)
+                            gObj.put("tasks", updatedArray)
+                            p.edit().putString("garden_json", gObj.toString()).apply()
+                        } catch (_: Exception) {}
+                    }
+                }
+            }
+        } catch (_: Exception) {}
+    }
+
+    private fun toggleTopTask(context: Context) {
+        try {
+            val prefs = context.getSharedPreferences("lilo_widget_prefs", Context.MODE_PRIVATE)
+            val gardenPrefs = context.getSharedPreferences("lilos_garden_prefs", Context.MODE_PRIVATE)
+            var tasksJsonStr = prefs.getString("tasks_json", null)
+                ?: gardenPrefs.getString("tasks_json", null)
+            if (tasksJsonStr.isNullOrEmpty()) return
+
+            val rawArray = JSONArray(tasksJsonStr)
+            val customTasks = mutableListOf<JSONObject>()
+            for (i in 0 until rawArray.length()) {
+                val obj = rawArray.optJSONObject(i) ?: continue
+                val id = obj.optString("id", "")
+                if (id != "task-1" && id != "task-2" && id != "task-3") {
+                    customTasks.add(obj)
+                }
+            }
+            if (customTasks.isEmpty()) return
+
             var toggledIndex = -1
-            for (i in 0 until tasksArray.length()) {
-                val t = tasksArray.optJSONObject(i) ?: continue
-                if (!t.optBoolean("done", false)) {
-                    t.put("done", true)
+            for (i in customTasks.indices) {
+                if (!customTasks[i].optBoolean("done", false)) {
+                    customTasks[i].put("done", true)
                     toggledIndex = i
-                    val txt = t.optString("text", "Task")
+                    val txt = customTasks[i].optString("text", "Task")
                     Toast.makeText(context, "Completed: $txt! \u2713", Toast.LENGTH_SHORT).show()
                     break
                 }
             }
 
-            // If all were already done, uncheck all to restart the day!
-            if (toggledIndex == -1) {
-                for (i in 0 until tasksArray.length()) {
-                    tasksArray.optJSONObject(i)?.put("done", false)
+            if (toggledIndex != -1) {
+                val updatedArray = JSONArray()
+                for (t in customTasks) {
+                    updatedArray.put(t)
                 }
-                Toast.makeText(context, "All tasks reset for a cozy new day!", Toast.LENGTH_SHORT).show()
+                val newJson = updatedArray.toString()
+                prefs.edit().putString("tasks_json", newJson).apply()
+                gardenPrefs.edit().putString("tasks_json", newJson).apply()
             }
-
-            val newJson = tasksArray.toString()
-            val editor = prefs.edit().putString("tasks_json", newJson)
-
-            // Also keep garden_json in sync
-            val gJson = prefs.getString("garden_json", null)
-            if (!gJson.isNullOrEmpty()) {
-                try {
-                    val gObj = JSONObject(gJson)
-                    gObj.put("tasks", tasksArray)
-                    editor.putString("garden_json", gObj.toString())
-                } catch (_: Exception) {}
-            }
-            editor.apply()
         } catch (_: Exception) {}
     }
 
     companion object {
+        const val ACTION_NOTES_TOGGLE_ROW_0 = "com.valois.lilosgarden.ACTION_NOTES_TOGGLE_ROW_0"
+        const val ACTION_NOTES_TOGGLE_ROW_1 = "com.valois.lilosgarden.ACTION_NOTES_TOGGLE_ROW_1"
+        const val ACTION_NOTES_TOGGLE_ROW_2 = "com.valois.lilosgarden.ACTION_NOTES_TOGGLE_ROW_2"
         const val ACTION_NOTES_TOGGLE_TOP = "com.valois.lilosgarden.ACTION_NOTES_TOGGLE_TOP"
         const val ACTION_NOTES_OPEN_DEFAULT_APP = "com.valois.lilosgarden.ACTION_NOTES_OPEN_DEFAULT_APP"
         const val ACTION_NOTES_SYNC_CLIPBOARD = "com.valois.lilosgarden.ACTION_NOTES_SYNC_CLIPBOARD"
@@ -196,13 +249,17 @@ class LiloNotesWidgetProvider : AppWidgetProvider() {
         ) {
             try {
                 val prefs = context.getSharedPreferences("lilo_widget_prefs", Context.MODE_PRIVATE)
+                val gardenPrefs = context.getSharedPreferences("lilos_garden_prefs", Context.MODE_PRIVATE)
                 val views = RemoteViews(context.packageName, R.layout.lilo_notes_widget)
 
-                // 1. Read tasks and sticky note
+                // 1. Read tasks and sticky note (Custom Tasks Only)
                 var tasksJsonStr = prefs.getString("tasks_json", null)
+                    ?: gardenPrefs.getString("tasks_json", null)
                 var stickyNote = prefs.getString("sticky_note", null)
+                    ?: gardenPrefs.getString("sticky_note", null)
+
                 if (tasksJsonStr.isNullOrEmpty() || stickyNote.isNullOrEmpty()) {
-                    val gJson = prefs.getString("garden_json", null)
+                    val gJson = prefs.getString("garden_json", null) ?: gardenPrefs.getString("garden_json", null)
                     if (!gJson.isNullOrEmpty()) {
                         val gObj = JSONObject(gJson)
                         if (tasksJsonStr.isNullOrEmpty()) {
@@ -223,6 +280,8 @@ class LiloNotesWidgetProvider : AppWidgetProvider() {
                     val arr = JSONArray(tasksJsonStr)
                     for (i in 0 until arr.length()) {
                         val obj = arr.optJSONObject(i) ?: continue
+                        val id = obj.optString("id", "")
+                        if (id == "task-1" || id == "task-2" || id == "task-3") continue
                         val text = obj.optString("text", "").trim()
                         val done = obj.optBoolean("done", false)
                         if (text.isNotBlank()) {
@@ -230,14 +289,11 @@ class LiloNotesWidgetProvider : AppWidgetProvider() {
                         }
                     }
                 }
-                if (tasksList.isEmpty()) {
-                    tasksList.add(Pair("Pet Lilo & Cheeto", true))
-                    tasksList.add(Pair("Relax on porch deck", false))
-                    tasksList.add(Pair("Water forget-me-nots", false))
-                }
+                // NO hardcoded default dummy tasks added!
 
-                // Read recent device notes
+                // Read recent device notes if any
                 val deviceNotesJson = prefs.getString("device_notes_list", null)
+                    ?: gardenPrefs.getString("device_notes_list", null)
                 val recentNotes = mutableListOf<String>()
                 if (!deviceNotesJson.isNullOrEmpty()) {
                     try {
@@ -261,35 +317,70 @@ class LiloNotesWidgetProvider : AppWidgetProvider() {
                     views.addView(R.id.notes_flipper, frameView)
                 }
 
-                // 3. LAYER 2: High-Res Solid Notice Board & Typography Overlay (480x248 ARGB_8888)
+                // 3. LAYER 2: High-Res Solid Notice Board & Typography Overlay (520x300 ARGB_8888)
                 val hudBmp = renderNoticeBoardHud(context, tasksList, stickyNote, recentNotes)
                 views.setImageViewBitmap(R.id.notes_hud_overlay, hudBmp)
 
                 // 4. Hotspots PendingIntents
-                val toggleIntent = Intent(context, LiloNotesWidgetProvider::class.java).apply {
-                    action = ACTION_NOTES_TOGGLE_TOP
+                // Row 0
+                val row0Intent = Intent(context, LiloNotesWidgetProvider::class.java).apply {
+                    action = ACTION_NOTES_TOGGLE_ROW_0
                     putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
                 }
-                val togglePending = PendingIntent.getBroadcast(
-                    context,
-                    appWidgetId * 100 + 1,
-                    toggleIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                views.setOnClickPendingIntent(
+                    R.id.notes_row_0,
+                    PendingIntent.getBroadcast(
+                        context,
+                        appWidgetId * 100 + 10,
+                        row0Intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
                 )
-                views.setOnClickPendingIntent(R.id.notes_tasks_area, togglePending)
 
-                val editIntent = Intent(context, MainActivity::class.java).apply {
+                // Row 1
+                val row1Intent = Intent(context, LiloNotesWidgetProvider::class.java).apply {
+                    action = ACTION_NOTES_TOGGLE_ROW_1
+                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                }
+                views.setOnClickPendingIntent(
+                    R.id.notes_row_1,
+                    PendingIntent.getBroadcast(
+                        context,
+                        appWidgetId * 100 + 11,
+                        row1Intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
+                )
+
+                // Row 2
+                val row2Intent = Intent(context, LiloNotesWidgetProvider::class.java).apply {
+                    action = ACTION_NOTES_TOGGLE_ROW_2
+                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                }
+                views.setOnClickPendingIntent(
+                    R.id.notes_row_2,
+                    PendingIntent.getBroadcast(
+                        context,
+                        appWidgetId * 100 + 12,
+                        row2Intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
+                )
+
+                // Open App (Header & Sticky note)
+                val openAppIntent = Intent(context, MainActivity::class.java).apply {
                     action = "com.valois.lilosgarden.OPEN_TASKS"
                     putExtra("open_modal", "modalTasks")
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
                 }
-                val editPending = PendingIntent.getActivity(
+                val openAppPending = PendingIntent.getActivity(
                     context,
-                    appWidgetId * 100 + 2,
-                    editIntent,
+                    appWidgetId * 100 + 20,
+                    openAppIntent,
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
-                views.setOnClickPendingIntent(R.id.notes_edit_area, editPending)
+                views.setOnClickPendingIntent(R.id.notes_open_app, openAppPending)
+                views.setOnClickPendingIntent(R.id.notes_edit_area, openAppPending)
 
                 appWidgetManager.updateAppWidget(appWidgetId, views)
             } catch (_: Exception) {}
@@ -350,8 +441,8 @@ class LiloNotesWidgetProvider : AppWidgetProvider() {
             stickyNote: String,
             recentNotes: List<String>
         ): Bitmap {
-            val w = 480
-            val h = 248
+            val w = 520
+            val h = 300
             val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
             val c = Canvas(bmp)
             val font = loadPixelTypeface(context)
@@ -362,95 +453,95 @@ class LiloNotesWidgetProvider : AppWidgetProvider() {
                 isSubpixelText = true
             }
 
-            // 1. Board Title Bar
+            // 1. Board Title Bar ("MY TASKS & STICKY NOTE" @ 20f bold)
             p.color = Color.parseColor("#3b1d0a")
-            c.drawRect(18f, 14f, 400f, 44f, p)
+            c.drawRect(22f, 16f, 440f, 52f, p)
             p.color = Color.parseColor("#8f4d22")
-            c.drawRect(20f, 16f, 396f, 40f, p)
+            c.drawRect(24f, 18f, 436f, 50f, p)
 
             p.color = Color.parseColor("#ffffff")
-            p.textSize = 14f
+            p.textSize = 20f
             p.textAlign = Paint.Align.LEFT
-            c.drawText("SANCTUARY TASKS & NOTES", 28f, 34f, p)
+            c.drawText("MY TASKS & STICKY NOTE", 36f, 42f, p)
 
-            // 2. Render up to 2-3 Daily Tasks
-            val maxTasks = minOf(if (recentNotes.isNotEmpty()) 2 else 3, tasks.size)
-            var startY = 72f
-            for (i in 0 until maxTasks) {
-                val (taskText, isDone) = tasks[i]
+            // 2. Custom Task Rows (up to 3 @ 22f bold with 26x26 checkboxes)
+            if (tasks.isEmpty()) {
+                p.color = Color.parseColor("#78350f")
+                p.textSize = 20f
+                p.textAlign = Paint.Align.LEFT
+                c.drawText("Tap here to add custom tasks in app!", 36f, 115f, p)
+            } else {
+                val maxTasks = minOf(3, tasks.size)
+                var startY = 92f
+                for (i in 0 until maxTasks) {
+                    val (taskText, isDone) = tasks[i]
 
-                // Checkbox Box
-                p.color = Color.parseColor("#3b1d0a")
-                c.drawRect(24f, startY - 14f, 42f, startY + 4f, p)
+                    // 26x26 Checkbox
+                    val cbLeft = 28f
+                    val cbTop = startY - 20f
+                    val cbRight = cbLeft + 26f
+                    val cbBottom = cbTop + 26f
 
-                if (isDone) {
-                    p.color = Color.parseColor("#15803d")
-                    c.drawRect(26f, startY - 12f, 40f, startY + 2f, p)
-                    // White checkmark
-                    p.color = Color.parseColor("#ffffff")
-                    p.textSize = 12f
-                    c.drawText("\u2713", 28f, startY, p)
-                } else {
-                    p.color = Color.parseColor("#fffbeb")
-                    c.drawRect(26f, startY - 12f, 40f, startY + 2f, p)
-                }
-
-                // Task Text
-                p.textSize = 13f
-                if (isDone) {
-                    p.color = Color.parseColor("#64748b")
-                    val truncated = truncate(taskText, 25)
-                    c.drawText(truncated, 50f, startY, p)
-                    // Strikethrough line
-                    val textW = p.measureText(truncated)
-                    p.color = Color.parseColor("#94a3b8")
-                    c.drawRect(50f, startY - 4f, 50f + textW, startY - 2f, p)
-                } else {
                     p.color = Color.parseColor("#3b1d0a")
-                    val truncated = truncate(taskText, 25)
-                    c.drawText(truncated, 50f, startY, p)
-                }
+                    c.drawRect(cbLeft, cbTop, cbRight, cbBottom, p)
 
-                startY += 28f
+                    if (isDone) {
+                        p.color = Color.parseColor("#15803d")
+                        c.drawRect(cbLeft + 2f, cbTop + 2f, cbRight - 2f, cbBottom - 2f, p)
+                        // White checkmark
+                        p.color = Color.parseColor("#ffffff")
+                        p.textSize = 18f
+                        p.textAlign = Paint.Align.CENTER
+                        c.drawText("\u2713", cbLeft + 13f, cbTop + 19f, p)
+                    } else {
+                        p.color = Color.parseColor("#fffbeb")
+                        c.drawRect(cbLeft + 2f, cbTop + 2f, cbRight - 2f, cbBottom - 2f, p)
+                    }
+
+                    // Task Text @ 22f bold
+                    p.textSize = 22f
+                    p.textAlign = Paint.Align.LEFT
+                    val truncated = truncate(taskText, 25)
+                    if (isDone) {
+                        p.color = Color.parseColor("#64748b")
+                        c.drawText(truncated, 66f, startY, p)
+                        // Strikethrough line
+                        val textW = p.measureText(truncated)
+                        p.color = Color.parseColor("#94a3b8")
+                        c.drawRect(66f, startY - 7f, 66f + textW, startY - 4f, p)
+                    } else {
+                        p.color = Color.parseColor("#3b1d0a")
+                        c.drawText(truncated, 66f, startY, p)
+                    }
+
+                    startY += 38f
+                }
             }
 
-            // 3. Cozy Sticky Note at Bottom (y = 138..234)
+            // 3. Cozy Sticky Note at Bottom on warm yellow #FEF08A card
             p.color = Color.parseColor("#b45309")
-            c.drawRect(20f, 136f, 460f, 234f, p)
-            p.color = Color.parseColor("#fef3c7")
-            c.drawRect(22f, 138f, 458f, 232f, p)
+            c.drawRect(22f, 202f, 498f, 286f, p)
+            p.color = Color.parseColor("#fef08a")
+            c.drawRect(24f, 204f, 496f, 284f, p)
 
             // Red Pin at sticky note top-center
             p.color = Color.parseColor("#dc2626")
-            c.drawCircle(240f, 142f, 4f, p)
+            c.drawCircle(260f, 208f, 4.5f, p)
 
-            // Note Text / Recent Device Note
+            // Note Text @ 20f bold
             val primaryNote = if (recentNotes.isNotEmpty()) recentNotes[0] else stickyNote
-            val noteHeader = if (recentNotes.isNotEmpty()) "📌 RECENT NOTE:" else "📌 STICKY NOTE:"
-
-            p.color = Color.parseColor("#b45309")
-            p.textSize = 11f
-            p.textAlign = Paint.Align.LEFT
-            c.drawText(noteHeader, 32f, 162f, p)
+            val noteDisplay = if (primaryNote.isNotBlank()) primaryNote else "Take a deep breath and listen to the birds."
 
             p.color = Color.parseColor("#78350f")
-            p.textSize = 12f
-            val noteDisplay = truncate(primaryNote, 44)
-            c.drawText(noteDisplay, 32f, 186f, p)
+            p.textSize = 20f
+            p.textAlign = Paint.Align.LEFT
+            c.drawText(truncate(noteDisplay, 36), 34f, 248f, p)
 
-            // If there's a second note, display second line
-            if (recentNotes.size > 1) {
-                p.color = Color.parseColor("#92400e")
-                p.textSize = 11f
-                val note2 = truncate("• " + recentNotes[1], 44)
-                c.drawText(note2, 32f, 206f, p)
-            }
-
-            // "+ Edit" hint on bottom right
+            // [+ Tap to Edit] hint on bottom right
             p.color = Color.parseColor("#b45309")
-            p.textSize = 11f
+            p.textSize = 14f
             p.textAlign = Paint.Align.RIGHT
-            c.drawText("[+ Note / Edit]", 450f, 222f, p)
+            c.drawText("[+ Tap to Edit]", 486f, 276f, p)
 
             return bmp
         }

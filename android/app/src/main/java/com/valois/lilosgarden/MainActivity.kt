@@ -91,11 +91,53 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onNewIntent(intent: Intent?) {
-        super.onNewIntent(intent)
-        setIntent(intent)
-        checkIntentModal()
-        handleIncomingNoteIntent(intent)
+    override fun onResume() {
+        super.onResume()
+        window.decorView.post { hideSystemUI() }
+        syncTasksFromWidget()
+    }
+
+    private fun syncTasksFromWidget() {
+        try {
+            val prefs = getSharedPreferences("lilo_widget_prefs", Context.MODE_PRIVATE)
+            val gardenPrefs = getSharedPreferences("lilos_garden_prefs", Context.MODE_PRIVATE)
+            val tasksJson = prefs.getString("tasks_json", null) ?: gardenPrefs.getString("tasks_json", null)
+            if (!tasksJson.isNullOrEmpty() && ::webView.isInitialized) {
+                val quoted = JSONObject.quote(tasksJson)
+                webView.post {
+                    webView.evaluateJavascript(
+                        """
+                        (function() {
+                            if (typeof world !== 'undefined' && Array.isArray(world.tasks)) {
+                                try {
+                                    const widgetTasks = JSON.parse($quoted);
+                                    if (Array.isArray(widgetTasks) && widgetTasks.length > 0) {
+                                        let changed = false;
+                                        widgetTasks.forEach(function(wt) {
+                                            if (wt && wt.id !== 'task-1' && wt.id !== 'task-2' && wt.id !== 'task-3') {
+                                                const existing = world.tasks.find(function(t) { return t.id === wt.id; });
+                                                if (existing) {
+                                                    if (existing.done !== wt.done) {
+                                                        existing.done = wt.done;
+                                                        changed = true;
+                                                    }
+                                                }
+                                            }
+                                        });
+                                        if (changed) {
+                                            if (typeof world.save === 'function') world.save();
+                                            if (typeof renderTasksUI === 'function') renderTasksUI();
+                                        }
+                                    }
+                                } catch (e) {}
+                            }
+                        })();
+                        """.trimIndent(),
+                        null
+                    )
+                }
+            }
+        } catch (_: Exception) {}
     }
 
     private fun checkIntentModal() {
@@ -465,6 +507,16 @@ class MainActivity : AppCompatActivity() {
         fun pinMusicWidget() {
             activity.runOnUiThread {
                 try {
+                    val enabled = android.provider.Settings.Secure.getString(activity.contentResolver, "enabled_notification_listeners") ?: ""
+                    if (!enabled.contains(activity.packageName)) {
+                        Toast.makeText(
+                            activity,
+                            "Please enable 'Lilo\'s Garden' in Notification Access to sync live Spotify music!",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        activity.startActivity(Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    }
+
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         val appWidgetManager = AppWidgetManager.getInstance(activity)
                         val widgetProvider = ComponentName(activity, LiloMusicWidgetProvider::class.java)

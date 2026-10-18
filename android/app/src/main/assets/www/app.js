@@ -5,7 +5,16 @@ let deferredInstallPrompt = null;
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => { });
+    navigator.serviceWorker.register('./sw.js').then((reg) => {
+      reg.update();
+    }).catch(() => {});
+  });
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) {
+      refreshing = true;
+      window.location.reload();
+    }
   });
 }
 
@@ -108,8 +117,8 @@ const COTTAGE_BOUNDS = {
 
 const COTTAGE_SPOTS = {
   hearth: { x: 544, y: 224, radius: 32, label: 'Memorial Bookcase & Tribute' },
-  sofa:   { x: 608, y: 334, radius: 30, label: 'Cozy Cream Sofa' },
-  bed:    { x: 465, y: 224, radius: 32, label: 'Cozy Yellow Quilt Bed' },
+  sofa:   { x: 608, y: 336, radius: 30, label: 'Cozy Cream Sofa' },
+  bed:    { x: 464, y: 214, radius: 32, label: 'Cozy Yellow Quilt Bed' },
   desk:   { x: 598, y: 248, radius: 26, label: 'Wooden Study Desk' },
   rug:    { x: 476, y: 266, radius: 28, label: 'Warm Crimson Bedside Rug' },
   table:  { x: 364, y: 312, radius: 32, label: 'Dining Table' },
@@ -678,12 +687,8 @@ const world = {
   skyDesc: 'Sunny Sky',
   tempC: 24,
   tributeNote: "Forever loved, forever missed. Enjoy the endless sunshine, crunchy kibble, and cozy gazebo naps, sweet Lilo and Cheeto.",
-  tasks: [
-    { id: 'task-1', text: 'Pet Lilo & Cheeto', done: false },
-    { id: 'task-2', text: 'Relax by the porch deck', done: false },
-    { id: 'task-3', text: 'Water forget-me-not blooms', done: false }
-  ],
-  stickyNote: 'Take a deep breath and listen to the birds.',
+  tasks: [],
+  stickyNote: '',
   cats: [],
   particles: [],
   critters: [],
@@ -801,7 +806,7 @@ const world = {
     const ct = this.caretaker;
     ct.state = 'SEEK_TABLE_MEAL';
     ct.targetX = 364;
-    ct.targetY = 268; // Waist at table top edge (y=268); full torso & head sit in front of top chair!
+    ct.targetY = 288;
     ct.labelAlpha = 1.8;
     showToast(`${ct.name} is sitting down at the table to eat!`, 'fish', '#fbbf24');
   },
@@ -982,7 +987,11 @@ const world = {
       this.blooms = typeof saved.blooms === 'number' ? Math.max(1, Math.min(24, saved.blooms)) : 8;
       this.bowlLevel = typeof saved.bowlLevel === 'number' ? Math.max(0, Math.min(3, saved.bowlLevel)) : 3;
       if (saved.tributeNote) this.tributeNote = String(saved.tributeNote);
-      if (Array.isArray(saved.tasks)) this.tasks = saved.tasks;
+      if (Array.isArray(saved.tasks)) {
+        this.tasks = saved.tasks.filter(
+          (t) => t && t.id !== 'task-1' && t.id !== 'task-2' && t.id !== 'task-3'
+        );
+      }
       if (typeof saved.stickyNote === 'string') this.stickyNote = saved.stickyNote;
       if (saved.weatherMode) this.weatherMode = saved.weatherMode;
       if (saved.caretaker && typeof saved.caretaker === 'object') {
@@ -1420,7 +1429,7 @@ const world = {
         const dist = Math.hypot(dx, dy);
         if (dist < 3) {
           ct.x = 364;
-          ct.y = 268;
+          ct.y = 288;
           ct.facing = 1;
           ct.state = 'EATING_TABLE';
           ct.stateTimer = 8.0;
@@ -1610,18 +1619,23 @@ function clampCamera() {
 
 function updateCanvasResolution() {
   if (!canvas) return;
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  const vp = window.visualViewport;
+  const w = Math.round(vp ? vp.width : window.innerWidth);
+  const h = Math.round(vp ? vp.height : window.innerHeight);
+  canvas.width = w;
+  canvas.height = h;
 
-  const isPortrait = canvas.height > canvas.width;
+  // Lock camera baseScale to a uniform 360x640 (portrait) or 540x360 (landscape) virtual frame
+  const isPortrait = h >= w;
   if (isPortrait) {
-    // On portrait phones, fit ~280px of garden width across the screen so 16px cats are large!
-    camera.baseScale = Math.max(2.2, canvas.width / 270);
+    camera.baseScale = Math.max(2.0, Math.min(w / 260, h / 420));
   } else {
-    // On desktop / landscape, fit the 560x350 garden comfortably
-    camera.baseScale = Math.max(1.8, Math.min(canvas.width / 540, canvas.height / 340));
+    camera.baseScale = Math.max(1.8, Math.min(w / 520, h / 340));
   }
   clampCamera();
+}
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', updateCanvasResolution);
 }
 
 function screenToWorld(clientX, clientY) {
@@ -1917,21 +1931,18 @@ function drawPixelCaretaker(c, caretaker, time) {
     c.scale(1.35, 1.35);
 
     if (isSleepingBed) {
-      // Head resting directly on the left white pillow of DoubleBed
-      px(-5, -15, 10, 7, skin);
-      px(-5, -17, 10, 3, hair);
-      px(-6, -16, 2, 4, hair);
-      px(4, -16, 2, 4, hair);
-      // Closed sleeping eyes & blush
-      px(-3, -11, 2, 1, '#1e293b');
-      px(1, -11, 2, 1, '#1e293b');
-      px(-4, -10, 1, 1, '#fda4af');
-      px(3, -10, 1, 1, '#fda4af');
-      // Shoulders & quilt blanket pulled up over chest
-      px(-6, -8 + breath, 12, 3, outfit);
-      px(-8, -6 + breath, 16, 2, '#fef08a');
-      px(-8, -4 + breath, 16, 8, '#eab308');
-      px(-8, 3 + breath, 16, 2, '#ca8a04');
+      // Head & shoulders resting directly on the left white pillow of DoubleBed (x=464, y=214)
+      px(-5, -8, 10, 7, skin);
+      px(-5, -10, 10, 3, hair);
+      px(-6, -9, 2, 4, hair);
+      px(4, -9, 2, 4, hair);
+      // Closed sleeping eyes & blush cheeks
+      px(-3, -4, 2, 1, '#1e293b');
+      px(1, -4, 2, 1, '#1e293b');
+      px(-4, -3, 1, 1, '#fda4af');
+      px(3, -3, 1, 1, '#fda4af');
+      // Pajama/hoodie shoulders tucked into the top edge of the bed's quilt
+      px(-6, -1 + breath, 12, 4, outfit);
     } else {
       px(-5, -7 + breath, 10, 7, outfit);
       px(-6, -2, 8, 3, pants);
@@ -2892,9 +2903,31 @@ function getCottageFurnitureRenderables(ctx, time) {
       }
     },
     {
-      // Bed frame at y=228 so sleeping Caretaker (y=232) renders on top of the mattress!
+      // Full DoubleBed base (headboard, pillows, mattress) at y=228
       y: 228,
       draw: () => drawIndividualFurniture(ctx, 'intDoubleBed', 476, 254, 1.35, true)
+    },
+    {
+      // Bed blanket & footboard overlay when Caretaker is sleeping in bed (tucks Caretaker under the real bed quilt!)
+      y: 256,
+      draw: () => {
+        if (world.caretaker && world.caretaker.state === 'SLEEPING_BED') {
+          const item = getTrimmedSprite('intDoubleBed');
+          if (item) {
+            const scale = 1.35;
+            const dw = Math.round(item.w * scale);
+            const dh = Math.round(item.h * scale);
+            const dx = Math.round(476 - dw / 2);
+            const dy = Math.round(254 - dh);
+            // Redraw only the lower 58% of DoubleBed (the yellow quilt & wooden footboard) on top of the Caretaker's shoulders
+            const srcY = Math.floor(item.h * 0.42);
+            const srcH = item.h - srcY;
+            const dstY = dy + Math.floor(dh * 0.42);
+            const dstH = dh - Math.floor(dh * 0.42);
+            ctx.drawImage(item.canvas, 0, srcY, item.w, srcH, dx, dstY, dw, dstH);
+          }
+        }
+      }
     },
     {
       y: 232,
@@ -2925,12 +2958,12 @@ function getCottageFurnitureRenderables(ctx, time) {
       draw: () => drawIndividualFurniture(ctx, 'intChairTop', 598, 252, 1.25, true)
     },
     // Left Dining Table Set:
-    // 1. Front-facing chair at top of dining table (depth-sort y=262) -> Caretaker (sort y=280) overlays this chair!
+    // 1. Front-facing chair at top of dining table (depth-sort y=275) -> Caretaker (sort y=288) sits in front of backrest!
     {
-      y: 262,
-      draw: () => drawIndividualFurniture(ctx, 'intChairTop', 364, 272, 1.35, true)
+      y: 275,
+      draw: () => drawIndividualFurniture(ctx, 'intChairTop', 364, 285, 1.35, true)
     },
-    // 2. Dining Table (depth-sort y=326) -> Overlays only the Caretaker's legs below y=268, leaving full torso visible!
+    // 2. Dining Table (depth-sort y=326) -> Top edge is at y=280, covering Caretaker's legs (280..288) while full torso (268..280) is visible!
     {
       y: 326,
       draw: () => {
@@ -2938,11 +2971,11 @@ function getCottageFurnitureRenderables(ctx, time) {
         drawIndividualFurniture(ctx, 'intDiningTable', 364, 326, 1.35, true);
         if (world.caretaker && world.caretaker.state === 'EATING_TABLE') {
           ctx.fillStyle = '#f8fafc';
-          ctx.fillRect(359, 274, 10, 6);
+          ctx.fillRect(359, 283, 10, 6);
           ctx.fillStyle = '#ea580c';
-          ctx.fillRect(361, 275, 6, 4);
+          ctx.fillRect(361, 284, 6, 4);
           ctx.fillStyle = '#fde047';
-          ctx.fillRect(362, 276, 3, 2);
+          ctx.fillRect(362, 285, 3, 2);
         }
         drawIndividualFurniture(ctx, 'intChairBottom', 364, 340, 1.35, true);
       }
@@ -3010,8 +3043,10 @@ function drawGardenScene(time = 0) {
       y:
         world.caretaker.state === 'SLEEPING_BED'
           ? 255
+          : world.caretaker.state === 'NAPPING_COUCH'
+          ? 368
           : world.caretaker.state === 'EATING_TABLE'
-          ? 280
+          ? 288
           : world.caretaker.y,
       draw: () => drawPixelCaretaker(ctx, world.caretaker, time)
     },
@@ -3967,7 +4002,6 @@ function getGitHubUrls() {
   const { slug } = getGitHubRepoInfo();
   return {
     releaseDirectApk: `https://github.com/${slug}/releases/download/latest/lilos-garden.apk`,
-    releaseDirectIpa: `https://github.com/${slug}/releases/download/latest/lilos-garden-ios.ipa`,
     releasesPage: `https://github.com/${slug}/releases/latest`,
     allReleases: `https://github.com/${slug}/releases`,
     actionsPage: `https://github.com/${slug}/actions`
@@ -4029,51 +4063,6 @@ safeOn('install-pwa-btn', 'click', () => {
 safeOn('btnOpenApkTutorial', 'click', () => {
   closeModal('install-choice-modal');
   openModal('apk-tutorial-modal');
-});
-
-// Choice C: Open iOS (iPhone & iPad) Tutorial Modal
-safeOn('btnOpenIosTutorial', 'click', () => {
-  closeModal('install-choice-modal');
-  openModal('ios-tutorial-modal');
-});
-
-// Choice C2: Direct 1-Tap iOS .IPA Download from GitHub Release (or local ./lilos-garden-ios.ipa)
-safeOn('btnDownloadIosIpa', 'click', async (e) => {
-  e.preventDefault();
-  const urls = getGitHubUrls();
-
-  // A. Check if IPA is hosted locally in the web root
-  try {
-    const localIosCheck = await fetch('./lilos-garden-ios.ipa', { method: 'HEAD' });
-    const localCheck = localIosCheck.ok ? localIosCheck : await fetch('./lilos-garden.ipa', { method: 'HEAD' });
-    if (localCheck.ok) {
-      const targetFilename = localIosCheck.ok ? 'lilos-garden-ios.ipa' : 'lilos-garden.ipa';
-      const a = document.createElement('a');
-      a.href = `./${targetFilename}`;
-      a.download = targetFilename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      showToast(`Downloading ${targetFilename} directly...`, 'download');
-      return;
-    }
-  } catch (err) {}
-
-  // B. Direct download from GitHub Releases
-  try {
-    const a = document.createElement('a');
-    a.href = urls.releaseDirectIpa;
-    a.download = 'lilos-garden-ios.ipa';
-    a.target = '_blank';
-    a.rel = 'noopener,noreferrer';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    showToast('Downloading iOS .IPA (Sideload / AltStore)...', 'download');
-  } catch (err) {
-    window.open(urls.allReleases, '_blank', 'noopener,noreferrer');
-    showToast('Opening GitHub Releases page...', 'download');
-  }
 });
 
 // 3. Inside Tutorial Modal: Direct 1-Tap APK Download from GitHub Release (or local ./lilos-garden.apk)

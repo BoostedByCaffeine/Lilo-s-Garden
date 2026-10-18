@@ -2,7 +2,7 @@
 
 A single-file HTML5 Canvas, CSS3, and Vanilla JavaScript cozy virtual pet garden sandbox tribute inspired by a minimalist Stardew Valley aesthetic, honoring **Lilo the pure white cat** and **Cheeto the orange tabby**.
 
-Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-tier live local weather, client-side `localStorage` persistence, PWA offline installability with **iOS Web App Support**, **Cozy Cottage Interior**, **8-Bit Customizable Caretaker**, **Cozy Tasks & Sticky Notes**, and **7 Authentic Android Home Screen Widgets**.
+Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-tier live local weather, client-side `localStorage` persistence, PWA offline installability across all devices, **Cozy Cottage Interior**, **8-Bit Customizable Caretaker**, **Cozy Tasks & Sticky Notes**, and **7 Authentic Android Home Screen Widgets**.
 
 ---
 
@@ -145,14 +145,11 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-t
 
 ---
 
-### 9. iOS Web App Port & Safari Install Guide
-- **Full-Screen Offline iOS Sanctuary**:
-  - Full standalone Web App support on iPhone and iPad with `<meta name="apple-mobile-web-app-capable" content="yes">`, `<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">`, and Apple touch icon definitions.
-  - Safe-area inset protection (`env(safe-area-inset-top)`, `env(safe-area-inset-bottom)`) for seamless rendering around the Dynamic Island and bottom gesture bars.
-  - Interactive **3-Step Safari Install Guide Modal (`#ios-tutorial-modal`)** accessible from the Install Sanctuary choice modal:
-    1. Tap Safari's **Share** button (`[↑]`).
-    2. Scroll down and select **"Add to Home Screen"**.
-    3. Tap **"Add"** in the top-right corner to launch full-screen with offline caching.
+### 9. Progressive Web App (PWA) Offline Sanctuary
+- **Full-Screen Offline PWA on All Devices**:
+  - Full standalone Web App support on iPhone, iPad, Android, and Desktop with `<meta name="apple-mobile-web-app-capable" content="yes">`, `<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">`, and Apple touch icon definitions.
+  - Safe-area inset protection (`env(safe-area-inset-top)`, `env(safe-area-inset-bottom)`) for seamless rendering around the Dynamic Island, notch, and gesture bars.
+  - Quick 1-tap install via browser prompt or "Add to Home Screen" in Safari / Chrome with complete offline asset caching.
   - Automatic WebAudio synthesizer unlock on initial user touch gesture.
 
 ---
@@ -198,27 +195,17 @@ All widgets are powered by an animation engine with a **2-Layer Compositor Archi
    - Play/pause toggle and reset buttons with exact countdown ticks managed via `AlarmManager`.
    - **Forget-Me-Not Bloom Rewards**: Completing a 25-minute focus session awards **+1 Forget-Me-Not Bloom** (up to 24) synchronized directly to the main garden sanctuary app.
 6. **Cozy Tasks & Sticky Notes Widget (`LiloNotesWidgetProvider.kt`)**:
-   - High-res anti-aliased `480x248` wooden notice board widget rendering your personal yellow sticky note and active to-do tasks with `WidgetFontHelper`.
-   - Top task interactive completion toggle (`ACTION_NOTES_TOGGLE_TOP`): tap the checkbox on your home screen to check/uncheck tasks instantly without opening the app.
-   - System text-share receiver (`ACTION_SEND`, `text/plain`) allowing you to share notes from any Android app directly into your sticky note board.
-   - System clipboard sync (`ACTION_NOTES_SYNC_CLIPBOARD`) and default notes app launcher.
+   - High-res anti-aliased `520x300` wooden notice board widget (`4x3` cells, `195dp` height) rendering your personal yellow sticky note (`#FEF08A`) and custom to-do tasks with `WidgetFontHelper`.
+   - **Individual Row Toggles**: Clickable hotspots (`@+id/notes_row_0`, `@+id/notes_row_1`, `@+id/notes_row_2`) toggle completion of each specific task with large `26x26` checkboxes (`✓`) and strikethrough styling without auto-resetting all completed tasks.
+   - **Custom Tasks Only**: Displays only user-created tasks without dummy placeholders.
+   - **Two-Way Synchronization**: Toggling tasks on the widget immediately updates `SharedPreferences` and synchronizes back to `world.tasks` in the app's WebView when resumed.
+   - System text-share receiver (`ACTION_SEND`, `text/plain`) allowing you to share notes from any Android app directly into your sticky note board, plus clipboard sync.
 7. **Spotify & Media Now-Playing Widget (`LiloMusicWidgetProvider.kt`)**:
-   - Live music companion widget with 12-frame spinning vinyl record and head-bobbing Lilo & Cheeto wearing headphones with floating musical notes.
-   - High-res `480x248` HUD with live Track Title, Artist, Album, and status badge (`▶ PLAYING` vs `⏸ PAUSED`).
-   - Paused power-saver: Emits exactly 1 static frame when paused to halt vinyl spinning and cat bobbing until playback resumes.
-   - Notification listener access detection with 1-tap connect button linking to system settings if disconnected.
-   - Optimistic Play/Pause toggle with immediate UI feedback and system media key dispatching.
-
----
-
-### 12. Native iOS Xcode & WidgetKit Project (`ios/`)
-- Declarative **XcodeGen** project spec (`ios/project.yml`) generating native Xcode workspace targeting iOS 16+.
-- **SwiftUI App (`ios/LilosGarden/`)**: Full-screen WKWebView host with native JavaScript bridge synchronizing garden state and tasks to shared App Group (`group.com.valois.lilosgarden`).
-- **WidgetKit Extension (`ios/LilosGardenWidgets/`)**:
-  - **Cat Companion & Clock Widget (`LiloCompanionClockWidget`)**: Stardew wooden frame with pixel cat, live SwiftUI time, bloom counter, and weather.
-  - **Cozy Tasks & Notes Widget (`LiloNotesWidget`)**: Notice board styling with daily habits, checkmarks, and pinned sticky note.
-  - **Window Peek Sky Widget (`LiloWindowSkyWidget`)**: Dynamic time-based sky gradient with peeking cat windowsill.
-- **GitHub Actions CI/CD (`.github/workflows/ios-build.yml`)**: Automated macOS workflow building unsigned `.ipa` packages on every push/tag and publishing to GitHub Releases for easy sideloading via AltStore, SideStore, TrollStore, or Scarlet.
+   - Live music companion widget (`4x2` cells, `185dp` height) with 12-frame spinning vinyl record and head-bobbing Lilo & Cheeto wearing headphones with floating musical notes.
+   - High-res `520x270` HUD with live Track Title (`24f` bold), Artist & Album (`18f` bold), and status badge (`▶ PLAYING` vs `⏸ PAUSED` at `16f` bold).
+   - **Two-Way Spotify Sync**: `LiloMediaListenerService` tracks Spotify notification action buttons and active media sessions with 2-second background sync, instantly pausing the spinning vinyl and cat bobbing animation when playback pauses in Spotify.
+   - **Tactile Media Buttons**: Oversized `90x52` px pixel buttons for Previous (`|<<`), Play/Pause (`▶` / `||`), and Next (`>>|`) with `24f` bold icons and `56dp` tall touch hotspots.
+   - Notification listener access detection with a prominent **"TAP TO LINK SPOTIFY"** prompt that directly routes to Android settings if permission is missing.
 
 ---
 

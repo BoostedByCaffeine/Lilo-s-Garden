@@ -7,7 +7,7 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="154dp"
+        android:layout_height="185dp"
         android:layout_gravity="center">
 
         <!-- LAYER 1: 12-Frame Spinning Vinyl & Bobbing Cats Animation Loop @ 3.3 FPS (300ms) -->
@@ -34,57 +34,55 @@
             android:orientation="horizontal"
             android:weightSum="100">
 
-            <!-- Left 42%: Spinning Turntable & Bobbing Cats (Tap to open player) -->
+            <!-- Left 38%: Spinning Turntable & Bobbing Cats (Tap to open player / link) -->
             <FrameLayout
                 android:id="@+id/music_turntable_area"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="42"
+                android:layout_weight="38"
                 android:background="@android:color/transparent" />
 
-            <!-- Right 58%: Track Info + 3 Media Controls -->
+            <!-- Right 62%: Track Info + 3 Media Controls -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="58"
-                android:orientation="vertical"
-                android:weightSum="100">
+                android:layout_weight="62"
+                android:orientation="vertical">
 
-                <!-- Track & Artist Hotspot (Tap to open Spotify / player) -->
+                <!-- Track & Artist Hotspot: Tap to open Spotify / Notification Settings -->
                 <FrameLayout
-                    android:id="@+id/music_track_area"
+                    android:id="@+id/music_info_hotspot"
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
-                    android:layout_weight="56"
+                    android:layout_weight="1"
                     android:background="@android:color/transparent" />
 
-                <!-- 3 Media Buttons: Previous, Play/Pause, Next -->
+                <!-- 3 Media Buttons: Previous, Play/Pause, Next (56dp tall) -->
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="44"
+                    android:layout_height="56dp"
                     android:orientation="horizontal"
-                    android:weightSum="100">
+                    android:weightSum="3">
 
                     <FrameLayout
                         android:id="@+id/music_btn_prev"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_weight="33"
+                        android:layout_weight="1"
                         android:background="@android:color/transparent" />
 
                     <FrameLayout
                         android:id="@+id/music_btn_play_pause"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_weight="34"
+                        android:layout_weight="1"
                         android:background="@android:color/transparent" />
 
                     <FrameLayout
                         android:id="@+id/music_btn_next"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_weight="33"
+                        android:layout_weight="1"
                         android:background="@android:color/transparent" />
                 </LinearLayout>
             </LinearLayout>

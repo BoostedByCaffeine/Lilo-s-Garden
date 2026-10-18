@@ -7,7 +7,7 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="154dp"
+        android:layout_height="195dp"
         android:layout_gravity="center">
 
         <!-- LAYER 1: Pixel Animation Loop (12 frames @ 300ms) -->
@@ -34,20 +34,44 @@
             android:orientation="vertical"
             android:weightSum="100">
 
-            <!-- Top Header & Task List: Tap to check off current top incomplete task -->
+            <!-- Top Header Area: Tap to open tasks in App -->
             <FrameLayout
-                android:id="@+id/notes_tasks_area"
+                android:id="@+id/notes_open_app"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="72"
+                android:layout_weight="18"
                 android:background="@android:color/transparent" />
 
-            <!-- Bottom Note & Edit Bar: Tap to launch App into #modalTasks -->
+            <!-- Task Row 0 Hotspot -->
+            <FrameLayout
+                android:id="@+id/notes_row_0"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="16"
+                android:background="@android:color/transparent" />
+
+            <!-- Task Row 1 Hotspot -->
+            <FrameLayout
+                android:id="@+id/notes_row_1"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="16"
+                android:background="@android:color/transparent" />
+
+            <!-- Task Row 2 Hotspot -->
+            <FrameLayout
+                android:id="@+id/notes_row_2"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="16"
+                android:background="@android:color/transparent" />
+
+            <!-- Bottom Sticky Note / Edit Area: Tap to launch App into #modalTasks -->
             <FrameLayout
                 android:id="@+id/notes_edit_area"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="28"
+                android:layout_weight="34"
                 android:background="@android:color/transparent" />
         </LinearLayout>
     </RelativeLayout>

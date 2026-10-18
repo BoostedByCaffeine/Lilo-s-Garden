@@ -10,14 +10,12 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.RectF
 import android.graphics.Typeface
 import android.media.AudioManager
 import android.os.Bundle
 import android.os.SystemClock
 import android.view.KeyEvent
 import android.widget.RemoteViews
-import androidx.core.content.res.ResourcesCompat
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -127,7 +125,7 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
                     "enabled_notification_listeners"
                 ) ?: return false
                 val myComponent = ComponentName(context, LiloMediaListenerService::class.java).flattenToString()
-                enabledListeners.contains(myComponent)
+                enabledListeners.contains(myComponent) || enabledListeners.contains(context.packageName)
             } catch (_: Exception) {
                 false
             }
@@ -143,6 +141,10 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
             }
         }
 
+        fun updateAllWidgets(context: Context) {
+            refreshAllMusicWidgets(context)
+        }
+
         fun loadPixelTypeface(context: Context): Typeface {
             return WidgetFontHelper.loadPixelTypeface(context)
         }
@@ -155,10 +157,10 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
             try {
                 val hasAccess = hasNotificationAccess(context)
                 val prefs = context.getSharedPreferences("lilo_music_prefs", Context.MODE_PRIVATE)
-                val track = prefs.getString("track_title", if (hasAccess) "Cozy Garden Melodies" else "Tap to Connect Spotify") ?: "Cozy Garden Melodies"
-                val artist = prefs.getString("artist_name", if (hasAccess) "Lilo & Cheeto Sanctuary" else "Notification Access Required") ?: "Lilo & Cheeto Sanctuary"
-                val album = prefs.getString("album_name", if (hasAccess) "Reunited Forever" else "Settings Permission") ?: "Reunited Forever"
-                val isPlaying = prefs.getBoolean("is_playing", false)
+                val track = prefs.getString("track_title", prefs.getString("music_title", if (hasAccess) "Cozy Garden Melodies" else "TAP TO LINK SPOTIFY")) ?: "Cozy Garden Melodies"
+                val artist = prefs.getString("artist_name", prefs.getString("music_artist", if (hasAccess) "Lilo & Cheeto Sanctuary" else "Notification Access Required")) ?: "Lilo & Cheeto Sanctuary"
+                val album = prefs.getString("album_name", prefs.getString("music_album", if (hasAccess) "Reunited Forever" else "Settings Permission")) ?: "Reunited Forever"
+                val isPlaying = prefs.getBoolean("is_playing", prefs.getBoolean("music_playing", false))
 
                 val views = RemoteViews(context.packageName, R.layout.lilo_music_widget)
 
@@ -172,7 +174,7 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
                     views.addView(R.id.music_flipper, frameView)
                 }
 
-                // 2. LAYER 2: High-Res Solid Track Typography & Button Sprites (480x248 ARGB_8888)
+                // 2. LAYER 2: High-Res Solid Track Typography & Button Sprites (520x270 ARGB_8888)
                 val hudBmp = renderMusicHud(context, track, artist, album, isPlaying, hasAccess)
                 views.setImageViewBitmap(R.id.music_hud_overlay, hudBmp)
 
@@ -181,37 +183,43 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
                     action = ACTION_MUSIC_PREV
                     putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
                 }
-                val prevPending = PendingIntent.getBroadcast(
-                    context,
-                    appWidgetId * 100 + 10,
-                    prevIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                views.setOnClickPendingIntent(
+                    R.id.music_btn_prev,
+                    PendingIntent.getBroadcast(
+                        context,
+                        appWidgetId * 100 + 10,
+                        prevIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
                 )
-                views.setOnClickPendingIntent(R.id.music_btn_prev, prevPending)
 
                 val playIntent = Intent(context, LiloMusicWidgetProvider::class.java).apply {
                     action = ACTION_MUSIC_PLAY_PAUSE
                     putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
                 }
-                val playPending = PendingIntent.getBroadcast(
-                    context,
-                    appWidgetId * 100 + 11,
-                    playIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                views.setOnClickPendingIntent(
+                    R.id.music_btn_play_pause,
+                    PendingIntent.getBroadcast(
+                        context,
+                        appWidgetId * 100 + 11,
+                        playIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
                 )
-                views.setOnClickPendingIntent(R.id.music_btn_play_pause, playPending)
 
                 val nextIntent = Intent(context, LiloMusicWidgetProvider::class.java).apply {
                     action = ACTION_MUSIC_NEXT
                     putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
                 }
-                val nextPending = PendingIntent.getBroadcast(
-                    context,
-                    appWidgetId * 100 + 12,
-                    nextIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                views.setOnClickPendingIntent(
+                    R.id.music_btn_next,
+                    PendingIntent.getBroadcast(
+                        context,
+                        appWidgetId * 100 + 12,
+                        nextIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                    )
                 )
-                views.setOnClickPendingIntent(R.id.music_btn_next, nextPending)
 
                 // Tapping track info or turntable opens Settings (if no access) or Spotify / MainActivity
                 val launchIntent = if (!hasAccess) {
@@ -230,7 +238,7 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
                     launchIntent,
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
-                views.setOnClickPendingIntent(R.id.music_track_area, launchPending)
+                views.setOnClickPendingIntent(R.id.music_info_hotspot, launchPending)
                 views.setOnClickPendingIntent(R.id.music_turntable_area, launchPending)
 
                 appWidgetManager.updateAppWidget(appWidgetId, views)
@@ -301,7 +309,6 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
             px(lx + 4, ly + 5, 7, 5, "#422817")
             // Eyes
             if (isPlaying) {
-                // Happy closed curved eyes
                 px(lx + 5, ly + 7, 2, 1, "#1e293b")
                 px(lx + 8, ly + 7, 2, 1, "#1e293b")
             } else {
@@ -354,8 +361,8 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
             isPlaying: Boolean,
             hasAccess: Boolean
         ): Bitmap {
-            val w = 480
-            val h = 248
+            val w = 520
+            val h = 270
             val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
             val c = Canvas(bmp)
             val font = loadPixelTypeface(context)
@@ -366,74 +373,76 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
                 isSubpixelText = true
             }
 
-            // Right Half: Music Information Box (x = 244..462, y = 14..132)
+            // Right Area: Music Information Card (x = 206..502, y = 14..156)
             p.color = Color.parseColor("#3b1d0a")
-            c.drawRect(244f, 14f, 462f, 134f, p)
+            c.drawRect(206f, 14f, 502f, 158f, p)
             p.color = Color.parseColor("#532e16")
-            c.drawRect(246f, 16f, 460f, 132f, p)
-            p.color = Color.parseColor("#ffefc7") // Parchment box
-            c.drawRect(248f, 18f, 458f, 130f, p)
+            c.drawRect(208f, 16f, 500f, 156f, p)
+            p.color = Color.parseColor("#ffefc7") // Warm parchment card
+            c.drawRect(210f, 18f, 498f, 154f, p)
 
             if (!hasAccess) {
                 // Header Tag: "CONNECT SPOTIFY"
                 p.color = Color.parseColor("#b45309")
-                c.drawRect(254f, 22f, 386f, 38f, p)
+                c.drawRect(218f, 24f, 386f, 44f, p)
                 p.color = Color.parseColor("#ffffff")
-                p.textSize = 10f
-                p.textAlign = Paint.Align.LEFT
-                c.drawText("CONNECT SPOTIFY", 260f, 34f, p)
-
-                // Track Title Prompt
                 p.textSize = 14f
+                p.textAlign = Paint.Align.LEFT
+                c.drawText("CONNECT SPOTIFY", 226f, 40f, p)
+
+                // Bold Prompt: "TAP TO LINK SPOTIFY" @ 20f bold
+                p.textSize = 20f
                 p.color = Color.parseColor("#3b1d0a")
-                c.drawText("Tap to Connect", 254f, 62f, p)
+                c.drawText("TAP TO LINK SPOTIFY", 218f, 78f, p)
 
                 // Subtitle
-                p.textSize = 11f
+                p.textSize = 14f
                 p.color = Color.parseColor("#8f4d22")
-                c.drawText("Notification access needed", 254f, 84f, p)
+                c.drawText("Notification access needed for live track sync", 218f, 108f, p)
 
                 // Status label
-                p.textSize = 10f
+                p.textSize = 14f
                 p.color = Color.parseColor("#b45309")
-                c.drawText("Tap here to grant access \u2192", 254f, 106f, p)
+                c.drawText("Tap card to enable in Settings \u2192", 218f, 136f, p)
             } else {
                 // Header Tag: "SPOTIFY / LIVE"
                 p.color = Color.parseColor("#15803d")
-                c.drawRect(254f, 22f, 370f, 38f, p)
+                c.drawRect(218f, 24f, 370f, 44f, p)
                 p.color = Color.parseColor("#ffffff")
-                p.textSize = 10f
-                p.textAlign = Paint.Align.LEFT
-                c.drawText("SPOTIFY LIVE", 260f, 34f, p)
-
-                // Track Title
                 p.textSize = 14f
+                p.textAlign = Paint.Align.LEFT
+                c.drawText("SPOTIFY LIVE", 226f, 40f, p)
+
+                // Track Title @ 24f bold (#3B1D0A)
+                p.textSize = 24f
                 p.color = Color.parseColor("#3b1d0a")
-                val truncatedTrack = truncate(track, 18)
-                c.drawText(truncatedTrack, 254f, 62f, p)
+                val truncatedTrack = truncate(track, 20)
+                c.drawText(truncatedTrack, 218f, 78f, p)
 
-                // Artist & Album
-                p.textSize = 11f
-                p.color = Color.parseColor("#8f4d22")
-                val truncatedArtist = truncate(if (album.isNotBlank()) "$artist \u2022 $album" else artist, 24)
-                c.drawText(truncatedArtist, 254f, 84f, p)
+                // Artist & Album @ 18f bold (#6E3F1D)
+                p.textSize = 18f
+                p.color = Color.parseColor("#6e3f1d")
+                val artistAlbumStr = if (album.isNotBlank()) "$artist - $album" else artist
+                val truncatedArtist = truncate(artistAlbumStr, 26)
+                c.drawText(truncatedArtist, 218f, 108f, p)
 
-                // Status label
-                p.textSize = 11f
-                p.color = if (isPlaying) Color.parseColor("#16a34a") else Color.parseColor("#b45309")
-                c.drawText(if (isPlaying) "\u25B6 PLAYING" else "\u23F8 PAUSED", 254f, 106f, p)
+                // Status Badge @ 16f bold (PLAYING in emerald #15803D or PAUSED in amber #B45309)
+                p.textSize = 16f
+                p.color = if (isPlaying) Color.parseColor("#15803d") else Color.parseColor("#b45309")
+                val badgeText = if (isPlaying) "\u25B6 PLAYING" else "\u23F8 PAUSED"
+                c.drawText(badgeText, 218f, 136f, p)
             }
 
-            // 3 Media Control Buttons (y = 148..214)
-            // Button 1: Previous (x = 248..308)
-            drawPixelMediaButton(c, 248f, 154f, 60f, 48f, "|<<", p)
+            // 3 Oversized Tactile Stardew Buttons (90x52 px each, icons @ 24f bold)
+            // Button 1: Previous (x = 210..300, y = 174..226)
+            drawPixelMediaButton(c, 210f, 174f, 90f, 52f, "|<<", p, isHighlight = false)
 
-            // Button 2: Play / Pause (x = 318..390)
+            // Button 2: Play / Pause (x = 308..398, y = 174..226)
             val playIcon = if (isPlaying) "||" else "\u25B6"
-            drawPixelMediaButton(c, 320f, 148f, 72f, 60f, playIcon, p, isHighlight = true)
+            drawPixelMediaButton(c, 308f, 174f, 90f, 52f, playIcon, p, isHighlight = true)
 
-            // Button 3: Next (x = 402..462)
-            drawPixelMediaButton(c, 402f, 154f, 60f, 48f, ">>|", p)
+            // Button 3: Next (x = 406..496, y = 174..226)
+            drawPixelMediaButton(c, 406f, 174f, 90f, 52f, ">>|", p, isHighlight = false)
 
             return bmp
         }
@@ -458,11 +467,11 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
             p.color = if (isHighlight) Color.parseColor("#3d7a14") else Color.parseColor("#dca03a")
             c.drawRect(x + 2f, y + h / 2f, x + w - 2f, y + h - 2f, p)
 
-            // Button label
+            // Button label (24f bold)
             p.color = if (isHighlight) Color.parseColor("#ffffff") else Color.parseColor("#3b1d0a")
-            p.textSize = if (isHighlight) 18f else 13f
+            p.textSize = 24f
             p.textAlign = Paint.Align.CENTER
-            c.drawText(label, x + w / 2f, y + h / 2f + 5f, p)
+            c.drawText(label, x + w / 2f, y + h / 2f + 8f, p)
         }
 
         private fun truncate(str: String, maxLen: Int): String {
