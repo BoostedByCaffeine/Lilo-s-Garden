@@ -198,7 +198,7 @@ class LiloNotesWidgetProvider : AppWidgetProvider() {
                 for (f in 0 until TOTAL_FRAMES) {
                     val frameBmp = renderNoticeBoardFrame(f)
                     val frameView = RemoteViews(context.packageName, R.layout.widget_flipper_frame)
-                    frameView.setImageViewBitmap(R.id.flipper_frame_img, frameBmp)
+                    frameView.setImageViewBitmap(R.id.frame_img, frameBmp)
                     views.addView(R.id.notes_flipper, frameView)
                 }
 
