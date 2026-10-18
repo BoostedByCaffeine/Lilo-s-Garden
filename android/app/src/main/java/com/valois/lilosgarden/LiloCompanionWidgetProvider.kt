@@ -111,6 +111,10 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
             val pattern: String
         )
 
+        fun updateClockOnly(context: Context) {
+            refreshAllCompanionWidgets(context, fullUpdate = false)
+        }
+
         fun scheduleNextMinuteTick(context: Context) {
             try {
                 val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -124,8 +128,12 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
                 val now = System.currentTimeMillis()
-                val nextMinute = ((now / 60000L) + 1L) * 60000L + 500L
-                am.set(AlarmManager.RTC, nextMinute, pi)
+                val nextMinute = ((now / 60000L) + 1L) * 60000L + 250L
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                    am.setWindow(AlarmManager.RTC, nextMinute, 5000L, pi)
+                } else {
+                    am.set(AlarmManager.RTC, nextMinute, pi)
+                }
             } catch (e: Exception) {}
         }
 
@@ -237,9 +245,12 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                 val tempC = prefs.getInt("tempC", if (isNight) 24 else 29)
 
                 val nowDate = Date()
+                val is24Hour = DateFormat.is24HourFormat(context)
+                val timePattern = if (is24Hour) "HH:mm" else "hh:mm a"
+                val timeStr = SimpleDateFormat(timePattern, Locale.getDefault()).format(nowDate).uppercase(Locale.getDefault())
                 val dateStr = SimpleDateFormat("EEE, MMM d", Locale.getDefault()).format(nowDate)
 
-                val pixelFont = loadPixelTypeface(context)
+                val pixelFont = WidgetFontHelper.loadPixelTypeface(context)
 
                 // LAYER 2: High-Res Solid Typography Overlay (440x224 ARGB_8888, 1 single bitmap)
                 val hudBmp = Bitmap.createBitmap(440, 224, Bitmap.Config.ARGB_8888)
@@ -261,12 +272,19 @@ class LiloCompanionWidgetProvider : AppWidgetProvider() {
                 tp.textAlign = Paint.Align.LEFT
                 hudCanvas.drawText("${cat.name} • $poseLabel", 232f, 40f, tp)
 
-                // 2. Solid Bold Pixel Date inside Parchment Plaque (Time is handled by native TextClock)
+                // 2. Live Pixel Time directly on HUD using Stardew_Valley.ttf with warm highlight shadow
+                tp.textSize = 28f
+                tp.color = Color.parseColor("#ffefc7")
+                hudCanvas.drawText(timeStr, 230f, 92f, tp)
+                tp.color = Color.parseColor("#3b1d0a")
+                hudCanvas.drawText(timeStr, 228f, 90f, tp)
+
+                // 3. Solid Bold Pixel Date inside Parchment Plaque
                 tp.textSize = 17f
                 tp.color = Color.parseColor("#ffefc7")
-                hudCanvas.drawText(dateStr, 230f, 128f, tp)
+                hudCanvas.drawText(dateStr, 230f, 130f, tp)
                 tp.color = Color.parseColor("#6e3f1d")
-                hudCanvas.drawText(dateStr, 228f, 126f, tp)
+                hudCanvas.drawText(dateStr, 228f, 128f, tp)
 
                 // 3. Weather Badge inside Bottom-Left of Clock Plaque
                 val weatherShort = when (weather) {

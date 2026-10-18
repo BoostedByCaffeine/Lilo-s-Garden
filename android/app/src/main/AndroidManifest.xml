@@ -24,6 +24,11 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
         </activity>
 
         <!-- 2. Stardew Valley Home Screen Widget Provider -->
@@ -138,6 +143,8 @@
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <action android:name="com.valois.lilosgarden.ACTION_NOTES_TOGGLE_TOP" />
                 <action android:name="com.valois.lilosgarden.ACTION_NOTES_REFRESH" />
+                <action android:name="com.valois.lilosgarden.ACTION_NOTES_OPEN_DEFAULT_APP" />
+                <action android:name="com.valois.lilosgarden.ACTION_NOTES_SYNC_CLIPBOARD" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
@@ -157,6 +164,7 @@
                 <action android:name="com.valois.lilosgarden.ACTION_MUSIC_REFRESH" />
                 <action android:name="com.spotify.music.metadatachanged" />
                 <action android:name="com.spotify.music.playbackstatechanged" />
+                <action android:name="com.spotify.music.queuechanged" />
                 <action android:name="com.android.music.metadatachanged" />
                 <action android:name="com.android.music.playstatechanged" />
             </intent-filter>

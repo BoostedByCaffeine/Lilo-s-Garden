@@ -1,11 +1,14 @@
 package com.valois.lilosgarden
 
+import android.app.Notification
 import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.media.MediaMetadata
 import android.media.session.MediaController
+import android.media.session.MediaSession
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
 import android.os.Build
@@ -16,6 +19,15 @@ class LiloMediaListenerService : NotificationListenerService() {
 
     private var sessionManager: MediaSessionManager? = null
     private var activeController: MediaController? = null
+
+    private val timeTickReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            try {
+                LiloCompanionWidgetProvider.updateClockOnly(applicationContext)
+                LiloWindowWidgetProvider.updateClockOnly(applicationContext)
+            } catch (_: Exception) {}
+        }
+    }
 
     private val musicReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -42,17 +54,27 @@ class LiloMediaListenerService : NotificationListenerService() {
 
         override fun onPlaybackStateChanged(state: PlaybackState?) {
             val isPlaying = state?.state == PlaybackState.STATE_PLAYING
-            val prefs = getSharedPreferences("lilo_music_prefs", Context.MODE_PRIVATE)
-            prefs.edit().putBoolean("is_playing", isPlaying).apply()
+            savePlaybackState(isPlaying)
             LiloMusicWidgetProvider.refreshAllMusicWidgets(this@LiloMediaListenerService)
         }
     }
 
     override fun onCreate() {
         super.onCreate()
+
+        // 1. Register minute time ticks for custom pixel clock in companion & window widgets
+        val timeFilter = IntentFilter().apply {
+            addAction(Intent.ACTION_TIME_TICK)
+            addAction(Intent.ACTION_TIME_CHANGED)
+            addAction(Intent.ACTION_TIMEZONE_CHANGED)
+        }
+        registerReceiver(timeTickReceiver, timeFilter)
+
+        // 2. Register standard music broadcast intents
         val filter = IntentFilter().apply {
             addAction("com.spotify.music.metadatachanged")
             addAction("com.spotify.music.playbackstatechanged")
+            addAction("com.spotify.music.queuechanged")
             addAction("com.android.music.metadatachanged")
             addAction("com.android.music.playstatechanged")
         }
@@ -67,6 +89,9 @@ class LiloMediaListenerService : NotificationListenerService() {
 
     override fun onDestroy() {
         try {
+            unregisterReceiver(timeTickReceiver)
+        } catch (_: Exception) {}
+        try {
             unregisterReceiver(musicReceiver)
         } catch (_: Exception) {}
         try {
@@ -76,6 +101,25 @@ class LiloMediaListenerService : NotificationListenerService() {
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
+        try {
+            val token = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                sbn?.notification?.extras?.getParcelable(Notification.EXTRA_MEDIA_SESSION, MediaSession.Token::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                sbn?.notification?.extras?.getParcelable<MediaSession.Token>(Notification.EXTRA_MEDIA_SESSION)
+            }
+            if (token != null) {
+                val controller = MediaController(this, token)
+                val isPlaying = controller.playbackState?.state == PlaybackState.STATE_PLAYING
+                if (isPlaying || activeController == null) {
+                    activeController?.unregisterCallback(controllerCallback)
+                    activeController = controller
+                    activeController?.registerCallback(controllerCallback)
+                    extractAndSaveMetadata(controller.metadata, controller.playbackState)
+                    return
+                }
+            }
+        } catch (_: Exception) {}
         checkMediaSessions()
     }
 
@@ -93,7 +137,7 @@ class LiloMediaListenerService : NotificationListenerService() {
     private fun checkMediaSessions() {
         try {
             val sessions = sessionManager?.getActiveSessions(
-                android.content.ComponentName(this, LiloMediaListenerService::class.java)
+                ComponentName(this, LiloMediaListenerService::class.java)
             )
             if (!sessions.isNullOrEmpty()) {
                 val controller = sessions.firstOrNull {
@@ -127,16 +171,36 @@ class LiloMediaListenerService : NotificationListenerService() {
         }
     }
 
+    private fun savePlaybackState(isPlaying: Boolean) {
+        val prefNames = arrayOf("lilo_music_prefs", "lilo_widget_prefs", "lilos_garden_prefs")
+        for (prefName in prefNames) {
+            getSharedPreferences(prefName, Context.MODE_PRIVATE).edit()
+                .putBoolean("is_playing", isPlaying)
+                .putBoolean("music_playing", isPlaying)
+                .putBoolean("music_connected", true)
+                .apply()
+        }
+    }
+
     private fun updateMusicPrefs(track: String, artist: String, album: String, isPlaying: Boolean) {
-        val prefs = getSharedPreferences("lilo_music_prefs", Context.MODE_PRIVATE)
-        prefs.edit()
-            .putString("track_title", track)
-            .putString("artist_name", artist)
-            .putString("album_name", album)
-            .putBoolean("is_playing", isPlaying)
-            .putLong("last_update", System.currentTimeMillis())
-            .apply()
+        val now = System.currentTimeMillis()
+        val prefNames = arrayOf("lilo_music_prefs", "lilo_widget_prefs", "lilos_garden_prefs")
+        for (prefName in prefNames) {
+            getSharedPreferences(prefName, Context.MODE_PRIVATE).edit()
+                .putString("track_title", track)
+                .putString("artist_name", artist)
+                .putString("album_name", album)
+                .putString("music_title", track)
+                .putString("music_artist", artist)
+                .putString("music_album", album)
+                .putBoolean("is_playing", isPlaying)
+                .putBoolean("music_playing", isPlaying)
+                .putBoolean("music_connected", true)
+                .putLong("last_update", now)
+                .apply()
+        }
 
         LiloMusicWidgetProvider.refreshAllMusicWidgets(this)
     }
 }
+

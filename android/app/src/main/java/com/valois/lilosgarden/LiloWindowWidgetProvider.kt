@@ -114,6 +114,10 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
             val pattern: String
         )
 
+        fun updateClockOnly(context: Context) {
+            refreshAllWindowWidgets(context, fullUpdate = false)
+        }
+
         fun scheduleNextMinuteTick(context: Context) {
             try {
                 val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -127,8 +131,12 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                 )
                 val now = System.currentTimeMillis()
-                val nextMinute = ((now / 60000L) + 1L) * 60000L + 500L
-                am.set(AlarmManager.RTC, nextMinute, pi)
+                val nextMinute = ((now / 60000L) + 1L) * 60000L + 250L
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
+                    am.setWindow(AlarmManager.RTC, nextMinute, 5000L, pi)
+                } else {
+                    am.set(AlarmManager.RTC, nextMinute, pi)
+                }
             } catch (e: Exception) {}
         }
 
@@ -260,7 +268,11 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
                 }
                 val tempC = prefs.getInt("tempC", defaultTemp)
 
-                val pixelFont = loadPixelTypeface(context)
+                val is24Hour = DateFormat.is24HourFormat(context)
+                val timePattern = if (is24Hour) "HH:mm" else "hh:mm a"
+                val timeStr = SimpleDateFormat(timePattern, Locale.getDefault()).format(Date()).uppercase(Locale.getDefault())
+
+                val pixelFont = WidgetFontHelper.loadPixelTypeface(context)
 
                 // LAYER 2: High-Res Solid Typography Overlay (400x240 ARGB_8888, 1 single bitmap)
                 val hudBmp = Bitmap.createBitmap(400, 240, Bitmap.Config.ARGB_8888)
@@ -270,7 +282,14 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
                     isFakeBoldText = true
                 }
 
-                // 1. Time is handled by native TextClock (win_clock) in layout!
+                // 1. Live Pixel Time on Top-Left with dark drop-shadow
+                tp.textSize = 26f
+                tp.textAlign = Paint.Align.LEFT
+                tp.color = Color.parseColor("#1e293b")
+                hudCanvas.drawText(timeStr, 36f, 56f, tp)
+                hudCanvas.drawText(timeStr, 35f, 55f, tp)
+                tp.color = Color.parseColor("#ffffff")
+                hudCanvas.drawText(timeStr, 34f, 54f, tp)
 
                 // 2. Solid Bold Pixel Temperature on Top-Right
                 tp.textSize = 23f

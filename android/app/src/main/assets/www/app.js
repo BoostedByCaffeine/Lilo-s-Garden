@@ -109,7 +109,7 @@ const COTTAGE_BOUNDS = {
 const COTTAGE_SPOTS = {
   hearth: { x: 544, y: 224, radius: 32, label: 'Memorial Bookcase & Tribute' },
   sofa:   { x: 608, y: 334, radius: 30, label: 'Cozy Cream Sofa' },
-  bed:    { x: 464, y: 218, radius: 32, label: 'Cozy Yellow Quilt Bed' },
+  bed:    { x: 465, y: 224, radius: 32, label: 'Cozy Yellow Quilt Bed' },
   desk:   { x: 598, y: 248, radius: 26, label: 'Wooden Study Desk' },
   rug:    { x: 476, y: 266, radius: 28, label: 'Warm Crimson Bedside Rug' },
   table:  { x: 364, y: 312, radius: 32, label: 'Dining Table' },
@@ -801,7 +801,7 @@ const world = {
     const ct = this.caretaker;
     ct.state = 'SEEK_TABLE_MEAL';
     ct.targetX = 364;
-    ct.targetY = 283; // Seated on front-facing chair with full torso above table top edge (y=275)
+    ct.targetY = 268; // Waist at table top edge (y=268); full torso & head sit in front of top chair!
     ct.labelAlpha = 1.8;
     showToast(`${ct.name} is sitting down at the table to eat!`, 'fish', '#fbbf24');
   },
@@ -1415,13 +1415,12 @@ const world = {
           }
         }
       } else if (ct.state === 'SEEK_TABLE_MEAL') {
-        // 2. Walking to Front-Facing Chair at Dining Table to Eat
         const dx = ct.targetX - ct.x;
         const dy = ct.targetY - ct.y;
         const dist = Math.hypot(dx, dy);
         if (dist < 3) {
           ct.x = 364;
-          ct.y = 283;
+          ct.y = 268;
           ct.facing = 1;
           ct.state = 'EATING_TABLE';
           ct.stateTimer = 8.0;
@@ -1918,18 +1917,21 @@ function drawPixelCaretaker(c, caretaker, time) {
     c.scale(1.35, 1.35);
 
     if (isSleepingBed) {
-      // Head resting on the left white pillow of DoubleBed
-      px(-5, -13, 10, 7, skin);
-      px(-5, -15, 10, 3, hair);
-      px(-6, -14, 2, 4, hair);
-      px(4, -14, 2, 4, hair);
-      // Closed peaceful eyes
-      px(-3, -9, 2, 1, '#1e293b');
-      px(1, -9, 2, 1, '#1e293b');
-      // Folded quilt collar & warm blanket matching the bed mattress
+      // Head resting directly on the left white pillow of DoubleBed
+      px(-5, -15, 10, 7, skin);
+      px(-5, -17, 10, 3, hair);
+      px(-6, -16, 2, 4, hair);
+      px(4, -16, 2, 4, hair);
+      // Closed sleeping eyes & blush
+      px(-3, -11, 2, 1, '#1e293b');
+      px(1, -11, 2, 1, '#1e293b');
+      px(-4, -10, 1, 1, '#fda4af');
+      px(3, -10, 1, 1, '#fda4af');
+      // Shoulders & quilt blanket pulled up over chest
+      px(-6, -8 + breath, 12, 3, outfit);
       px(-8, -6 + breath, 16, 2, '#fef08a');
-      px(-8, -4 + breath, 16, 7, '#eab308');
-      px(-8, 1 + breath, 16, 2, '#ca8a04');
+      px(-8, -4 + breath, 16, 8, '#eab308');
+      px(-8, 3 + breath, 16, 2, '#ca8a04');
     } else {
       px(-5, -7 + breath, 10, 7, outfit);
       px(-6, -2, 8, 3, pants);
@@ -2923,12 +2925,12 @@ function getCottageFurnitureRenderables(ctx, time) {
       draw: () => drawIndividualFurniture(ctx, 'intChairTop', 598, 252, 1.25, true)
     },
     // Left Dining Table Set:
-    // 1. Front-facing chair at top of dining table (depth-sort y=278) -> Caretaker (y=283) overlays this chair!
+    // 1. Front-facing chair at top of dining table (depth-sort y=262) -> Caretaker (sort y=280) overlays this chair!
     {
-      y: 278,
-      draw: () => drawIndividualFurniture(ctx, 'intChairTop', 364, 282, 1.35, true)
+      y: 262,
+      draw: () => drawIndividualFurniture(ctx, 'intChairTop', 364, 272, 1.35, true)
     },
-    // 2. Dining Table (y=326) -> Overlays only the Caretaker's lower legs below y=275, leaving full torso visible!
+    // 2. Dining Table (depth-sort y=326) -> Overlays only the Caretaker's legs below y=268, leaving full torso visible!
     {
       y: 326,
       draw: () => {
@@ -2936,11 +2938,11 @@ function getCottageFurnitureRenderables(ctx, time) {
         drawIndividualFurniture(ctx, 'intDiningTable', 364, 326, 1.35, true);
         if (world.caretaker && world.caretaker.state === 'EATING_TABLE') {
           ctx.fillStyle = '#f8fafc';
-          ctx.fillRect(359, 280, 10, 6);
+          ctx.fillRect(359, 274, 10, 6);
           ctx.fillStyle = '#ea580c';
-          ctx.fillRect(361, 281, 6, 4);
+          ctx.fillRect(361, 275, 6, 4);
           ctx.fillStyle = '#fde047';
-          ctx.fillRect(362, 282, 3, 2);
+          ctx.fillRect(362, 276, 3, 2);
         }
         drawIndividualFurniture(ctx, 'intChairBottom', 364, 340, 1.35, true);
       }
@@ -3005,7 +3007,12 @@ function drawGardenScene(time = 0) {
       };
     }),
     {
-      y: world.caretaker.y,
+      y:
+        world.caretaker.state === 'SLEEPING_BED'
+          ? 255
+          : world.caretaker.state === 'EATING_TABLE'
+          ? 280
+          : world.caretaker.y,
       draw: () => drawPixelCaretaker(ctx, world.caretaker, time)
     },
     ...world.cats.map((cat) => ({
@@ -3960,6 +3967,7 @@ function getGitHubUrls() {
   const { slug } = getGitHubRepoInfo();
   return {
     releaseDirectApk: `https://github.com/${slug}/releases/download/latest/lilos-garden.apk`,
+    releaseDirectIpa: `https://github.com/${slug}/releases/download/latest/lilos-garden.ipa`,
     releasesPage: `https://github.com/${slug}/releases/latest`,
     allReleases: `https://github.com/${slug}/releases`,
     actionsPage: `https://github.com/${slug}/actions`
@@ -4027,6 +4035,43 @@ safeOn('btnOpenApkTutorial', 'click', () => {
 safeOn('btnOpenIosTutorial', 'click', () => {
   closeModal('install-choice-modal');
   openModal('ios-tutorial-modal');
+});
+
+// Choice C2: Direct 1-Tap iOS .IPA Download from GitHub Release (or local ./lilos-garden.ipa)
+safeOn('btnDownloadIosIpa', 'click', async (e) => {
+  e.preventDefault();
+  const urls = getGitHubUrls();
+
+  // A. Check if IPA is hosted locally in the web root
+  try {
+    const localCheck = await fetch('./lilos-garden.ipa', { method: 'HEAD' });
+    if (localCheck.ok) {
+      const a = document.createElement('a');
+      a.href = './lilos-garden.ipa';
+      a.download = 'lilos-garden.ipa';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast('Downloading lilos-garden.ipa directly...', 'download');
+      return;
+    }
+  } catch (err) {}
+
+  // B. Direct download from GitHub Releases
+  try {
+    const a = document.createElement('a');
+    a.href = urls.releaseDirectIpa;
+    a.download = 'lilos-garden.ipa';
+    a.target = '_blank';
+    a.rel = 'noopener,noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast('Downloading iOS .IPA (Sideload / AltStore)...', 'download');
+  } catch (err) {
+    window.open(urls.allReleases, '_blank', 'noopener,noreferrer');
+    showToast('Opening GitHub Releases page...', 'download');
+  }
 });
 
 // 3. Inside Tutorial Modal: Direct 1-Tap APK Download from GitHub Release (or local ./lilos-garden.apk)

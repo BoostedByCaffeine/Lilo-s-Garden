@@ -49,6 +49,55 @@ class LiloNotesWidgetProvider : AppWidgetProvider() {
                 toggleTopTask(context)
                 refreshAllNotesWidgets(context)
             }
+            ACTION_NOTES_OPEN_DEFAULT_APP -> {
+                try {
+                    val keepIntent = context.packageManager.getLaunchIntentForPackage("com.google.android.keep")
+                        ?: context.packageManager.getLaunchIntentForPackage("com.samsung.android.app.notes")
+                    if (keepIntent != null) {
+                        keepIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        context.startActivity(keepIntent)
+                    } else {
+                        val genericIntent = Intent(Intent.ACTION_VIEW).apply {
+                            type = "vnd.android.cursor.dir/vnd.google.note"
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        }
+                        if (genericIntent.resolveActivity(context.packageManager) != null) {
+                            context.startActivity(genericIntent)
+                        } else {
+                            val createIntent = Intent("android.intent.action.CREATE_NOTE").apply {
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            }
+                            if (createIntent.resolveActivity(context.packageManager) != null) {
+                                context.startActivity(createIntent)
+                            } else {
+                                val appIntent = Intent(context, MainActivity::class.java).apply {
+                                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                                    putExtra("open_modal", "modalTasks")
+                                }
+                                context.startActivity(appIntent)
+                            }
+                        }
+                    }
+                } catch (_: Exception) {}
+            }
+            ACTION_NOTES_SYNC_CLIPBOARD -> {
+                try {
+                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                    val clip = clipboard?.primaryClip
+                    if (clip != null && clip.itemCount > 0) {
+                        val text = clip.getItemAt(0).coerceToText(context)?.toString()?.trim()
+                        if (!text.isNullOrBlank()) {
+                            MainActivity.addDeviceNote(context, text)
+                            Toast.makeText(context, "Note imported from clipboard!", Toast.LENGTH_SHORT).show()
+                            refreshAllNotesWidgets(context)
+                        } else {
+                            Toast.makeText(context, "Clipboard is empty", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        Toast.makeText(context, "Clipboard is empty", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (_: Exception) {}
+            }
             ACTION_NOTES_REFRESH -> {
                 refreshAllNotesWidgets(context)
             }
@@ -121,6 +170,8 @@ class LiloNotesWidgetProvider : AppWidgetProvider() {
 
     companion object {
         const val ACTION_NOTES_TOGGLE_TOP = "com.valois.lilosgarden.ACTION_NOTES_TOGGLE_TOP"
+        const val ACTION_NOTES_OPEN_DEFAULT_APP = "com.valois.lilosgarden.ACTION_NOTES_OPEN_DEFAULT_APP"
+        const val ACTION_NOTES_SYNC_CLIPBOARD = "com.valois.lilosgarden.ACTION_NOTES_SYNC_CLIPBOARD"
         const val ACTION_NOTES_REFRESH = "com.valois.lilosgarden.ACTION_NOTES_REFRESH"
         private const val TOTAL_FRAMES = 12
 
@@ -135,15 +186,7 @@ class LiloNotesWidgetProvider : AppWidgetProvider() {
         }
 
         fun loadPixelTypeface(context: Context): Typeface {
-            return try {
-                Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew_Valley.ttf")
-            } catch (e1: Exception) {
-                try {
-                    ResourcesCompat.getFont(context, R.font.press_start_2p) ?: Typeface.MONOSPACE
-                } catch (e2: Exception) {
-                    Typeface.MONOSPACE
-                }
-            }
+            return WidgetFontHelper.loadPixelTypeface(context)
         }
 
         private fun updateNotesWidget(
@@ -193,6 +236,22 @@ class LiloNotesWidgetProvider : AppWidgetProvider() {
                     tasksList.add(Pair("Water forget-me-nots", false))
                 }
 
+                // Read recent device notes
+                val deviceNotesJson = prefs.getString("device_notes_list", null)
+                val recentNotes = mutableListOf<String>()
+                if (!deviceNotesJson.isNullOrEmpty()) {
+                    try {
+                        val arr = JSONArray(deviceNotesJson)
+                        for (i in 0 until minOf(3, arr.length())) {
+                            val obj = arr.optJSONObject(i) ?: continue
+                            val txt = obj.optString("text", "").trim()
+                            if (txt.isNotBlank()) {
+                                recentNotes.add(txt)
+                            }
+                        }
+                    } catch (_: Exception) {}
+                }
+
                 // 2. LAYER 1: Animation Frames Loop (12 frames @ 220x110 RGB_565)
                 views.removeAllViews(R.id.notes_flipper)
                 for (f in 0 until TOTAL_FRAMES) {
@@ -202,8 +261,8 @@ class LiloNotesWidgetProvider : AppWidgetProvider() {
                     views.addView(R.id.notes_flipper, frameView)
                 }
 
-                // 3. LAYER 2: High-Res Solid Notice Board & Typography Overlay (440x220 ARGB_8888)
-                val hudBmp = renderNoticeBoardHud(context, tasksList, stickyNote)
+                // 3. LAYER 2: High-Res Solid Notice Board & Typography Overlay (480x248 ARGB_8888)
+                val hudBmp = renderNoticeBoardHud(context, tasksList, stickyNote, recentNotes)
                 views.setImageViewBitmap(R.id.notes_hud_overlay, hudBmp)
 
                 // 4. Hotspots PendingIntents
@@ -288,93 +347,110 @@ class LiloNotesWidgetProvider : AppWidgetProvider() {
         private fun renderNoticeBoardHud(
             context: Context,
             tasks: List<Pair<String, Boolean>>,
-            stickyNote: String
+            stickyNote: String,
+            recentNotes: List<String>
         ): Bitmap {
-            val w = 440
-            val h = 220
+            val w = 480
+            val h = 248
             val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
             val c = Canvas(bmp)
             val font = loadPixelTypeface(context)
 
             val p = Paint().apply {
                 typeface = font
-                isAntiAlias = false
+                isAntiAlias = true
+                isSubpixelText = true
             }
 
             // 1. Board Title Bar
             p.color = Color.parseColor("#3b1d0a")
-            c.drawRect(16f, 14f, 360f, 42f, p)
+            c.drawRect(18f, 14f, 400f, 44f, p)
             p.color = Color.parseColor("#8f4d22")
-            c.drawRect(18f, 16f, 356f, 38f, p)
+            c.drawRect(20f, 16f, 396f, 40f, p)
 
             p.color = Color.parseColor("#ffffff")
             p.textSize = 14f
             p.textAlign = Paint.Align.LEFT
-            c.drawText("SANCTUARY TASKS & NOTES", 26f, 33f, p)
+            c.drawText("SANCTUARY TASKS & NOTES", 28f, 34f, p)
 
-            // 2. Render up to 3 Daily Tasks
-            val maxTasks = minOf(3, tasks.size)
-            var startY = 70f
+            // 2. Render up to 2-3 Daily Tasks
+            val maxTasks = minOf(if (recentNotes.isNotEmpty()) 2 else 3, tasks.size)
+            var startY = 72f
             for (i in 0 until maxTasks) {
                 val (taskText, isDone) = tasks[i]
 
                 // Checkbox Box
                 p.color = Color.parseColor("#3b1d0a")
-                c.drawRect(22f, startY - 14f, 38f, startY + 2f, p)
+                c.drawRect(24f, startY - 14f, 42f, startY + 4f, p)
 
                 if (isDone) {
                     p.color = Color.parseColor("#15803d")
-                    c.drawRect(24f, startY - 12f, 36f, startY, p)
+                    c.drawRect(26f, startY - 12f, 40f, startY + 2f, p)
                     // White checkmark
                     p.color = Color.parseColor("#ffffff")
                     p.textSize = 12f
-                    c.drawText("\u2713", 26f, startY - 2f, p)
+                    c.drawText("\u2713", 28f, startY, p)
                 } else {
                     p.color = Color.parseColor("#fffbeb")
-                    c.drawRect(24f, startY - 12f, 36f, startY, p)
+                    c.drawRect(26f, startY - 12f, 40f, startY + 2f, p)
                 }
 
                 // Task Text
                 p.textSize = 13f
                 if (isDone) {
                     p.color = Color.parseColor("#64748b")
-                    val truncated = truncate(taskText, 24)
-                    c.drawText(truncated, 46f, startY, p)
+                    val truncated = truncate(taskText, 25)
+                    c.drawText(truncated, 50f, startY, p)
                     // Strikethrough line
                     val textW = p.measureText(truncated)
                     p.color = Color.parseColor("#94a3b8")
-                    c.drawRect(46f, startY - 4f, 46f + textW, startY - 2f, p)
+                    c.drawRect(50f, startY - 4f, 50f + textW, startY - 2f, p)
                 } else {
                     p.color = Color.parseColor("#3b1d0a")
-                    val truncated = truncate(taskText, 24)
-                    c.drawText(truncated, 46f, startY, p)
+                    val truncated = truncate(taskText, 25)
+                    c.drawText(truncated, 50f, startY, p)
                 }
 
                 startY += 28f
             }
 
-            // 3. Cozy Sticky Note at Bottom (y = 152..206)
+            // 3. Cozy Sticky Note at Bottom (y = 138..234)
             p.color = Color.parseColor("#b45309")
-            c.drawRect(18f, 150f, 422f, 206f, p)
+            c.drawRect(20f, 136f, 460f, 234f, p)
             p.color = Color.parseColor("#fef3c7")
-            c.drawRect(20f, 152f, 420f, 204f, p)
+            c.drawRect(22f, 138f, 458f, 232f, p)
 
             // Red Pin at sticky note top-center
             p.color = Color.parseColor("#dc2626")
-            c.drawCircle(220f, 156f, 4f, p)
+            c.drawCircle(240f, 142f, 4f, p)
 
-            // Note Text
+            // Note Text / Recent Device Note
+            val primaryNote = if (recentNotes.isNotEmpty()) recentNotes[0] else stickyNote
+            val noteHeader = if (recentNotes.isNotEmpty()) "📌 RECENT NOTE:" else "📌 STICKY NOTE:"
+
+            p.color = Color.parseColor("#b45309")
+            p.textSize = 11f
+            p.textAlign = Paint.Align.LEFT
+            c.drawText(noteHeader, 32f, 162f, p)
+
             p.color = Color.parseColor("#78350f")
             p.textSize = 12f
-            p.textAlign = Paint.Align.LEFT
-            val noteDisplay = truncate(stickyNote, 42)
-            c.drawText(noteDisplay, 30f, 184f, p)
+            val noteDisplay = truncate(primaryNote, 44)
+            c.drawText(noteDisplay, 32f, 186f, p)
+
+            // If there's a second note, display second line
+            if (recentNotes.size > 1) {
+                p.color = Color.parseColor("#92400e")
+                p.textSize = 11f
+                val note2 = truncate("• " + recentNotes[1], 44)
+                c.drawText(note2, 32f, 206f, p)
+            }
 
             // "+ Edit" hint on bottom right
             p.color = Color.parseColor("#b45309")
             p.textSize = 11f
             p.textAlign = Paint.Align.RIGHT
-            c.drawText("[+ Note / Edit]", 412f, 200f, p)
+            c.drawText("[+ Note / Edit]", 450f, 222f, p)
 
             return bmp
         }

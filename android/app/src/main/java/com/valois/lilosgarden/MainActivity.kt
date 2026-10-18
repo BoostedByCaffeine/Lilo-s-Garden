@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.WallpaperManager
 import android.appwidget.AppWidgetManager
+import android.content.ClipboardManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
@@ -25,6 +26,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import org.json.JSONArray
 import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
@@ -35,6 +37,27 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val LOCATION_REQ_CODE = 1001
+
+        fun addDeviceNote(context: Context, noteText: String) {
+            try {
+                val prefs = context.getSharedPreferences("lilo_widget_prefs", Context.MODE_PRIVATE)
+                val currentNotesJson = prefs.getString("device_notes_list", "[]") ?: "[]"
+                val jsonArr = JSONArray(currentNotesJson)
+                val newArr = JSONArray()
+                newArr.put(JSONObject().apply {
+                    put("text", noteText)
+                    put("time", System.currentTimeMillis())
+                })
+                for (i in 0 until minOf(9, jsonArr.length())) {
+                    val obj = jsonArr.optJSONObject(i) ?: continue
+                    newArr.put(obj)
+                }
+                prefs.edit()
+                    .putString("device_notes_list", newArr.toString())
+                    .putString("sticky_note", noteText)
+                    .apply()
+            } catch (_: Exception) {}
+        }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -58,6 +81,7 @@ class MainActivity : AppCompatActivity() {
         })
 
         webView.loadUrl("file:///android_asset/www/index.html")
+        handleIncomingNoteIntent(intent)
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -71,6 +95,7 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         checkIntentModal()
+        handleIncomingNoteIntent(intent)
     }
 
     private fun checkIntentModal() {
@@ -78,6 +103,25 @@ class MainActivity : AppCompatActivity() {
         if (modal == "modalTasks" || intent?.action == "com.valois.lilosgarden.OPEN_TASKS") {
             webView.post {
                 webView.evaluateJavascript("if (typeof openModal === 'function') { if (typeof renderTasksUI === 'function') renderTasksUI(); openModal('modalTasks'); }", null)
+            }
+        }
+    }
+
+    private fun handleIncomingNoteIntent(incomingIntent: Intent?) {
+        if (incomingIntent == null) return
+        if (incomingIntent.action == Intent.ACTION_SEND && incomingIntent.type?.startsWith("text/") == true) {
+            val sharedText = incomingIntent.getStringExtra(Intent.EXTRA_TEXT)?.trim()
+            if (!sharedText.isNullOrBlank()) {
+                addDeviceNote(this, sharedText)
+                LiloNotesWidgetProvider.refreshAllNotesWidgets(this)
+                val safeText = JSONObject.quote(sharedText)
+                webView.post {
+                    webView.evaluateJavascript(
+                        "if (typeof world !== 'undefined') { world.stickyNote = $safeText; if (typeof saveGameState === 'function') saveGameState(); if (typeof showToast === 'function') showToast('Note received from share menu!', 'star', '#fde047'); }",
+                        null
+                    )
+                }
+                Toast.makeText(this, "Saved to Cozy Sticky Note!", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -442,6 +486,62 @@ class MainActivity : AppCompatActivity() {
         fun getWidgetBlooms(): Int {
             val prefs = activity.getSharedPreferences("lilo_widget_prefs", Context.MODE_PRIVATE)
             return prefs.getInt("blooms", 8)
+        }
+
+        @JavascriptInterface
+        fun openDeviceNotesApp() {
+            activity.runOnUiThread {
+                try {
+                    val keepIntent = activity.packageManager.getLaunchIntentForPackage("com.google.android.keep")
+                        ?: activity.packageManager.getLaunchIntentForPackage("com.samsung.android.app.notes")
+                    if (keepIntent != null) {
+                        activity.startActivity(keepIntent)
+                        return@runOnUiThread
+                    }
+                    val genericIntent = Intent(Intent.ACTION_VIEW).apply {
+                        type = "vnd.android.cursor.dir/vnd.google.note"
+                    }
+                    if (genericIntent.resolveActivity(activity.packageManager) != null) {
+                        activity.startActivity(genericIntent)
+                        return@runOnUiThread
+                    }
+                    val createIntent = Intent("android.intent.action.CREATE_NOTE")
+                    if (createIntent.resolveActivity(activity.packageManager) != null) {
+                        activity.startActivity(createIntent)
+                        return@runOnUiThread
+                    }
+                    Toast.makeText(activity, "No dedicated notes app installed", Toast.LENGTH_SHORT).show()
+                } catch (_: Exception) {
+                    Toast.makeText(activity, "Could not open notes app", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun importClipboardNote() {
+            activity.runOnUiThread {
+                try {
+                    val clipboard = activity.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                    val clip = clipboard?.primaryClip
+                    if (clip != null && clip.itemCount > 0) {
+                        val text = clip.getItemAt(0).coerceToText(activity)?.toString()?.trim()
+                        if (!text.isNullOrBlank()) {
+                            addDeviceNote(activity, text)
+                            LiloNotesWidgetProvider.refreshAllNotesWidgets(activity)
+                            val safeText = JSONObject.quote(text)
+                            activity.webView.evaluateJavascript(
+                                "if (typeof world !== 'undefined') { world.stickyNote = $safeText; if (typeof saveGameState === 'function') saveGameState(); if (typeof showToast === 'function') showToast('Sticky note imported from clipboard!', 'star', '#fde047'); }",
+                                null
+                            )
+                            Toast.makeText(activity, "Imported clipboard to Sticky Note!", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(activity, "Clipboard is empty", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        Toast.makeText(activity, "Clipboard is empty", Toast.LENGTH_SHORT).show()
+                    }
+                } catch (_: Exception) {}
+            }
         }
 
         @JavascriptInterface

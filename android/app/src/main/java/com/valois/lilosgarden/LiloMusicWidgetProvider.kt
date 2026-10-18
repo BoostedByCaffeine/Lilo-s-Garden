@@ -50,7 +50,13 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
                 sendMediaKey(context, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE)
                 val prefs = context.getSharedPreferences("lilo_music_prefs", Context.MODE_PRIVATE)
                 val curState = prefs.getBoolean("is_playing", false)
-                prefs.edit().putBoolean("is_playing", !curState).apply()
+                val newState = !curState
+                for (prefName in arrayOf("lilo_music_prefs", "lilo_widget_prefs", "lilos_garden_prefs")) {
+                    context.getSharedPreferences(prefName, Context.MODE_PRIVATE).edit()
+                        .putBoolean("is_playing", newState)
+                        .putBoolean("music_playing", newState)
+                        .apply()
+                }
                 refreshAllMusicWidgets(context)
             }
             ACTION_MUSIC_PREV -> {
@@ -66,20 +72,28 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
                 val artist = intent.getStringExtra("artist")
                 val album = intent.getStringExtra("album")
                 if (!track.isNullOrBlank()) {
-                    val prefs = context.getSharedPreferences("lilo_music_prefs", Context.MODE_PRIVATE)
-                    prefs.edit()
-                        .putString("track_title", track)
-                        .putString("artist_name", artist ?: "")
-                        .putString("album_name", album ?: "")
-                        .putLong("last_update", System.currentTimeMillis())
-                        .apply()
+                    for (prefName in arrayOf("lilo_music_prefs", "lilo_widget_prefs", "lilos_garden_prefs")) {
+                        context.getSharedPreferences(prefName, Context.MODE_PRIVATE).edit()
+                            .putString("track_title", track)
+                            .putString("artist_name", artist ?: "")
+                            .putString("album_name", album ?: "")
+                            .putString("music_title", track)
+                            .putString("music_artist", artist ?: "")
+                            .putString("music_album", album ?: "")
+                            .putLong("last_update", System.currentTimeMillis())
+                            .apply()
+                    }
                     refreshAllMusicWidgets(context)
                 }
             }
             "com.spotify.music.playbackstatechanged", "com.android.music.playstatechanged" -> {
                 val playing = intent.getBooleanExtra("playing", intent.getBooleanExtra("playstate", false))
-                val prefs = context.getSharedPreferences("lilo_music_prefs", Context.MODE_PRIVATE)
-                prefs.edit().putBoolean("is_playing", playing).apply()
+                for (prefName in arrayOf("lilo_music_prefs", "lilo_widget_prefs", "lilos_garden_prefs")) {
+                    context.getSharedPreferences(prefName, Context.MODE_PRIVATE).edit()
+                        .putBoolean("is_playing", playing)
+                        .putBoolean("music_playing", playing)
+                        .apply()
+                }
                 refreshAllMusicWidgets(context)
             }
             ACTION_MUSIC_REFRESH -> {
@@ -106,6 +120,19 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
         const val ACTION_MUSIC_REFRESH = "com.valois.lilosgarden.ACTION_MUSIC_REFRESH"
         private const val TOTAL_FRAMES = 12
 
+        fun hasNotificationAccess(context: Context): Boolean {
+            return try {
+                val enabledListeners = android.provider.Settings.Secure.getString(
+                    context.contentResolver,
+                    "enabled_notification_listeners"
+                ) ?: return false
+                val myComponent = ComponentName(context, LiloMediaListenerService::class.java).flattenToString()
+                enabledListeners.contains(myComponent)
+            } catch (_: Exception) {
+                false
+            }
+        }
+
         fun refreshAllMusicWidgets(context: Context) {
             val manager = AppWidgetManager.getInstance(context)
             val ids = manager.getAppWidgetIds(ComponentName(context, LiloMusicWidgetProvider::class.java))
@@ -117,15 +144,7 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
         }
 
         fun loadPixelTypeface(context: Context): Typeface {
-            return try {
-                Typeface.createFromAsset(context.assets, "www/assets/fonts/Stardew_Valley.ttf")
-            } catch (e1: Exception) {
-                try {
-                    ResourcesCompat.getFont(context, R.font.press_start_2p) ?: Typeface.MONOSPACE
-                } catch (e2: Exception) {
-                    Typeface.MONOSPACE
-                }
-            }
+            return WidgetFontHelper.loadPixelTypeface(context)
         }
 
         private fun updateMusicWidget(
@@ -134,25 +153,27 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
             appWidgetId: Int
         ) {
             try {
+                val hasAccess = hasNotificationAccess(context)
                 val prefs = context.getSharedPreferences("lilo_music_prefs", Context.MODE_PRIVATE)
-                val track = prefs.getString("track_title", "Cozy Garden Melodies") ?: "Cozy Garden Melodies"
-                val artist = prefs.getString("artist_name", "Lilo & Cheeto Sanctuary") ?: "Lilo & Cheeto Sanctuary"
-                val album = prefs.getString("album_name", "Reunited Forever") ?: "Reunited Forever"
+                val track = prefs.getString("track_title", if (hasAccess) "Cozy Garden Melodies" else "Tap to Connect Spotify") ?: "Cozy Garden Melodies"
+                val artist = prefs.getString("artist_name", if (hasAccess) "Lilo & Cheeto Sanctuary" else "Notification Access Required") ?: "Lilo & Cheeto Sanctuary"
+                val album = prefs.getString("album_name", if (hasAccess) "Reunited Forever" else "Settings Permission") ?: "Reunited Forever"
                 val isPlaying = prefs.getBoolean("is_playing", false)
 
                 val views = RemoteViews(context.packageName, R.layout.lilo_music_widget)
 
-                // 1. LAYER 1: 12-Frame Spinning Turntable & Bobbing Cats (220x110 RGB_565)
+                // 1. LAYER 1: If playing, 12-Frame Spinning Turntable & Bobbing Cats (220x110 RGB_565). If paused, exactly 1 static frame!
                 views.removeAllViews(R.id.music_flipper)
-                for (f in 0 until TOTAL_FRAMES) {
+                val frameCount = if (isPlaying) TOTAL_FRAMES else 1
+                for (f in 0 until frameCount) {
                     val frameBmp = renderMusicFrame(f, isPlaying)
                     val frameView = RemoteViews(context.packageName, R.layout.widget_flipper_frame)
                     frameView.setImageViewBitmap(R.id.frame_img, frameBmp)
                     views.addView(R.id.music_flipper, frameView)
                 }
 
-                // 2. LAYER 2: High-Res Solid Track Typography & Button Sprites (440x220 ARGB_8888)
-                val hudBmp = renderMusicHud(context, track, artist, album, isPlaying)
+                // 2. LAYER 2: High-Res Solid Track Typography & Button Sprites (480x248 ARGB_8888)
+                val hudBmp = renderMusicHud(context, track, artist, album, isPlaying, hasAccess)
                 views.setImageViewBitmap(R.id.music_hud_overlay, hudBmp)
 
                 // 3. Hotspots
@@ -192,11 +213,17 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
                 )
                 views.setOnClickPendingIntent(R.id.music_btn_next, nextPending)
 
-                // Tapping track info or turntable opens Spotify or MainActivity
-                val launchIntent = context.packageManager.getLaunchIntentForPackage("com.spotify.music")
-                    ?: Intent(context, MainActivity::class.java).apply {
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                // Tapping track info or turntable opens Settings (if no access) or Spotify / MainActivity
+                val launchIntent = if (!hasAccess) {
+                    Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
                     }
+                } else {
+                    context.packageManager.getLaunchIntentForPackage("com.spotify.music")
+                        ?: Intent(context, MainActivity::class.java).apply {
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                        }
+                }
                 val launchPending = PendingIntent.getActivity(
                     context,
                     appWidgetId * 100 + 13,
@@ -324,62 +351,89 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
             track: String,
             artist: String,
             album: String,
-            isPlaying: Boolean
+            isPlaying: Boolean,
+            hasAccess: Boolean
         ): Bitmap {
-            val w = 440
-            val h = 220
+            val w = 480
+            val h = 248
             val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
             val c = Canvas(bmp)
             val font = loadPixelTypeface(context)
 
             val p = Paint().apply {
                 typeface = font
-                isAntiAlias = false
+                isAntiAlias = true
+                isSubpixelText = true
             }
 
-            // Right Half: Music Information Box (x = 236..424, y = 16..114)
+            // Right Half: Music Information Box (x = 244..462, y = 14..132)
             p.color = Color.parseColor("#3b1d0a")
-            c.drawRect(236f, 16f, 424f, 118f, p)
+            c.drawRect(244f, 14f, 462f, 134f, p)
             p.color = Color.parseColor("#532e16")
-            c.drawRect(238f, 18f, 422f, 116f, p)
+            c.drawRect(246f, 16f, 460f, 132f, p)
             p.color = Color.parseColor("#ffefc7") // Parchment box
-            c.drawRect(240f, 20f, 420f, 114f, p)
+            c.drawRect(248f, 18f, 458f, 130f, p)
 
-            // Header Tag: "SPOTIFY / LIVE"
-            p.color = Color.parseColor("#15803d")
-            c.drawRect(246f, 24f, 342f, 38f, p)
-            p.color = Color.parseColor("#ffffff")
-            p.textSize = 9f
-            p.textAlign = Paint.Align.LEFT
-            c.drawText("SPOTIFY LIVE", 252f, 34f, p)
+            if (!hasAccess) {
+                // Header Tag: "CONNECT SPOTIFY"
+                p.color = Color.parseColor("#b45309")
+                c.drawRect(254f, 22f, 386f, 38f, p)
+                p.color = Color.parseColor("#ffffff")
+                p.textSize = 10f
+                p.textAlign = Paint.Align.LEFT
+                c.drawText("CONNECT SPOTIFY", 260f, 34f, p)
 
-            // Track Title
-            p.textSize = 14f
-            p.color = Color.parseColor("#3b1d0a")
-            val truncatedTrack = truncate(track, 15)
-            c.drawText(truncatedTrack, 246f, 62f, p)
+                // Track Title Prompt
+                p.textSize = 14f
+                p.color = Color.parseColor("#3b1d0a")
+                c.drawText("Tap to Connect", 254f, 62f, p)
 
-            // Artist & Album
-            p.textSize = 11f
-            p.color = Color.parseColor("#8f4d22")
-            val truncatedArtist = truncate("$artist \u2022 $album", 20)
-            c.drawText(truncatedArtist, 246f, 82f, p)
+                // Subtitle
+                p.textSize = 11f
+                p.color = Color.parseColor("#8f4d22")
+                c.drawText("Notification access needed", 254f, 84f, p)
 
-            // Status label
-            p.textSize = 10f
-            p.color = if (isPlaying) Color.parseColor("#16a34a") else Color.parseColor("#b45309")
-            c.drawText(if (isPlaying) "\u25B6 Playing" else "\u23F8 Paused", 246f, 102f, p)
+                // Status label
+                p.textSize = 10f
+                p.color = Color.parseColor("#b45309")
+                c.drawText("Tap here to grant access \u2192", 254f, 106f, p)
+            } else {
+                // Header Tag: "SPOTIFY / LIVE"
+                p.color = Color.parseColor("#15803d")
+                c.drawRect(254f, 22f, 370f, 38f, p)
+                p.color = Color.parseColor("#ffffff")
+                p.textSize = 10f
+                p.textAlign = Paint.Align.LEFT
+                c.drawText("SPOTIFY LIVE", 260f, 34f, p)
 
-            // 3 Media Control Buttons (y = 136..196)
-            // Button 1: Previous (x = 240..290)
-            drawPixelMediaButton(c, 240f, 136f, 50f, 42f, "|<<", p)
+                // Track Title
+                p.textSize = 14f
+                p.color = Color.parseColor("#3b1d0a")
+                val truncatedTrack = truncate(track, 18)
+                c.drawText(truncatedTrack, 254f, 62f, p)
 
-            // Button 2: Play / Pause (x = 300..360)
+                // Artist & Album
+                p.textSize = 11f
+                p.color = Color.parseColor("#8f4d22")
+                val truncatedArtist = truncate(if (album.isNotBlank()) "$artist \u2022 $album" else artist, 24)
+                c.drawText(truncatedArtist, 254f, 84f, p)
+
+                // Status label
+                p.textSize = 11f
+                p.color = if (isPlaying) Color.parseColor("#16a34a") else Color.parseColor("#b45309")
+                c.drawText(if (isPlaying) "\u25B6 PLAYING" else "\u23F8 PAUSED", 254f, 106f, p)
+            }
+
+            // 3 Media Control Buttons (y = 148..214)
+            // Button 1: Previous (x = 248..308)
+            drawPixelMediaButton(c, 248f, 154f, 60f, 48f, "|<<", p)
+
+            // Button 2: Play / Pause (x = 318..390)
             val playIcon = if (isPlaying) "||" else "\u25B6"
-            drawPixelMediaButton(c, 302f, 134f, 58f, 46f, playIcon, p, isHighlight = true)
+            drawPixelMediaButton(c, 320f, 148f, 72f, 60f, playIcon, p, isHighlight = true)
 
-            // Button 3: Next (x = 370..420)
-            drawPixelMediaButton(c, 370f, 136f, 50f, 42f, ">>|", p)
+            // Button 3: Next (x = 402..462)
+            drawPixelMediaButton(c, 402f, 154f, 60f, 48f, ">>|", p)
 
             return bmp
         }
@@ -406,7 +460,7 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
 
             // Button label
             p.color = if (isHighlight) Color.parseColor("#ffffff") else Color.parseColor("#3b1d0a")
-            p.textSize = if (isHighlight) 16f else 13f
+            p.textSize = if (isHighlight) 18f else 13f
             p.textAlign = Paint.Align.CENTER
             c.drawText(label, x + w / 2f, y + h / 2f + 5f, p)
         }
