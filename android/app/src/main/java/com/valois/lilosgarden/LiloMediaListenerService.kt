@@ -6,15 +6,12 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.media.AudioManager
 import android.media.MediaMetadata
 import android.media.session.MediaController
 import android.media.session.MediaSession
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 
@@ -24,16 +21,6 @@ class LiloMediaListenerService : NotificationListenerService() {
     private var activeController: MediaController? = null
     private val controllerCallbacks = mutableMapOf<String, MediaController.Callback>()
     private val activeControllers = mutableMapOf<String, MediaController>()
-
-    private val pollHandler = Handler(Looper.getMainLooper())
-    private val pollRunnable = object : Runnable {
-        override fun run() {
-            try {
-                checkPlaybackStateSync()
-            } catch (_: Exception) {}
-            pollHandler.postDelayed(this, 2000)
-        }
-    }
 
     private val sessionsChangedListener = MediaSessionManager.OnActiveSessionsChangedListener { controllers ->
         handleSessionsChanged(controllers)
@@ -92,11 +79,9 @@ class LiloMediaListenerService : NotificationListenerService() {
         }
 
         initMediaSessions()
-        pollHandler.postDelayed(pollRunnable, 2000)
     }
 
     override fun onDestroy() {
-        pollHandler.removeCallbacks(pollRunnable)
         try {
             unregisterReceiver(timeTickReceiver)
         } catch (_: Exception) {}
@@ -145,7 +130,6 @@ class LiloMediaListenerService : NotificationListenerService() {
                 override fun onPlaybackStateChanged(state: PlaybackState?) {
                     val isPlaying = state?.state == PlaybackState.STATE_PLAYING
                     savePlaybackState(isPlaying)
-                    LiloMusicWidgetProvider.refreshAllMusicWidgets(this@LiloMediaListenerService)
                 }
             }
             controller.registerCallback(cb)
@@ -170,15 +154,8 @@ class LiloMediaListenerService : NotificationListenerService() {
             val album = extras.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString()?.trim()
 
             var isPlaying: Boolean? = null
-            sbn.notification.actions?.forEach { action ->
-                val actionTitle = action.title?.toString()?.lowercase() ?: ""
-                if (actionTitle.contains("pause")) {
-                    isPlaying = true
-                } else if (actionTitle.contains("play")) {
-                    isPlaying = false
-                }
-            }
 
+            // 1. Determine playback state strictly from MediaSession Token
             val token = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 extras.getParcelable(Notification.EXTRA_MEDIA_SESSION, MediaSession.Token::class.java)
             } else {
@@ -190,8 +167,9 @@ class LiloMediaListenerService : NotificationListenerService() {
                 try {
                     val controller = MediaController(this, token)
                     activeController = controller
-                    if (isPlaying == null) {
-                        isPlaying = controller.playbackState?.state == PlaybackState.STATE_PLAYING
+                    val state = controller.playbackState?.state
+                    if (state != null) {
+                        isPlaying = (state == PlaybackState.STATE_PLAYING)
                     }
                     if (title.isNullOrBlank()) {
                         extractAndSaveMetadata(controller.metadata, controller.playbackState)
@@ -200,12 +178,32 @@ class LiloMediaListenerService : NotificationListenerService() {
                 } catch (_: Exception) {}
             }
 
+            // 2. Check active controllers from MediaSessionManager
             if (isPlaying == null) {
-                isPlaying = sbn.isOngoing
+                val activeState = activeController?.playbackState?.state
+                if (activeState != null) {
+                    isPlaying = (activeState == PlaybackState.STATE_PLAYING)
+                }
             }
 
+            // 3. Check notification action buttons (Pause -> playing, Play -> paused)
+            if (isPlaying == null) {
+                sbn.notification.actions?.forEach { action ->
+                    val actionTitle = action.title?.toString()?.lowercase() ?: ""
+                    if (actionTitle.contains("pause")) {
+                        isPlaying = true
+                    } else if (actionTitle.contains("play")) {
+                        isPlaying = false
+                    }
+                }
+            }
+
+            // Fallback: If still unknown, NEVER use sbn.isOngoing (Spotify keeps isOngoing true when paused)!
+            val prefs = getSharedPreferences("lilo_music_prefs", Context.MODE_PRIVATE)
+            val finalPlaying = isPlaying ?: prefs.getBoolean("is_playing", false)
+
             if (!title.isNullOrBlank()) {
-                updateMusicPrefs(title, artist ?: "", album ?: "", isPlaying == true)
+                updateMusicPrefs(title, artist ?: "", album ?: "", finalPlaying)
             }
         }
     }
@@ -215,22 +213,6 @@ class LiloMediaListenerService : NotificationListenerService() {
         val pkg = sbn.packageName.lowercase()
         if (pkg.contains("spotify")) {
             savePlaybackState(false)
-            LiloMusicWidgetProvider.refreshAllMusicWidgets(this)
-        }
-    }
-
-    private fun checkPlaybackStateSync() {
-        val audioManager = getSystemService(Context.AUDIO_SERVICE) as? AudioManager
-        val isMusicActive = audioManager?.isMusicActive == true
-        val controllerPlaying = activeController?.playbackState?.state == PlaybackState.STATE_PLAYING
-        val actualPlaying = controllerPlaying || isMusicActive
-
-        val prefs = getSharedPreferences("lilo_music_prefs", Context.MODE_PRIVATE)
-        val savedPlaying = prefs.getBoolean("is_playing", false)
-
-        if (actualPlaying != savedPlaying) {
-            savePlaybackState(actualPlaying)
-            LiloMusicWidgetProvider.refreshAllMusicWidgets(this)
         }
     }
 
@@ -251,18 +233,48 @@ class LiloMediaListenerService : NotificationListenerService() {
     }
 
     private fun savePlaybackState(isPlaying: Boolean) {
+        val prefs = getSharedPreferences("lilo_music_prefs", Context.MODE_PRIVATE)
+        val now = System.currentTimeMillis()
+        val lastManualToggle = prefs.getLong("last_manual_toggle_ms", 0L)
+        var effectivePlaying = isPlaying
+        if (now - lastManualToggle < 600L) {
+            effectivePlaying = prefs.getBoolean("is_playing", isPlaying)
+        }
+
+        val oldPlaying = prefs.getBoolean("is_playing", false)
+        if (effectivePlaying == oldPlaying) {
+            return // DEBOUNCE: Do not refresh if playback state unchanged
+        }
+
         val prefNames = arrayOf("lilo_music_prefs", "lilo_widget_prefs", "lilos_garden_prefs")
         for (prefName in prefNames) {
             getSharedPreferences(prefName, Context.MODE_PRIVATE).edit()
-                .putBoolean("is_playing", isPlaying)
-                .putBoolean("music_playing", isPlaying)
+                .putBoolean("is_playing", effectivePlaying)
+                .putBoolean("music_playing", effectivePlaying)
                 .putBoolean("music_connected", true)
                 .apply()
         }
+
+        LiloMusicWidgetProvider.refreshAllMusicWidgets(this)
     }
 
     private fun updateMusicPrefs(track: String, artist: String, album: String, isPlaying: Boolean) {
+        val prefs = getSharedPreferences("lilo_music_prefs", Context.MODE_PRIVATE)
         val now = System.currentTimeMillis()
+        val lastManualToggle = prefs.getLong("last_manual_toggle_ms", 0L)
+        var effectivePlaying = isPlaying
+        if (now - lastManualToggle < 600L) {
+            effectivePlaying = prefs.getBoolean("is_playing", isPlaying)
+        }
+
+        val oldTitle = prefs.getString("track_title", "") ?: ""
+        val oldArtist = prefs.getString("artist_name", "") ?: ""
+        val oldPlaying = prefs.getBoolean("is_playing", false)
+
+        if (track == oldTitle && artist == oldArtist && effectivePlaying == oldPlaying) {
+            return // DEBOUNCE: Eliminate 100% of blinking if nothing changed!
+        }
+
         val prefNames = arrayOf("lilo_music_prefs", "lilo_widget_prefs", "lilos_garden_prefs")
         for (prefName in prefNames) {
             getSharedPreferences(prefName, Context.MODE_PRIVATE).edit()
@@ -272,8 +284,8 @@ class LiloMediaListenerService : NotificationListenerService() {
                 .putString("music_title", track)
                 .putString("music_artist", artist)
                 .putString("music_album", album)
-                .putBoolean("is_playing", isPlaying)
-                .putBoolean("music_playing", isPlaying)
+                .putBoolean("is_playing", effectivePlaying)
+                .putBoolean("music_playing", effectivePlaying)
                 .putBoolean("music_connected", true)
                 .putLong("last_update", now)
                 .apply()

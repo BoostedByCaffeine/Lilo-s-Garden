@@ -12,8 +12,8 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-t
 - **Global Solid Pixel Font**:
   - Imported solid pixel font (`Stardew_Valley.ttf` & `.otf`) applied uniformly across the web application and all 7 Android home screen widgets.
   - Specially tuned typography sizes across the HUD, dialogue badges, and polaroid tribute frames for razor-sharp readability on all screen densities.
-- **PWA v13 Offline Cache**:
-  - Service worker precaching updated to `'lilos-garden-pwa-v13'` bundling all core assets, solid typography, floating dining table Eat button, individual interior furniture sprites (`assets/interior/Individual/*.png`), and all 30 environment tileset sprites with `ignoreSearch: true` for 100% offline playability.
+- **PWA v15 Offline Cache**:
+  - Service worker precaching updated to `'lilos-garden-pwa-v15'` bundling all core assets, solid typography, floating dining table Eat button, individual interior furniture sprites (`assets/interior/Individual/*.png`), and all 30 environment tileset sprites with `ignoreSearch: true` for 100% offline playability.
   - Automatic environment asset restoration on minimize/resume (`areAllSpritesLoaded()`, `restoreEnvironmentOnResume`, `visibilitychange`, `pageshow`, and `focus` listeners) preventing blank tiles when switching apps.
 - **60 FPS Offscreen Canvas Caching**:
   - Pre-renders static scenes (`ensureGardenStaticCache`, `ensureCottageStaticCache`) and dynamic lighting glow sprites (`getFireGlowSprite`, `getLanternGlowSprite`) into offscreen canvases, minimizing draw calls and guaranteeing locked 60 FPS performance on mobile devices.
@@ -25,9 +25,9 @@ Hosted for free on **GitHub Pages** with zero external runtime dependencies, 3-t
 - **Living Pixel Caretaker**:
   - A customizable 8-bit character rendered with taller proportions (6px legs, 9px torso) living alongside Lilo and Cheeto in both the Garden and Cottage.
   - Interactive cuddles: Tapping the Caretaker in the scene calls the cats over for cuddles and purrs.
-  - **Bed Sleep & Morning Wake**: Tapping the double bed tucks the Caretaker into bed (`SLEEPING_BED`) with his head resting directly on the white left pillow of `DoubleBed.png` (`COTTAGE_SPOTS.bed = { x: 464, y: 218 }`) and body under a matching folded yellow quilt blanket with floating sleep Z's. Hidden when viewing the outdoor Garden, and automatically wakes up in the morning (at daybreak or when the clock reaches 6 AM).
+  - **Bed Sleep & Morning Wake**: Tapping the double bed tucks the Caretaker into bed (`SLEEPING_BED`) with his head resting directly on the left white pillow of `DoubleBed.png` (`COTTAGE_SPOTS.bed = { x: 465, y: 215 }`, head at world `y = 208..218`) and shoulders tucked under the yellow quilt overlay starting at 45% height (`y = 218..224`, depth-sort `y = 255`) with floating sleep Z's. Hidden when viewing the outdoor Garden, and automatically wakes up in the morning (at daybreak or when the clock reaches 6 AM).
   - **Couch Nap**: Tapping the right-wall sofa curls the Caretaker up for a cozy couch nap (`NAPPING_COUCH`).
-  - **Dining Table Meal**: Tapping the dining table reveals a floating **"Eat"** button; clicking it seats the Caretaker at the table's front chair (`y = 283`) with his full torso, arms, and head visible above the table edge with a warm plate of food and animated eating bites.
+  - **Dining Table Meal**: Tapping the dining table reveals a floating **"Eat"** button; clicking it seats the Caretaker at the table's front chair (`x: 364, y: 277`) with his legs tucked under the tabletop (`y = 269..326`) while his entire torso, arms, and head remain 100% visible above the table edge (depth-sorted at `y = 280` between chair backrest at `y = 260` and table with dinner plate at `y = 326`) with animated eating bites.
   - **Rain Reaction, Porch Deck & Umbrella**: In rainy weather outdoors, the Caretaker holds a pixel umbrella while walking and seeks refuge on the spacious 64x28 cedar porch deck (`drawPorchDeck`) with 42px tall posts and elevated cedar roof (`drawPorchRoofOverhead`), ensuring the Caretaker's head and dialogue name tag are 100% visible underneath without clipping.
   - **Study Desk Sitting**: Caretaker sits directly on the front-facing chair (`intChairTop`) when reading or coding at the study desk.
   - Cozy animated activities:
@@ -178,7 +178,7 @@ All widgets are powered by an animation engine with a **2-Layer Compositor Archi
    - Carved wooden window frame looking out onto the garden with dynamic sky backdrops (Day, Sunset, Starry Night, Rain, Clouds).
    - **Live Custom Pixel Clock**: Pixel time rendered with `WidgetFontHelper` directly onto high-res HUD canvas with dark drop shadows, synchronized via `ACTION_TIME_TICK` and exact `AlarmManager` minute ticks.
    - **Peeking Cat in Bottom-Left Corner** (`cx = 42` at `2.0f` scale) with curious looking, paw-lick grooming, flutter-watching, and peaceful napping.
-   - **Seamless 224px Wrap-Around Clouds** eliminating sawtooth animation jumps.
+   - **Seamless 12-Frame Periodic Cloud Wrap**: Two symmetric cloud pairs spaced 120px apart over a 240px domain advancing by 10px per frame (`12 frames * 10px = 120px` exact period) completely eliminating sawtooth jumps and visual resets.
    - Interactive hotspots: Pet cat, switch active cat, toggle weather override, and open app.
 2. **Stardew Companion Widget (`LiloCompanionWidgetProvider.kt`)**:
    - Split-panel Stardew HUD: Left patio sanctuary with velvet cat bed, post-free glowing lantern, and garden bushes; right parchment HUD with live pixel clock rendered using `WidgetFontHelper`, date, and weather badge.
@@ -195,16 +195,18 @@ All widgets are powered by an animation engine with a **2-Layer Compositor Archi
    - Play/pause toggle and reset buttons with exact countdown ticks managed via `AlarmManager`.
    - **Forget-Me-Not Bloom Rewards**: Completing a 25-minute focus session awards **+1 Forget-Me-Not Bloom** (up to 24) synchronized directly to the main garden sanctuary app.
 6. **Cozy Tasks & Sticky Notes Widget (`LiloNotesWidgetProvider.kt`)**:
-   - High-res anti-aliased `520x300` wooden notice board widget (`4x3` cells, `195dp` height) rendering your personal yellow sticky note (`#FEF08A`) and custom to-do tasks with `WidgetFontHelper`.
-   - **Individual Row Toggles**: Clickable hotspots (`@+id/notes_row_0`, `@+id/notes_row_1`, `@+id/notes_row_2`) toggle completion of each specific task with large `26x26` checkboxes (`✓`) and strikethrough styling without auto-resetting all completed tasks.
+   - High-res anti-aliased `520x300` wooden notice board widget (`4x3` cells, `195dp` height) with full-width brown title banner (`RectF(18f, 18f, W - 18f, 54f)`) and upscaled `21f` bold typography.
+   - **Upscaled Task Rows**: Large `26x26` px checkboxes with `3f` stroke border and `24f` bold task text; `+ Tap here to add custom tasks` empty prompt at `22f` bold.
+   - **Taller Sticky Note Card (`stickyTop = 182f`)**: Warm `#FEF08A` card with top-center red pin, `"📌 STICKY NOTE:"` label at `16f` bold, and user note text at `24f` bold with automatic 2-line wrapping for long notes.
+   - **Individual Row Toggles**: Clickable hotspots (`@+id/notes_row_0`, `@+id/notes_row_1`, `@+id/notes_row_2`) toggle completion of each specific task without auto-resetting all completed tasks.
    - **Custom Tasks Only**: Displays only user-created tasks without dummy placeholders.
    - **Two-Way Synchronization**: Toggling tasks on the widget immediately updates `SharedPreferences` and synchronizes back to `world.tasks` in the app's WebView when resumed.
    - System text-share receiver (`ACTION_SEND`, `text/plain`) allowing you to share notes from any Android app directly into your sticky note board, plus clipboard sync.
 7. **Spotify & Media Now-Playing Widget (`LiloMusicWidgetProvider.kt`)**:
-   - Live music companion widget (`4x2` cells, `185dp` height) with 12-frame spinning vinyl record and head-bobbing Lilo & Cheeto wearing headphones with floating musical notes.
+   - Live music companion widget (`4x2` cells, `185dp` height) with 12-frame spinning vinyl record on the upper-left (`cx = 92, cy = 104, r = 64`) and bobbing cats Lilo (`62, 236`) & Cheeto (`114, 236`) seated underneath the vinyl on the left side, completely eliminating overlap with media buttons.
    - High-res `520x270` HUD with live Track Title (`24f` bold), Artist & Album (`18f` bold), and status badge (`▶ PLAYING` vs `⏸ PAUSED` at `16f` bold).
-   - **Two-Way Spotify Sync**: `LiloMediaListenerService` tracks Spotify notification action buttons and active media sessions with 2-second background sync, instantly pausing the spinning vinyl and cat bobbing animation when playback pauses in Spotify.
-   - **Tactile Media Buttons**: Oversized `90x52` px pixel buttons for Previous (`|<<`), Play/Pause (`▶` / `||`), and Next (`>>|`) with `24f` bold icons and `56dp` tall touch hotspots.
+   - **Zero-Blinking Media Engine (`LiloMediaListenerService`)**: Replaced periodic polling loops with event-driven notifications; playback state derived strictly from `MediaController.playbackState` and notification actions rather than misleading `isOngoing` flags; update debouncing eliminates 100% of widget blinking, with `last_manual_toggle_ms` protection for responsive button clicks.
+   - **Pure Percentage Touch Layout (`lilo_music_widget.xml`)**: 34% left turntable area and 66% right side split into 64% info card and 36% media buttons (`music_btn_prev`, `music_btn_play_pause`, `music_btn_next`), ensuring button clicks never accidentally launch the app.
    - Notification listener access detection with a prominent **"TAP TO LINK SPOTIFY"** prompt that directly routes to Android settings if permission is missing.
 
 ---

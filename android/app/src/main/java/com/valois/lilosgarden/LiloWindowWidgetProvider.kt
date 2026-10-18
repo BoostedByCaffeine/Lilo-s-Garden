@@ -462,25 +462,31 @@ class LiloWindowWidgetProvider : AppWidgetProvider() {
                 px(129, 57 + sunBob, 14, 12, "#fef08a")
             }
 
-            // Seamless 224px wrap-around cloud domain (224 / 64 = 3.5px per frame -> wraps seamlessly!)
-            val cloud1X = ((20 + (frame * 7) / 2) % 224) - 34
-            val cloud2X = ((132 + (frame * 7) / 2) % 224) - 34
-            if (isRain || isCloudy) {
-                val cCol = if (isRain) "#64748b" else "#e2e8f0"
-                val cShade = if (isRain) "#475569" else "#cbd5e1"
-                px(cloud1X, 34, 34, 7, cCol)
-                px(cloud1X + 4, 31, 24, 4, cCol)
-                px(cloud1X, 39, 34, 2, cShade)
+            // Seamless 12-frame cloud wrap: 12 frames * 10px = 120px (exact distance between cloud pairs!)
+            if (!isNight || isRain || isCloudy) {
+                val cCol = when {
+                    isRain -> "#64748b"
+                    isCloudy -> "#e2e8f0"
+                    isSunset -> "#fed7aa"
+                    else -> "#f0f9ff"
+                }
+                val cShade = if (isRain) "#475569" else if (isCloudy) "#cbd5e1" else null
+                val shift = frame * 10
+                for (pair in 0..2) {
+                    val baseX = pair * 120 + shift
+                    val cxTop = (baseX % 240) - 32
+                    val cxLow = ((baseX + 60) % 240) - 32
 
-                px(cloud2X, 42, 40, 8, cCol)
-                px(cloud2X + 6, 38, 28, 5, cCol)
-                px(cloud2X, 48, 40, 2, cShade)
-            } else if (!isNight) {
-                val cCol = if (isSunset) "#fed7aa" else "#f0f9ff"
-                px(cloud1X, 38, 26, 5, cCol)
-                px(cloud1X + 4, 36, 18, 3, cCol)
-                px(cloud2X, 45, 28, 5, cCol)
-                px(cloud2X + 5, 43, 18, 3, cCol)
+                    // Top Cloud at y = 36
+                    px(cxTop, 36, 32, 6, cCol)
+                    px(cxTop + 4, 33, 22, 3, cCol)
+                    if (cShade != null) px(cxTop, 42, 32, 2, cShade)
+
+                    // Low Cloud at y = 52
+                    px(cxLow, 52, 36, 7, cCol)
+                    px(cxLow + 5, 49, 24, 3, cCol)
+                    if (cShade != null) px(cxLow, 59, 36, 2, cShade)
+                }
             }
 
             // Continuous Falling Rain Across 64 Frames

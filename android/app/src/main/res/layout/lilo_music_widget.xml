@@ -10,7 +10,6 @@
         android:layout_height="185dp"
         android:layout_gravity="center">
 
-        <!-- LAYER 1: 12-Frame Spinning Vinyl & Bobbing Cats Animation Loop @ 3.3 FPS (300ms) -->
         <ViewFlipper
             android:id="@+id/music_flipper"
             android:layout_width="match_parent"
@@ -19,7 +18,6 @@
             android:autoStart="true"
             android:flipInterval="300" />
 
-        <!-- LAYER 2: High-Res Solid Track Typography & Button Sprites -->
         <ImageView
             android:id="@+id/music_hud_overlay"
             android:layout_width="match_parent"
@@ -27,40 +25,40 @@
             android:layout_centerInParent="true"
             android:scaleType="fitCenter" />
 
-        <!-- Interactive Hotspots -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="horizontal"
+            android:padding="10dp"
             android:weightSum="100">
 
-            <!-- Left 38%: Spinning Turntable & Bobbing Cats (Tap to open player / link) -->
+            <!-- Left 34%: Vinyl Turntable & Cats -->
             <FrameLayout
-                android:id="@+id/music_turntable_area"
+                android:id="@+id/music_open_app"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="38"
+                android:layout_weight="34"
                 android:background="@android:color/transparent" />
 
-            <!-- Right 62%: Track Info + 3 Media Controls -->
+            <!-- Right 66%: Top 64% Track Info Card, Bottom 36% Media Control Buttons -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="62"
-                android:orientation="vertical">
+                android:layout_weight="66"
+                android:orientation="vertical"
+                android:weightSum="100">
 
-                <!-- Track & Artist Hotspot: Tap to open Spotify / Notification Settings -->
                 <FrameLayout
                     android:id="@+id/music_info_hotspot"
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
-                    android:layout_weight="1"
+                    android:layout_weight="64"
                     android:background="@android:color/transparent" />
 
-                <!-- 3 Media Buttons: Previous, Play/Pause, Next (56dp tall) -->
                 <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="56dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="36"
                     android:orientation="horizontal"
                     android:weightSum="3">
 

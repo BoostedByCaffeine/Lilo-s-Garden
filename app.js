@@ -118,7 +118,7 @@ const COTTAGE_BOUNDS = {
 const COTTAGE_SPOTS = {
   hearth: { x: 544, y: 224, radius: 32, label: 'Memorial Bookcase & Tribute' },
   sofa:   { x: 608, y: 336, radius: 30, label: 'Cozy Cream Sofa' },
-  bed:    { x: 464, y: 214, radius: 32, label: 'Cozy Yellow Quilt Bed' },
+  bed:    { x: 465, y: 215, radius: 32, label: 'Cozy Yellow Quilt Bed' },
   desk:   { x: 598, y: 248, radius: 26, label: 'Wooden Study Desk' },
   rug:    { x: 476, y: 266, radius: 28, label: 'Warm Crimson Bedside Rug' },
   table:  { x: 364, y: 312, radius: 32, label: 'Dining Table' },
@@ -806,7 +806,7 @@ const world = {
     const ct = this.caretaker;
     ct.state = 'SEEK_TABLE_MEAL';
     ct.targetX = 364;
-    ct.targetY = 288;
+    ct.targetY = 277;
     ct.labelAlpha = 1.8;
     showToast(`${ct.name} is sitting down at the table to eat!`, 'fish', '#fbbf24');
   },
@@ -1429,7 +1429,7 @@ const world = {
         const dist = Math.hypot(dx, dy);
         if (dist < 3) {
           ct.x = 364;
-          ct.y = 288;
+          ct.y = 277;
           ct.facing = 1;
           ct.state = 'EATING_TABLE';
           ct.stateTimer = 8.0;
@@ -1931,18 +1931,18 @@ function drawPixelCaretaker(c, caretaker, time) {
     c.scale(1.35, 1.35);
 
     if (isSleepingBed) {
-      // Head & shoulders resting directly on the left white pillow of DoubleBed (x=464, y=214)
-      px(-5, -8, 10, 7, skin);
-      px(-5, -10, 10, 3, hair);
-      px(-6, -9, 2, 4, hair);
-      px(4, -9, 2, 4, hair);
-      // Closed sleeping eyes & blush cheeks
-      px(-3, -4, 2, 1, '#1e293b');
-      px(1, -4, 2, 1, '#1e293b');
-      px(-4, -3, 1, 1, '#fda4af');
-      px(3, -3, 1, 1, '#fda4af');
-      // Pajama/hoodie shoulders tucked into the top edge of the bed's quilt
-      px(-6, -1 + breath, 12, 4, outfit);
+      // Head centered directly on the left white pillow (world y = 208..218)
+      px(-5, -5, 10, 7, skin);
+      px(-5, -7, 10, 3, hair);
+      px(-6, -6, 2, 4, hair);
+      px(4, -6, 2, 4, hair);
+      // Closed sleeping eyes & rosy cheeks
+      px(-3, -1, 2, 1, '#1e293b');
+      px(1, -1, 2, 1, '#1e293b');
+      px(-4, 0, 1, 1, '#fda4af');
+      px(3, 0, 1, 1, '#fda4af');
+      // Pajama shoulders tucked under the top edge of the yellow quilt (world y = 218..224)
+      px(-6, 2 + breath, 12, 4, outfit);
     } else {
       px(-5, -7 + breath, 10, 7, outfit);
       px(-6, -2, 8, 3, pants);
@@ -2919,11 +2919,10 @@ function getCottageFurnitureRenderables(ctx, time) {
             const dh = Math.round(item.h * scale);
             const dx = Math.round(476 - dw / 2);
             const dy = Math.round(254 - dh);
-            // Redraw only the lower 58% of DoubleBed (the yellow quilt & wooden footboard) on top of the Caretaker's shoulders
-            const srcY = Math.floor(item.h * 0.42);
+            const srcY = Math.floor(item.h * 0.45);
             const srcH = item.h - srcY;
-            const dstY = dy + Math.floor(dh * 0.42);
-            const dstH = dh - Math.floor(dh * 0.42);
+            const dstY = dy + Math.floor(dh * 0.45);
+            const dstH = dh - Math.floor(dh * 0.45);
             ctx.drawImage(item.canvas, 0, srcY, item.w, srcH, dx, dstY, dw, dstH);
           }
         }
@@ -2958,12 +2957,12 @@ function getCottageFurnitureRenderables(ctx, time) {
       draw: () => drawIndividualFurniture(ctx, 'intChairTop', 598, 252, 1.25, true)
     },
     // Left Dining Table Set:
-    // 1. Front-facing chair at top of dining table (depth-sort y=275) -> Caretaker (sort y=288) sits in front of backrest!
+    // 1. Front-facing chair at top of dining table (depth-sort y=260) -> Caretaker (sort y=280) sits in front of backrest!
     {
-      y: 275,
-      draw: () => drawIndividualFurniture(ctx, 'intChairTop', 364, 285, 1.35, true)
+      y: 260,
+      draw: () => drawIndividualFurniture(ctx, 'intChairTop', 364, 275, 1.35, true)
     },
-    // 2. Dining Table (depth-sort y=326) -> Top edge is at y=280, covering Caretaker's legs (280..288) while full torso (268..280) is visible!
+    // 2. Dining Table (depth-sort y=326) -> Top edge is at y=269, covering Caretaker's legs (269..277) while full torso (257..269) is visible!
     {
       y: 326,
       draw: () => {
@@ -2971,11 +2970,11 @@ function getCottageFurnitureRenderables(ctx, time) {
         drawIndividualFurniture(ctx, 'intDiningTable', 364, 326, 1.35, true);
         if (world.caretaker && world.caretaker.state === 'EATING_TABLE') {
           ctx.fillStyle = '#f8fafc';
-          ctx.fillRect(359, 283, 10, 6);
+          ctx.fillRect(359, 273, 10, 6);
           ctx.fillStyle = '#ea580c';
-          ctx.fillRect(361, 284, 6, 4);
+          ctx.fillRect(361, 274, 6, 4);
           ctx.fillStyle = '#fde047';
-          ctx.fillRect(362, 285, 3, 2);
+          ctx.fillRect(362, 275, 3, 2);
         }
         drawIndividualFurniture(ctx, 'intChairBottom', 364, 340, 1.35, true);
       }
@@ -3046,7 +3045,7 @@ function drawGardenScene(time = 0) {
           : world.caretaker.state === 'NAPPING_COUCH'
           ? 368
           : world.caretaker.state === 'EATING_TABLE'
-          ? 288
+          ? 280
           : world.caretaker.y,
       draw: () => drawPixelCaretaker(ctx, world.caretaker, time)
     },

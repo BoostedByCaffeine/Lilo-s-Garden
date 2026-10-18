@@ -410,28 +410,6 @@ class LiloNotesWidgetProvider : AppWidgetProvider() {
             px(3, h - 6, 3, 3, "#fbbf24")
             px(w - 6, h - 6, 3, 3, "#fbbf24")
 
-            // Peeking Lilo in top-right corner (x = 186, y = 3)
-            val earTwitch = if (frameIdx in 4..6) -1 else 0
-            val blink = frameIdx in 8..9
-
-            // Lilo's dark seal-point ears
-            px(188, 5 + earTwitch, 4, 6, "#2c1d11")
-            px(204, 5, 4, 6, "#2c1d11")
-            // Cream head
-            px(189, 9, 18, 12, "#ffeedb")
-            // Mask
-            px(192, 12, 12, 7, "#422817")
-            // Eyes
-            if (blink) {
-                px(194, 15, 3, 1, "#1e293b")
-                px(199, 15, 3, 1, "#1e293b")
-            } else {
-                px(194, 14, 3, 3, "#38bdf8") // Bright blue eyes
-                px(199, 14, 3, 3, "#38bdf8")
-            }
-            // Pink nose
-            px(197, 18, 2, 1, "#f472b6")
-
             return bmp
         }
 
@@ -453,95 +431,104 @@ class LiloNotesWidgetProvider : AppWidgetProvider() {
                 isSubpixelText = true
             }
 
-            // 1. Board Title Bar ("MY TASKS & STICKY NOTE" @ 20f bold)
+            // 1. Board Title Bar across full width (RectF(18f, 18f, w - 18f, 54f))
             p.color = Color.parseColor("#3b1d0a")
-            c.drawRect(22f, 16f, 440f, 52f, p)
+            c.drawRect(18f, 18f, w - 18f, 54f, p)
             p.color = Color.parseColor("#8f4d22")
-            c.drawRect(24f, 18f, 436f, 50f, p)
+            c.drawRect(20f, 20f, w - 20f, 52f, p)
 
             p.color = Color.parseColor("#ffffff")
-            p.textSize = 20f
+            p.textSize = 21f
             p.textAlign = Paint.Align.LEFT
-            c.drawText("MY TASKS & STICKY NOTE", 36f, 42f, p)
+            c.drawText("MY TASKS & STICKY NOTE", 30f, 43f, p)
 
-            // 2. Custom Task Rows (up to 3 @ 22f bold with 26x26 checkboxes)
+            // 2. Custom Task Rows (i = 0..2, rowY = 64f + i * 38f)
             if (tasks.isEmpty()) {
                 p.color = Color.parseColor("#78350f")
-                p.textSize = 20f
+                p.textSize = 22f
                 p.textAlign = Paint.Align.LEFT
-                c.drawText("Tap here to add custom tasks in app!", 36f, 115f, p)
+                c.drawText("+ Tap here to add custom tasks", 34f, 115f, p)
             } else {
                 val maxTasks = minOf(3, tasks.size)
-                var startY = 92f
                 for (i in 0 until maxTasks) {
+                    val rowY = 64f + i * 38f
                     val (taskText, isDone) = tasks[i]
 
-                    // 26x26 Checkbox
-                    val cbLeft = 28f
-                    val cbTop = startY - 20f
-                    val cbRight = cbLeft + 26f
-                    val cbBottom = cbTop + 26f
+                    // 26x26 Checkbox with 3f stroke border
+                    val cbLeft = 30f
+                    val cbTop = rowY
+                    val cbRight = 56f
+                    val cbBottom = rowY + 26f
 
                     p.color = Color.parseColor("#3b1d0a")
                     c.drawRect(cbLeft, cbTop, cbRight, cbBottom, p)
 
                     if (isDone) {
                         p.color = Color.parseColor("#15803d")
-                        c.drawRect(cbLeft + 2f, cbTop + 2f, cbRight - 2f, cbBottom - 2f, p)
+                        c.drawRect(cbLeft + 3f, cbTop + 3f, cbRight - 3f, cbBottom - 3f, p)
                         // White checkmark
                         p.color = Color.parseColor("#ffffff")
-                        p.textSize = 18f
+                        p.textSize = 19f
                         p.textAlign = Paint.Align.CENTER
-                        c.drawText("\u2713", cbLeft + 13f, cbTop + 19f, p)
+                        c.drawText("\u2713", cbLeft + 13f, cbTop + 20f, p)
                     } else {
                         p.color = Color.parseColor("#fffbeb")
-                        c.drawRect(cbLeft + 2f, cbTop + 2f, cbRight - 2f, cbBottom - 2f, p)
+                        c.drawRect(cbLeft + 3f, cbTop + 3f, cbRight - 3f, cbBottom - 3f, p)
                     }
 
-                    // Task Text @ 22f bold
-                    p.textSize = 22f
+                    // Task Text @ 24f bold
+                    p.textSize = 24f
                     p.textAlign = Paint.Align.LEFT
                     val truncated = truncate(taskText, 25)
                     if (isDone) {
                         p.color = Color.parseColor("#64748b")
-                        c.drawText(truncated, 66f, startY, p)
+                        c.drawText(truncated, 68f, rowY + 21f, p)
                         // Strikethrough line
                         val textW = p.measureText(truncated)
                         p.color = Color.parseColor("#94a3b8")
-                        c.drawRect(66f, startY - 7f, 66f + textW, startY - 4f, p)
+                        c.drawRect(68f, rowY + 12f, 68f + textW, rowY + 15f, p)
                     } else {
                         p.color = Color.parseColor("#3b1d0a")
-                        c.drawText(truncated, 66f, startY, p)
+                        c.drawText(truncated, 68f, rowY + 21f, p)
                     }
-
-                    startY += 38f
                 }
             }
 
-            // 3. Cozy Sticky Note at Bottom on warm yellow #FEF08A card
+            // 3. Taller Cozy Sticky Note at Bottom (stickyTop = 182f)
+            val stickyTop = 182f
             p.color = Color.parseColor("#b45309")
-            c.drawRect(22f, 202f, 498f, 286f, p)
+            c.drawRect(22f, stickyTop, w - 22f, h - 22f, p)
             p.color = Color.parseColor("#fef08a")
-            c.drawRect(24f, 204f, 496f, 284f, p)
+            c.drawRect(24f, stickyTop + 2f, w - 24f, h - 24f, p)
 
             // Red Pin at sticky note top-center
             p.color = Color.parseColor("#dc2626")
-            c.drawCircle(260f, 208f, 4.5f, p)
+            c.drawCircle(w / 2f, stickyTop + 6f, 4.5f, p)
 
-            // Note Text @ 20f bold
+            // Label: "📌 STICKY NOTE:" @ 16f bold (#B45309) at (32f, 206f)
+            p.color = Color.parseColor("#b45309")
+            p.textSize = 16f
+            p.textAlign = Paint.Align.LEFT
+            c.drawText("📌 STICKY NOTE:", 32f, 206f, p)
+
+            // User's sticky note text @ 24f bold (#3B1D0A) at (32f, 240f) (wrap to y=268f if > 28 chars)
             val primaryNote = if (recentNotes.isNotEmpty()) recentNotes[0] else stickyNote
             val noteDisplay = if (primaryNote.isNotBlank()) primaryNote else "Take a deep breath and listen to the birds."
 
-            p.color = Color.parseColor("#78350f")
-            p.textSize = 20f
+            p.color = Color.parseColor("#3b1d0a")
+            p.textSize = 24f
             p.textAlign = Paint.Align.LEFT
-            c.drawText(truncate(noteDisplay, 36), 34f, 248f, p)
-
-            // [+ Tap to Edit] hint on bottom right
-            p.color = Color.parseColor("#b45309")
-            p.textSize = 14f
-            p.textAlign = Paint.Align.RIGHT
-            c.drawText("[+ Tap to Edit]", 486f, 276f, p)
+            if (noteDisplay.length <= 28) {
+                c.drawText(noteDisplay, 32f, 240f, p)
+            } else {
+                var splitIdx = 28
+                val lastSpace = noteDisplay.substring(0, 28).lastIndexOf(' ')
+                if (lastSpace > 16) splitIdx = lastSpace
+                val line1 = noteDisplay.substring(0, splitIdx).trim()
+                val line2 = truncate(noteDisplay.substring(splitIdx).trim(), 28)
+                c.drawText(line1, 32f, 240f, p)
+                c.drawText(line2, 32f, 268f, p)
+            }
 
             return bmp
         }
