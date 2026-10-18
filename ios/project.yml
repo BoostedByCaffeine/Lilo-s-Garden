@@ -1,18 +1,19 @@
 name: LilosGarden
 options:
-  bundleIdPrefix: com.valois.lilosgarden
+  xcodeVersion: "15.0"
+  bundleIdPrefix: com.valois
   deploymentTarget:
     iOS: "16.0"
-  xcodeVersion: "15.0"
-  createIntermediateGroups: true
+  generateEmptyDirectories: true
 
 settings:
   base:
-    SWIFT_VERSION: "5.9"
-    CODE_SIGNING_ALLOWED: "NO"
-    CODE_SIGNING_REQUIRED: "NO"
+    MARKETING_VERSION: "1.3.0"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
     CODE_SIGN_IDENTITY: ""
-    DEVELOPMENT_TEAM: ""
+    CODE_SIGNING_REQUIRED: NO
+    CODE_SIGNING_ALLOWED: NO
 
 targets:
   LilosGarden:
@@ -21,20 +22,29 @@ targets:
     deploymentTarget: "16.0"
     sources:
       - path: LilosGarden
-      - path: www
-        type: folder
-        buildPhase: resources
-    entitlements:
-      path: LilosGarden/LilosGarden.entitlements
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.valois.lilosgarden
-        INFOPLIST_FILE: LilosGarden/Info.plist
-        TARGETED_DEVICE_FAMILY: "1,2"
-        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        GENERATE_INFOPLIST_FILE: NO
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIStatusBarHidden: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        INFOPLIST_KEY_CFBundleDisplayName: "Lilo's Garden"
     dependencies:
       - target: LilosGardenWidgets
+        embed: true
+    postCompileScripts:
+      - name: Copy Web Sanctuary Assets
+        script: |
+          mkdir -p "${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/www"
+          cp "${SRCROOT}/../index.html" "${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/www/"
+          cp "${SRCROOT}/../style.css" "${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/www/"
+          cp "${SRCROOT}/../app.js" "${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/www/"
+          cp "${SRCROOT}/../manifest.json" "${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/www/"
+          cp "${SRCROOT}/../favicon.png" "${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/www/"
+          cp -R "${SRCROOT}/../assets" "${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/www/assets"
 
   LilosGardenWidgets:
     type: app-extension
@@ -42,14 +52,13 @@ targets:
     deploymentTarget: "16.0"
     sources:
       - path: LilosGardenWidgets
-    entitlements:
-      path: LilosGardenWidgets/LilosGardenWidgets.entitlements
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.valois.lilosgarden.widgets
-        INFOPLIST_FILE: LilosGardenWidgets/Info.plist
-        TARGETED_DEVICE_FAMILY: "1,2"
-        GENERATE_INFOPLIST_FILE: NO
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: "Lilo's Garden Widgets"
+        INFOPLIST_KEY_NSExtensionPointIdentifier: "com.apple.widgetkit-extension"
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
     dependencies:
-      - framework: WidgetKit.framework
-      - framework: SwiftUI.framework
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework

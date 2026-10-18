@@ -6,9 +6,6 @@ on:
       - main
       - master
       - remastered
-      - 'release/**'
-    tags:
-      - 'v*'
   workflow_dispatch:
 
 permissions:
@@ -17,66 +14,72 @@ permissions:
 jobs:
   build-ios:
     name: Build Unsigned iOS IPA
-    runs-on: macos-14
+    runs-on: macos-latest
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Install XcodeGen
+      - name: Select Latest Installed Xcode
         run: |
-          brew install xcodegen
+          LATEST_XCODE=$(ls -d /Applications/Xcode*.app | sort -V | tail -n 1)
+          echo "Using Xcode: $LATEST_XCODE"
+          sudo xcode-select -s "$LATEST_XCODE/Contents/Developer"
+          xcodebuild -version
 
-      - name: Bundle Web Assets to iOS
-        run: |
-          mkdir -p ios/www
-          cp -r index.html style.css app.js manifest.json sw.js favicon.png assets ios/www/
-          echo "Successfully bundled web assets into ios/www/"
-
-      - name: Generate Xcode Project with XcodeGen
+      - name: Install XcodeGen & Generate Project
         working-directory: ios
         run: |
+          if ! command -v xcodegen &> /dev/null; then
+            brew install xcodegen
+          fi
+          rm -rf LilosGarden.xcodeproj
           xcodegen generate
+          # Safeguard: ensure project.pbxproj never uses future objectVersion 77 on Xcode 15 runners
+          sed -i '' 's/objectVersion = 77;/objectVersion = 56;/g' LilosGarden.xcodeproj/project.pbxproj
 
-      - name: Build Archive
+      - name: Build Unsigned Release .app
+        working-directory: ios
         run: |
-          xcodebuild -project ios/LilosGarden.xcodeproj \
+          xcodebuild build \
+            -project LilosGarden.xcodeproj \
             -scheme LilosGarden \
             -configuration Release \
-            -destination "generic/platform=iOS" \
-            -archivePath build/LilosGarden.xcarchive \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
+            -sdk iphoneos \
+            -derivedDataPath build \
             CODE_SIGN_IDENTITY="" \
-            DEVELOPMENT_TEAM="" \
-            archive
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES
 
-      - name: Package Unsigned .IPA
+      - name: Ad-Hoc Sign & Package into lilos-garden-ios.ipa
+        working-directory: ios
         run: |
-          mkdir -p build/Payload
-          cp -r build/LilosGarden.xcarchive/Products/Applications/LilosGarden.app build/Payload/
-          cd build
-          zip -qr ../lilos-garden.ipa Payload
-          cd ..
-          echo "Created lilos-garden.ipa"
+          APP_PATH="build/Build/Products/Release-iphoneos/LilosGarden.app"
+          if [ -d "$APP_PATH/PlugIns/LilosGardenWidgets.appex" ]; then
+            codesign --force --sign - --timestamp=none "$APP_PATH/PlugIns/LilosGardenWidgets.appex"
+          fi
+          codesign --force --sign - --timestamp=none "$APP_PATH"
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+          zip -r9 lilos-garden-ios.ipa Payload
+          cp lilos-garden-ios.ipa lilos-garden.ipa
 
-      - name: Upload IPA Artifact
+      - name: Upload iOS .ipa Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: lilos-garden-ipa
-          path: ./lilos-garden.ipa
-          if-no-files-found: error
+          name: lilos-garden-ios-ipa
+          path: |
+            ios/lilos-garden-ios.ipa
+            ios/lilos-garden.ipa
 
-      - name: Publish Direct IPA to GitHub Release
-        if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/remastered' || github.event_name == 'workflow_dispatch'
+      - name: Publish lilos-garden-ios.ipa to GitHub Release (latest)
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: "Lilo's Garden iOS (.ipa) & Android (.apk)"
-          body: "Direct download of Lilo's Garden iOS IPA (.ipa for AltStore / SideStore / TrollStore / Scarlet) and Android APK."
-          make_latest: true
+          name: "Lilo's Garden — Latest Android APK & iOS IPA"
           files: |
-            ./lilos-garden.ipa
+            ios/lilos-garden-ios.ipa
+            ios/lilos-garden.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true

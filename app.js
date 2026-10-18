@@ -3967,7 +3967,7 @@ function getGitHubUrls() {
   const { slug } = getGitHubRepoInfo();
   return {
     releaseDirectApk: `https://github.com/${slug}/releases/download/latest/lilos-garden.apk`,
-    releaseDirectIpa: `https://github.com/${slug}/releases/download/latest/lilos-garden.ipa`,
+    releaseDirectIpa: `https://github.com/${slug}/releases/download/latest/lilos-garden-ios.ipa`,
     releasesPage: `https://github.com/${slug}/releases/latest`,
     allReleases: `https://github.com/${slug}/releases`,
     actionsPage: `https://github.com/${slug}/actions`
@@ -4037,22 +4037,24 @@ safeOn('btnOpenIosTutorial', 'click', () => {
   openModal('ios-tutorial-modal');
 });
 
-// Choice C2: Direct 1-Tap iOS .IPA Download from GitHub Release (or local ./lilos-garden.ipa)
+// Choice C2: Direct 1-Tap iOS .IPA Download from GitHub Release (or local ./lilos-garden-ios.ipa)
 safeOn('btnDownloadIosIpa', 'click', async (e) => {
   e.preventDefault();
   const urls = getGitHubUrls();
 
   // A. Check if IPA is hosted locally in the web root
   try {
-    const localCheck = await fetch('./lilos-garden.ipa', { method: 'HEAD' });
+    const localIosCheck = await fetch('./lilos-garden-ios.ipa', { method: 'HEAD' });
+    const localCheck = localIosCheck.ok ? localIosCheck : await fetch('./lilos-garden.ipa', { method: 'HEAD' });
     if (localCheck.ok) {
+      const targetFilename = localIosCheck.ok ? 'lilos-garden-ios.ipa' : 'lilos-garden.ipa';
       const a = document.createElement('a');
-      a.href = './lilos-garden.ipa';
-      a.download = 'lilos-garden.ipa';
+      a.href = `./${targetFilename}`;
+      a.download = targetFilename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      showToast('Downloading lilos-garden.ipa directly...', 'download');
+      showToast(`Downloading ${targetFilename} directly...`, 'download');
       return;
     }
   } catch (err) {}
@@ -4061,7 +4063,7 @@ safeOn('btnDownloadIosIpa', 'click', async (e) => {
   try {
     const a = document.createElement('a');
     a.href = urls.releaseDirectIpa;
-    a.download = 'lilos-garden.ipa';
+    a.download = 'lilos-garden-ios.ipa';
     a.target = '_blank';
     a.rel = 'noopener,noreferrer';
     document.body.appendChild(a);
