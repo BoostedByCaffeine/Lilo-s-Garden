@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lilos-garden-pwa-v17';
+const CACHE_NAME = 'lilos-garden-pwa-v18';
 const CORE_ASSETS = [
   './',
   './index.html',
