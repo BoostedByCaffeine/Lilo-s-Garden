@@ -19,17 +19,17 @@
   <link rel="manifest" href="./manifest.json" />
   <link rel="icon" type="image/png" href="./favicon.png" />
 
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Local Tailwind CSS Stylesheet (Offline First) -->
+  <link rel="stylesheet" href="./assets/css/tailwind.min.css" />
 
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Quicksand:wght@500;600;700&display=swap"
-    rel="stylesheet" />
+  <!-- Local Fonts Stylesheet (Offline First) -->
+  <link rel="stylesheet" href="./assets/fonts/fonts.css" />
 
   <!-- External Stylesheet -->
   <link rel="stylesheet" href="./style.css" />
+
+  <!-- Local Tailwind CSS Compiler (Offline Fallback for dynamic classes) -->
+  <script src="./assets/vendor/tailwindcss.js"></script>
 </head>
 
 <body>

@@ -12,6 +12,8 @@ import android.media.session.MediaSession
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 
@@ -21,6 +23,32 @@ class LiloMediaListenerService : NotificationListenerService() {
     private var activeController: MediaController? = null
     private val controllerCallbacks = mutableMapOf<String, MediaController.Callback>()
     private val activeControllers = mutableMapOf<String, MediaController>()
+    private val mainHandler by lazy { Handler(Looper.getMainLooper()) }
+
+    companion object {
+        @Volatile
+        var instance: LiloMediaListenerService? = null
+            private set
+    }
+
+    fun getActiveController(): MediaController? {
+        if (activeController != null) return activeController
+        val playing = activeControllers.values.firstOrNull {
+            it.playbackState?.state == PlaybackState.STATE_PLAYING
+        }
+        if (playing != null) {
+            activeController = playing
+            return playing
+        }
+        val spotify = activeControllers.values.firstOrNull {
+            it.packageName.contains("spotify", ignoreCase = true)
+        }
+        if (spotify != null) {
+            activeController = spotify
+            return spotify
+        }
+        return activeControllers.values.firstOrNull()
+    }
 
     private val sessionsChangedListener = MediaSessionManager.OnActiveSessionsChangedListener { controllers ->
         handleSessionsChanged(controllers)
@@ -55,6 +83,7 @@ class LiloMediaListenerService : NotificationListenerService() {
 
     override fun onCreate() {
         super.onCreate()
+        instance = this
 
         // 1. Register minute time ticks for custom pixel clock in companion & window widgets
         val timeFilter = IntentFilter().apply {
@@ -81,7 +110,30 @@ class LiloMediaListenerService : NotificationListenerService() {
         initMediaSessions()
     }
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        instance = this
+        initMediaSessions()
+        return super.onStartCommand(intent, flags, startId)
+    }
+
+    override fun onListenerConnected() {
+        super.onListenerConnected()
+        instance = this
+        initMediaSessions()
+    }
+
+    override fun onListenerDisconnected() {
+        try {
+            sessionManager?.removeOnActiveSessionsChangedListener(sessionsChangedListener)
+        } catch (_: Exception) {}
+        cleanupControllers()
+        super.onListenerDisconnected()
+    }
+
     override fun onDestroy() {
+        if (instance == this) {
+            instance = null
+        }
         try {
             unregisterReceiver(timeTickReceiver)
         } catch (_: Exception) {}
@@ -91,56 +143,167 @@ class LiloMediaListenerService : NotificationListenerService() {
         try {
             sessionManager?.removeOnActiveSessionsChangedListener(sessionsChangedListener)
         } catch (_: Exception) {}
-        try {
-            for ((key, controller) in activeControllers) {
-                controllerCallbacks[key]?.let { cb -> controller.unregisterCallback(cb) }
-            }
-            activeControllers.clear()
-            controllerCallbacks.clear()
-        } catch (_: Exception) {}
+        cleanupControllers()
         super.onDestroy()
     }
 
-    private fun initMediaSessions() {
+    private fun cleanupControllers() {
+        try {
+            for ((key, controller) in activeControllers) {
+                controllerCallbacks[key]?.let { cb ->
+                    try { controller.unregisterCallback(cb) } catch (_: Exception) {}
+                }
+            }
+            activeControllers.clear()
+            controllerCallbacks.clear()
+            activeController = null
+        } catch (_: Exception) {}
+    }
+
+    fun initMediaSessions() {
         try {
             sessionManager = getSystemService(Context.MEDIA_SESSION_SERVICE) as? MediaSessionManager
             val component = ComponentName(this, LiloMediaListenerService::class.java)
-            sessionManager?.addOnActiveSessionsChangedListener(sessionsChangedListener, component)
+            try {
+                sessionManager?.removeOnActiveSessionsChangedListener(sessionsChangedListener)
+            } catch (_: Exception) {}
+            sessionManager?.addOnActiveSessionsChangedListener(sessionsChangedListener, component, mainHandler)
             val controllers = sessionManager?.getActiveSessions(component)
             handleSessionsChanged(controllers)
         } catch (_: Exception) {}
     }
 
     private fun handleSessionsChanged(controllers: List<MediaController>?) {
-        if (controllers.isNullOrEmpty()) return
-
-        for ((key, controller) in activeControllers) {
-            controllerCallbacks[key]?.let { cb -> controller.unregisterCallback(cb) }
+        if (controllers.isNullOrEmpty()) {
+            cleanupControllers()
+            savePlaybackState(false)
+            return
         }
-        activeControllers.clear()
-        controllerCallbacks.clear()
 
+        val currentTokens = mutableSetOf<MediaSession.Token>()
         for (controller in controllers) {
-            val key = controller.packageName
-            val cb = object : MediaController.Callback() {
-                override fun onMetadataChanged(metadata: MediaMetadata?) {
-                    metadata?.let { extractAndSaveMetadata(it, controller.playbackState) }
-                }
+            val token = controller.sessionToken
+            currentTokens.add(token)
+            val key = controller.packageName + "_" + token.hashCode()
+            if (!activeControllers.containsKey(key)) {
+                registerController(key, controller)
+            }
+        }
 
-                override fun onPlaybackStateChanged(state: PlaybackState?) {
-                    val isPlaying = state?.state == PlaybackState.STATE_PLAYING
-                    savePlaybackState(isPlaying)
+        // Clean up removed controllers
+        val toRemove = activeControllers.filter { (_, c) -> c.sessionToken !in currentTokens }
+        for ((oldKey, oldCtrl) in toRemove) {
+            controllerCallbacks[oldKey]?.let { cb ->
+                try { oldCtrl.unregisterCallback(cb) } catch (_: Exception) {}
+            }
+            activeControllers.remove(oldKey)
+            controllerCallbacks.remove(oldKey)
+        }
+
+        // Pick primary controller: playing > token match with current active > spotify > first
+        val playing = controllers.firstOrNull { it.playbackState?.state == PlaybackState.STATE_PLAYING }
+        val existingActive = controllers.firstOrNull { it.sessionToken == activeController?.sessionToken }
+        val spotify = controllers.firstOrNull { it.packageName.contains("spotify", ignoreCase = true) }
+        val primary = playing ?: existingActive ?: spotify ?: controllers[0]
+
+        activeController = primary
+        primary.let {
+            val isPlaying = it.playbackState?.state == PlaybackState.STATE_PLAYING
+            if (it.metadata != null) {
+                extractAndSaveMetadata(it.metadata, it.playbackState, isPlaying)
+            } else {
+                savePlaybackState(isPlaying)
+            }
+        }
+    }
+
+    private fun registerController(key: String, controller: MediaController) {
+        val cb = object : MediaController.Callback() {
+            override fun onMetadataChanged(metadata: MediaMetadata?) {
+                if (metadata == null) return
+                val isThisPlaying = controller.playbackState?.state == PlaybackState.STATE_PLAYING
+                val isActivePlaying = activeController?.playbackState?.state == PlaybackState.STATE_PLAYING
+                val isSpotify = controller.packageName.contains("spotify", ignoreCase = true)
+                val isSameAsActive = (controller.sessionToken == activeController?.sessionToken)
+
+                if (isThisPlaying || isSameAsActive || (!isActivePlaying && isSpotify) || activeController == null) {
+                    activeController = controller
+                    extractAndSaveMetadata(metadata, controller.playbackState, isThisPlaying)
                 }
             }
-            controller.registerCallback(cb)
-            activeControllers[key] = controller
-            controllerCallbacks[key] = cb
+
+            override fun onPlaybackStateChanged(state: PlaybackState?) {
+                val stateVal = state?.state ?: PlaybackState.STATE_NONE
+                val isPlaying = when (stateVal) {
+                    PlaybackState.STATE_PLAYING,
+                    PlaybackState.STATE_BUFFERING,
+                    PlaybackState.STATE_CONNECTING,
+                    PlaybackState.STATE_SKIPPING_TO_NEXT,
+                    PlaybackState.STATE_SKIPPING_TO_PREVIOUS -> true
+                    else -> false
+                }
+                val isSameAsActive = (controller.sessionToken == activeController?.sessionToken)
+
+                if (isPlaying) {
+                    activeController = controller
+                    if (controller.metadata != null) {
+                        extractAndSaveMetadata(controller.metadata, state, true)
+                    } else {
+                        savePlaybackState(true)
+                    }
+                } else if (isSameAsActive || activeController?.playbackState?.state != PlaybackState.STATE_PLAYING) {
+                    val otherPlaying = activeControllers.values.firstOrNull {
+                        it.sessionToken != controller.sessionToken && it.playbackState?.state == PlaybackState.STATE_PLAYING
+                    }
+                    if (otherPlaying != null) {
+                        activeController = otherPlaying
+                        if (otherPlaying.metadata != null) {
+                            extractAndSaveMetadata(otherPlaying.metadata, otherPlaying.playbackState, true)
+                        } else {
+                            savePlaybackState(true)
+                        }
+                    } else {
+                        activeController = controller
+                        if (controller.metadata != null) {
+                            extractAndSaveMetadata(controller.metadata, state, false)
+                        } else {
+                            savePlaybackState(false)
+                        }
+                    }
+                }
+            }
+
+            override fun onSessionDestroyed() {
+                try {
+                    controllerCallbacks[key]?.let { controller.unregisterCallback(it) }
+                } catch (_: Exception) {}
+                activeControllers.remove(key)
+                controllerCallbacks.remove(key)
+                if (activeController?.sessionToken == controller.sessionToken) {
+                    val fallback = activeControllers.values.firstOrNull {
+                        it.playbackState?.state == PlaybackState.STATE_PLAYING
+                    } ?: activeControllers.values.firstOrNull()
+                    activeController = fallback
+                    if (fallback != null) {
+                        val isPlaying = fallback.playbackState?.state == PlaybackState.STATE_PLAYING
+                        if (fallback.metadata != null) {
+                            extractAndSaveMetadata(fallback.metadata, fallback.playbackState, isPlaying)
+                        } else {
+                            savePlaybackState(isPlaying)
+                        }
+                    } else {
+                        savePlaybackState(false)
+                    }
+                }
+            }
         }
 
-        val primary = controllers.firstOrNull { it.playbackState?.state == PlaybackState.STATE_PLAYING }
-            ?: controllers[0]
-        activeController = primary
-        extractAndSaveMetadata(primary.metadata, primary.playbackState)
+        try {
+            // Always pass mainHandler to ensure callback registration is thread-safe on Binder threads
+            controller.registerCallback(cb, mainHandler)
+            activeControllers[key] = controller
+            controllerCallbacks[key] = cb
+        } catch (_: Exception) {}
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
@@ -155,7 +318,7 @@ class LiloMediaListenerService : NotificationListenerService() {
 
             var isPlaying: Boolean? = null
 
-            // 1. Determine playback state strictly from MediaSession Token
+            // 1. Determine playback state strictly from MediaSession Token & register callback
             val token = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 extras.getParcelable(Notification.EXTRA_MEDIA_SESSION, MediaSession.Token::class.java)
             } else {
@@ -166,27 +329,48 @@ class LiloMediaListenerService : NotificationListenerService() {
             if (token != null) {
                 try {
                     val controller = MediaController(this, token)
-                    activeController = controller
-                    val state = controller.playbackState?.state
-                    if (state != null) {
-                        isPlaying = (state == PlaybackState.STATE_PLAYING)
+                    val key = controller.packageName + "_" + token.hashCode()
+                    if (!activeControllers.containsKey(key)) {
+                        registerController(key, controller)
                     }
-                    if (title.isNullOrBlank()) {
-                        extractAndSaveMetadata(controller.metadata, controller.playbackState)
+                    activeController = controller
+
+                    val state = controller.playbackState
+                    if (state != null) {
+                        isPlaying = when (state.state) {
+                            PlaybackState.STATE_PLAYING,
+                            PlaybackState.STATE_BUFFERING,
+                            PlaybackState.STATE_CONNECTING,
+                            PlaybackState.STATE_SKIPPING_TO_NEXT,
+                            PlaybackState.STATE_SKIPPING_TO_PREVIOUS -> true
+                            PlaybackState.STATE_PAUSED,
+                            PlaybackState.STATE_STOPPED,
+                            PlaybackState.STATE_ERROR,
+                            PlaybackState.STATE_NONE -> false
+                            else -> null
+                        }
+                    }
+
+                    // 2. If state is not determined yet from controller, inspect notification action buttons
+                    if (isPlaying == null) {
+                        sbn.notification.actions?.forEach { action ->
+                            val actionTitle = action.title?.toString()?.lowercase() ?: ""
+                            if (actionTitle.contains("pause")) {
+                                isPlaying = true
+                            } else if (actionTitle.contains("play")) {
+                                isPlaying = false
+                            }
+                        }
+                    }
+
+                    if (controller.metadata != null) {
+                        extractAndSaveMetadata(controller.metadata, state, isPlaying)
                         return
                     }
                 } catch (_: Exception) {}
             }
 
-            // 2. Check active controllers from MediaSessionManager
-            if (isPlaying == null) {
-                val activeState = activeController?.playbackState?.state
-                if (activeState != null) {
-                    isPlaying = (activeState == PlaybackState.STATE_PLAYING)
-                }
-            }
-
-            // 3. Check notification action buttons (Pause -> playing, Play -> paused)
+            // 3. Fallback: check notification action buttons if token was null or controller threw
             if (isPlaying == null) {
                 sbn.notification.actions?.forEach { action ->
                     val actionTitle = action.title?.toString()?.lowercase() ?: ""
@@ -198,7 +382,7 @@ class LiloMediaListenerService : NotificationListenerService() {
                 }
             }
 
-            // Fallback: If still unknown, NEVER use sbn.isOngoing (Spotify keeps isOngoing true when paused)!
+            // Fallback: If still unknown, retrieve cached playing state from prefs
             val prefs = getSharedPreferences("lilo_music_prefs", Context.MODE_PRIVATE)
             val finalPlaying = isPlaying ?: prefs.getBoolean("is_playing", false)
 
@@ -211,24 +395,65 @@ class LiloMediaListenerService : NotificationListenerService() {
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
         if (sbn == null) return
         val pkg = sbn.packageName.lowercase()
-        if (pkg.contains("spotify")) {
-            savePlaybackState(false)
+        if (pkg.contains("spotify") || pkg.contains("music")) {
+            val anyPlaying = activeControllers.values.firstOrNull {
+                it.packageName.lowercase() != pkg && it.playbackState?.state == PlaybackState.STATE_PLAYING
+            }
+            if (anyPlaying != null) {
+                activeController = anyPlaying
+                val isPlaying = anyPlaying.playbackState?.state == PlaybackState.STATE_PLAYING
+                if (anyPlaying.metadata != null) {
+                    extractAndSaveMetadata(anyPlaying.metadata, anyPlaying.playbackState, isPlaying)
+                } else {
+                    savePlaybackState(isPlaying)
+                }
+            } else {
+                savePlaybackState(false)
+            }
         }
     }
 
-    private fun extractAndSaveMetadata(metadata: MediaMetadata?, state: PlaybackState?) {
+    private fun extractAndSaveMetadata(
+        metadata: MediaMetadata?,
+        state: PlaybackState?,
+        explicitIsPlaying: Boolean? = null
+    ) {
         if (metadata == null) return
         val title = metadata.getString(MediaMetadata.METADATA_KEY_TITLE)
+            ?: metadata.getText(MediaMetadata.METADATA_KEY_TITLE)?.toString()
             ?: metadata.getString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE)
+            ?: metadata.getText(MediaMetadata.METADATA_KEY_DISPLAY_TITLE)?.toString()
             ?: ""
         val artist = metadata.getString(MediaMetadata.METADATA_KEY_ARTIST)
+            ?: metadata.getText(MediaMetadata.METADATA_KEY_ARTIST)?.toString()
             ?: metadata.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST)
+            ?: metadata.getText(MediaMetadata.METADATA_KEY_ALBUM_ARTIST)?.toString()
+            ?: metadata.getString(MediaMetadata.METADATA_KEY_AUTHOR)
+            ?: metadata.getText(MediaMetadata.METADATA_KEY_AUTHOR)?.toString()
             ?: ""
-        val album = metadata.getString(MediaMetadata.METADATA_KEY_ALBUM) ?: ""
-        val isPlaying = state?.state == PlaybackState.STATE_PLAYING
+        val album = metadata.getString(MediaMetadata.METADATA_KEY_ALBUM)
+            ?: metadata.getText(MediaMetadata.METADATA_KEY_ALBUM)?.toString()
+            ?: ""
+
+        val isPlaying = explicitIsPlaying ?: when (state?.state) {
+            PlaybackState.STATE_PLAYING,
+            PlaybackState.STATE_BUFFERING,
+            PlaybackState.STATE_CONNECTING,
+            PlaybackState.STATE_SKIPPING_TO_NEXT,
+            PlaybackState.STATE_SKIPPING_TO_PREVIOUS -> true
+            PlaybackState.STATE_PAUSED,
+            PlaybackState.STATE_STOPPED,
+            PlaybackState.STATE_ERROR,
+            PlaybackState.STATE_NONE -> false
+            null -> {
+                val prefs = getSharedPreferences("lilo_music_prefs", Context.MODE_PRIVATE)
+                prefs.getBoolean("is_playing", false)
+            }
+            else -> false
+        }
 
         if (title.isNotBlank()) {
-            updateMusicPrefs(title, artist, album, isPlaying)
+            updateMusicPrefs(title.trim(), artist.trim(), album.trim(), isPlaying)
         }
     }
 
@@ -269,10 +494,11 @@ class LiloMediaListenerService : NotificationListenerService() {
 
         val oldTitle = prefs.getString("track_title", "") ?: ""
         val oldArtist = prefs.getString("artist_name", "") ?: ""
+        val oldAlbum = prefs.getString("album_name", "") ?: ""
         val oldPlaying = prefs.getBoolean("is_playing", false)
 
-        if (track == oldTitle && artist == oldArtist && effectivePlaying == oldPlaying) {
-            return // DEBOUNCE: Eliminate 100% of blinking if nothing changed!
+        if (track == oldTitle && artist == oldArtist && album == oldAlbum && effectivePlaying == oldPlaying) {
+            return // DEBOUNCE: Eliminate blinking if nothing changed
         }
 
         val prefNames = arrayOf("lilo_music_prefs", "lilo_widget_prefs", "lilos_garden_prefs")

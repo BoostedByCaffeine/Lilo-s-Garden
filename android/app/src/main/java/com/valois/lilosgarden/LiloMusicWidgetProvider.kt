@@ -13,8 +13,13 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.media.AudioManager
+import android.media.session.MediaController
+import android.media.session.MediaSessionManager
+import android.media.session.PlaybackState
+import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
+import android.service.notification.NotificationListenerService
 import android.view.KeyEvent
 import android.widget.RemoteViews
 import org.json.JSONObject
@@ -28,6 +33,9 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
+        try {
+            LiloMediaListenerService.instance?.initMediaSessions()
+        } catch (_: Exception) {}
         for (appWidgetId in appWidgetIds) {
             updateMusicWidget(context, appWidgetManager, appWidgetId)
         }
@@ -58,7 +66,23 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
                         .putLong("last_manual_toggle_ms", now)
                         .apply()
                 }
-                sendMediaKey(context, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE)
+
+                // Direct MediaController transport controls if available
+                val controller = resolveActiveController(context)
+                if (controller != null) {
+                    try {
+                        val pbState = controller.playbackState?.state
+                        if (pbState == PlaybackState.STATE_PLAYING) {
+                            controller.transportControls.pause()
+                        } else {
+                            controller.transportControls.play()
+                        }
+                    } catch (_: Exception) {
+                        sendMediaKey(context, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE)
+                    }
+                } else {
+                    sendMediaKey(context, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE)
+                }
                 refreshAllMusicWidgets(context)
             }
             ACTION_MUSIC_PREV -> {
@@ -68,7 +92,16 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
                         .putLong("last_manual_toggle_ms", now)
                         .apply()
                 }
-                sendMediaKey(context, KeyEvent.KEYCODE_MEDIA_PREVIOUS)
+                val controller = resolveActiveController(context)
+                if (controller != null) {
+                    try {
+                        controller.transportControls.skipToPrevious()
+                    } catch (_: Exception) {
+                        sendMediaKey(context, KeyEvent.KEYCODE_MEDIA_PREVIOUS)
+                    }
+                } else {
+                    sendMediaKey(context, KeyEvent.KEYCODE_MEDIA_PREVIOUS)
+                }
                 refreshAllMusicWidgets(context)
             }
             ACTION_MUSIC_NEXT -> {
@@ -78,7 +111,16 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
                         .putLong("last_manual_toggle_ms", now)
                         .apply()
                 }
-                sendMediaKey(context, KeyEvent.KEYCODE_MEDIA_NEXT)
+                val controller = resolveActiveController(context)
+                if (controller != null) {
+                    try {
+                        controller.transportControls.skipToNext()
+                    } catch (_: Exception) {
+                        sendMediaKey(context, KeyEvent.KEYCODE_MEDIA_NEXT)
+                    }
+                } else {
+                    sendMediaKey(context, KeyEvent.KEYCODE_MEDIA_NEXT)
+                }
                 refreshAllMusicWidgets(context)
             }
             ACTION_MUSIC_SWITCH_CAT -> {
@@ -119,6 +161,9 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
                 refreshAllMusicWidgets(context)
             }
             ACTION_MUSIC_REFRESH -> {
+                try {
+                    LiloMediaListenerService.instance?.initMediaSessions()
+                } catch (_: Exception) {}
                 refreshAllMusicWidgets(context)
             }
         }
@@ -199,6 +244,22 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
             }
         }
 
+        fun resolveActiveController(context: Context): MediaController? {
+            val serviceCtrl = LiloMediaListenerService.instance?.getActiveController()
+            if (serviceCtrl != null) return serviceCtrl
+            if (hasNotificationAccess(context)) {
+                try {
+                    val sm = context.getSystemService(Context.MEDIA_SESSION_SERVICE) as? MediaSessionManager
+                    val component = ComponentName(context, LiloMediaListenerService::class.java)
+                    val controllers = sm?.getActiveSessions(component)
+                    val playing = controllers?.firstOrNull { it.playbackState?.state == PlaybackState.STATE_PLAYING }
+                    val spotify = controllers?.firstOrNull { it.packageName.contains("spotify", ignoreCase = true) }
+                    return playing ?: spotify ?: controllers?.firstOrNull()
+                } catch (_: Exception) {}
+            }
+            return null
+        }
+
         fun refreshAllMusicWidgets(context: Context) {
             val manager = AppWidgetManager.getInstance(context)
             val ids = manager.getAppWidgetIds(ComponentName(context, LiloMusicWidgetProvider::class.java))
@@ -230,10 +291,62 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
                 val catIdx = widgetPrefs.getInt("music_cat_idx", 0) % roster.size
                 val activeCat = roster[catIdx]
 
-                val track = prefs.getString("track_title", prefs.getString("music_title", if (hasAccess) "Cozy Garden Melodies" else "TAP TO LINK SPOTIFY")) ?: "Cozy Garden Melodies"
-                val artist = prefs.getString("artist_name", prefs.getString("music_artist", if (hasAccess) "Lilo & Cheeto Sanctuary" else "Notification Access Required")) ?: "Lilo & Cheeto Sanctuary"
-                val album = prefs.getString("album_name", prefs.getString("music_album", if (hasAccess) "Reunited Forever" else "Settings Permission")) ?: "Reunited Forever"
-                val isPlaying = prefs.getBoolean("is_playing", prefs.getBoolean("music_playing", false))
+                var track = prefs.getString("track_title", prefs.getString("music_title", if (hasAccess) "Cozy Garden Melodies" else "TAP TO LINK SPOTIFY")) ?: "Cozy Garden Melodies"
+                var artist = prefs.getString("artist_name", prefs.getString("music_artist", if (hasAccess) "Lilo & Cheeto Sanctuary" else "Notification Access Required")) ?: "Lilo & Cheeto Sanctuary"
+                var album = prefs.getString("album_name", prefs.getString("music_album", if (hasAccess) "Reunited Forever" else "Settings Permission")) ?: "Reunited Forever"
+                var isPlaying = prefs.getBoolean("is_playing", prefs.getBoolean("music_playing", false))
+
+                if (hasAccess) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && LiloMediaListenerService.instance == null) {
+                        try {
+                            NotificationListenerService.requestRebind(ComponentName(context, LiloMediaListenerService::class.java))
+                        } catch (_: Exception) {}
+                    }
+                    try {
+                        val ctrl = resolveActiveController(context)
+                        if (ctrl != null) {
+                            val liveState = ctrl.playbackState
+                            val liveMeta = ctrl.metadata
+                            val now = System.currentTimeMillis()
+                            val lastToggle = prefs.getLong("last_manual_toggle_ms", 0L)
+                            if (now - lastToggle >= 600L && liveState != null) {
+                                val livePlaying = (liveState.state == PlaybackState.STATE_PLAYING)
+                                if (livePlaying != isPlaying) {
+                                    isPlaying = livePlaying
+                                    for (prefName in arrayOf("lilo_music_prefs", "lilo_widget_prefs", "lilos_garden_prefs")) {
+                                        context.getSharedPreferences(prefName, Context.MODE_PRIVATE).edit()
+                                            .putBoolean("is_playing", livePlaying)
+                                            .putBoolean("music_playing", livePlaying)
+                                            .apply()
+                                    }
+                                }
+                            }
+                            if (liveMeta != null) {
+                                val liveTitle = liveMeta.getString(android.media.MediaMetadata.METADATA_KEY_TITLE)
+                                    ?: liveMeta.getText(android.media.MediaMetadata.METADATA_KEY_TITLE)?.toString()
+                                val liveArtist = liveMeta.getString(android.media.MediaMetadata.METADATA_KEY_ARTIST)
+                                    ?: liveMeta.getText(android.media.MediaMetadata.METADATA_KEY_ARTIST)?.toString()
+                                val liveAlbum = liveMeta.getString(android.media.MediaMetadata.METADATA_KEY_ALBUM)
+                                    ?: liveMeta.getText(android.media.MediaMetadata.METADATA_KEY_ALBUM)?.toString()
+                                if (!liveTitle.isNullOrBlank() && (liveTitle != track || (liveArtist != null && liveArtist != artist))) {
+                                    track = liveTitle.trim()
+                                    artist = liveArtist?.trim() ?: ""
+                                    album = liveAlbum?.trim() ?: ""
+                                    for (prefName in arrayOf("lilo_music_prefs", "lilo_widget_prefs", "lilos_garden_prefs")) {
+                                        context.getSharedPreferences(prefName, Context.MODE_PRIVATE).edit()
+                                            .putString("track_title", track)
+                                            .putString("artist_name", artist)
+                                            .putString("album_name", album)
+                                            .putString("music_title", track)
+                                            .putString("music_artist", artist)
+                                            .putString("music_album", album)
+                                            .apply()
+                                    }
+                                }
+                            }
+                        }
+                    } catch (_: Exception) {}
+                }
 
                 val views = RemoteViews(context.packageName, R.layout.lilo_music_widget)
 
@@ -660,17 +773,17 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
                 p.textAlign = Paint.Align.LEFT
                 c.drawText("SPOTIFY LIVE", 168f, 40f, p)
 
-                // Track Title at (162f, 74f) in 21f bold Stardew_Valley.ttf (#3B1D0A, max 20 chars)
+                // Track Title at (162f, 74f) in 21f bold Stardew_Valley.ttf (#3B1D0A, up to 250px available)
                 p.textSize = 21f
                 p.color = Color.parseColor("#3b1d0a")
-                val truncatedTrack = truncate(track, 20)
+                val truncatedTrack = truncateToWidth(track, 250f, p)
                 c.drawText(truncatedTrack, 162f, 74f, p)
 
-                // Artist & Album at (162f, 102f) in 15f bold (#6E3F1D)
+                // Artist & Album at (162f, 102f) in 15f bold (#6E3F1D, up to 250px available)
                 p.textSize = 15f
                 p.color = Color.parseColor("#6e3f1d")
                 val artistAlbumStr = if (album.isNotBlank()) "$artist - $album" else artist
-                val truncatedArtist = truncate(artistAlbumStr, 26)
+                val truncatedArtist = truncateToWidth(artistAlbumStr, 250f, p)
                 c.drawText(truncatedArtist, 162f, 102f, p)
 
                 // Status text at (162f, 130f) in 15f bold: "▶ PLAYING" (#15803D) if isPlaying else "⏸ PAUSED" (#B45309)
@@ -724,8 +837,30 @@ class LiloMusicWidgetProvider : AppWidgetProvider() {
             c.drawText(label, (left + right) / 2f, top + 36f, p)
         }
 
+        private fun truncateToWidth(str: String, maxWidth: Float, paint: Paint): String {
+            if (paint.measureText(str) <= maxWidth) return str
+            val ellipsis = "..."
+            val ellipsisW = paint.measureText(ellipsis)
+            val avail = maxWidth - ellipsisW
+            if (avail <= 0f) return ellipsis
+
+            var low = 0
+            var high = str.length
+            var best = 0
+            while (low <= high) {
+                val mid = (low + high) / 2
+                if (paint.measureText(str, 0, mid) <= avail) {
+                    best = mid
+                    low = mid + 1
+                } else {
+                    high = mid - 1
+                }
+            }
+            return str.substring(0, best).trimEnd() + ellipsis
+        }
+
         private fun truncate(str: String, maxLen: Int): String {
-            return if (str.length <= maxLen) str else str.substring(0, maxLen - 1) + "\u2026"
+            return if (str.length <= maxLen) str else str.substring(0, maxLen - 1) + "..."
         }
     }
 }

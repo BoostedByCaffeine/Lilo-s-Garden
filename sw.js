@@ -1,8 +1,11 @@
-const CACHE_NAME = 'lilos-garden-pwa-v16';
+const CACHE_NAME = 'lilos-garden-pwa-v17';
 const CORE_ASSETS = [
   './',
   './index.html',
   './style.css',
+  './assets/css/tailwind.min.css',
+  './assets/fonts/fonts.css',
+  './assets/vendor/tailwindcss.js',
   './app.js',
   './manifest.json',
   './favicon.png',
@@ -12,6 +15,10 @@ const CORE_ASSETS = [
   './assets/icon-512.png',
   './assets/fonts/Stardew_Valley.ttf',
   './assets/fonts/Stardew_Valley.otf',
+  './assets/fonts/PressStart2P-Regular.ttf',
+  './assets/fonts/Quicksand-Medium.ttf',
+  './assets/fonts/Quicksand-SemiBold.ttf',
+  './assets/fonts/Quicksand-Bold.ttf',
   './assets/sprites/tileSprite/1 Tiles/FieldsTile_38.png',
   './assets/sprites/tileSprite/2 Objects/7 Decor/Tree1.png',
   './assets/sprites/tileSprite/2 Objects/9 Bush/1.png',

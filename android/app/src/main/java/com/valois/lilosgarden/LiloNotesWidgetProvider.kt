@@ -464,20 +464,20 @@ class LiloNotesWidgetProvider : AppWidgetProvider() {
                         c.drawRect(cbLeft + 2.5f, cbTop + 2.5f, cbRight - 2.5f, cbBottom - 2.5f, p)
                     }
 
-                    // Task text at (70f, rowY + 19f) in 21f bold
+                    // Task text at (70f, rowY + 19f) in 21f bold spanning full available width (416px)
                     p.textSize = 21f
                     p.textAlign = Paint.Align.LEFT
-                    val truncated = truncate(taskText, 25)
+                    val displayed = truncateToWidth(taskText, 416f, p)
                     if (isDone) {
                         p.color = Color.parseColor("#64748b")
-                        c.drawText(truncated, 70f, rowY + 19f, p)
+                        c.drawText(displayed, 70f, rowY + 19f, p)
                         // Strikethrough line
-                        val textW = p.measureText(truncated)
+                        val textW = p.measureText(displayed)
                         p.color = Color.parseColor("#94a3b8")
                         c.drawRect(70f, rowY + 11f, 70f + textW, rowY + 14f, p)
                     } else {
                         p.color = Color.parseColor("#3b1d0a")
-                        c.drawText(truncated, 70f, rowY + 19f, p)
+                        c.drawText(displayed, 70f, rowY + 19f, p)
                     }
                 }
             }
@@ -498,30 +498,110 @@ class LiloNotesWidgetProvider : AppWidgetProvider() {
             p.textAlign = Paint.Align.LEFT
             c.drawText("STICKY NOTE:", 34f, 206f, p)
 
-            // User note text at (34f, 234f) (and line 2 at 260f) in 21f bold (#3B1D0A)
+            // User note text at 34f spanning full width (452px) across 1-2 lines in 21f bold (#3B1D0A)
             val primaryNote = if (recentNotes.isNotEmpty()) recentNotes[0] else stickyNote
             val noteDisplay = if (primaryNote.isNotBlank()) primaryNote else "Take a deep breath and listen to the birds."
 
             p.color = Color.parseColor("#3b1d0a")
             p.textSize = 21f
             p.textAlign = Paint.Align.LEFT
-            if (noteDisplay.length <= 28) {
-                c.drawText(noteDisplay, 34f, 234f, p)
+
+            val noteLines = wrapTextToLines(noteDisplay, 452f, 2, p)
+            if (noteLines.size <= 1) {
+                val singleLine = noteLines.firstOrNull() ?: noteDisplay
+                c.drawText(singleLine, 34f, 240f, p)
             } else {
-                var splitIdx = 28
-                val lastSpace = noteDisplay.substring(0, 28).lastIndexOf(' ')
-                if (lastSpace > 16) splitIdx = lastSpace
-                val line1 = noteDisplay.substring(0, splitIdx).trim()
-                val line2 = truncate(noteDisplay.substring(splitIdx).trim(), 28)
-                c.drawText(line1, 34f, 234f, p)
-                c.drawText(line2, 34f, 260f, p)
+                c.drawText(noteLines[0], 34f, 232f, p)
+                c.drawText(noteLines[1], 34f, 258f, p)
             }
 
             return bmp
         }
 
+        private fun truncateToWidth(str: String, maxWidth: Float, paint: Paint): String {
+            if (paint.measureText(str) <= maxWidth) return str
+            val ellipsis = "..."
+            val ellipsisW = paint.measureText(ellipsis)
+            val avail = maxWidth - ellipsisW
+            if (avail <= 0f) return ellipsis
+
+            var low = 0
+            var high = str.length
+            var best = 0
+            while (low <= high) {
+                val mid = (low + high) / 2
+                if (paint.measureText(str, 0, mid) <= avail) {
+                    best = mid
+                    low = mid + 1
+                } else {
+                    high = mid - 1
+                }
+            }
+            return str.substring(0, best).trimEnd() + ellipsis
+        }
+
+        private fun wrapTextToLines(text: String, maxWidth: Float, maxLines: Int, paint: Paint): List<String> {
+            if (text.isBlank()) return emptyList()
+            val paragraphs = text.replace("\r\n", "\n").split("\n")
+            val lines = mutableListOf<String>()
+
+            for (pIndex in paragraphs.indices) {
+                if (lines.size >= maxLines) break
+                val para = paragraphs[pIndex].trim()
+                if (para.isEmpty()) continue
+
+                val words = para.split(Regex("\\s+")).filter { it.isNotEmpty() }.toMutableList()
+                if (words.isEmpty()) continue
+
+                var currentLine = ""
+                var i = 0
+                while (i < words.size && lines.size < maxLines) {
+                    val isLastLine = (lines.size == maxLines - 1)
+                    if (isLastLine) {
+                        val remainingInPara = words.subList(i, words.size).joinToString(" ")
+                        val remainingNextParas = paragraphs.subList(pIndex + 1, paragraphs.size)
+                            .map { it.trim() }
+                            .filter { it.isNotEmpty() }
+                            .joinToString(" ")
+                        val parts = listOf(currentLine, remainingInPara, remainingNextParas).filter { it.isNotEmpty() }
+                        val allRemaining = parts.joinToString(" ")
+                        lines.add(truncateToWidth(allRemaining, maxWidth, paint))
+                        return lines
+                    }
+
+                    val word = words[i]
+                    val candidate = if (currentLine.isEmpty()) word else "$currentLine $word"
+                    if (paint.measureText(candidate) <= maxWidth) {
+                        currentLine = candidate
+                        i++
+                    } else if (currentLine.isNotEmpty()) {
+                        lines.add(currentLine)
+                        currentLine = ""
+                    } else {
+                        // Single word exceeds maxWidth, break characters
+                        val chunk = truncateToWidth(word, maxWidth, paint).removeSuffix("...")
+                        val validChunk = if (chunk.isNotEmpty()) chunk else word.take(1)
+                        lines.add(validChunk)
+                        val remainder = word.substring(validChunk.length)
+                        if (remainder.isNotEmpty()) {
+                            words[i] = remainder
+                        } else {
+                            i++
+                        }
+                    }
+                }
+
+                if (currentLine.isNotEmpty() && lines.size < maxLines) {
+                    lines.add(currentLine)
+                    currentLine = ""
+                }
+            }
+
+            return lines
+        }
+
         private fun truncate(str: String, maxLen: Int): String {
-            return if (str.length <= maxLen) str else str.substring(0, maxLen - 1) + "\u2026"
+            return if (str.length <= maxLen) str else str.substring(0, maxLen - 1) + "..."
         }
     }
 }

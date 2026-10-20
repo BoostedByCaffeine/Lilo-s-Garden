@@ -327,6 +327,7 @@ class MainActivity : AppCompatActivity() {
                 LiloBatteryWidgetProvider.refreshAllBatteryWidgets(activity)
                 LiloPomodoroWidgetProvider.refreshAllPomodoroWidgets(activity)
                 LiloNotesWidgetProvider.refreshAllNotesWidgets(activity)
+                LiloMusicWidgetProvider.refreshAllMusicWidgets(activity)
             } catch (e: Exception) {}
         }
 
