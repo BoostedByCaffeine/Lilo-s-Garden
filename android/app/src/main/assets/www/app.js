@@ -208,7 +208,7 @@ class CozyAudio {
     this.enabled = true;
     this.rainGain = null;
     this.rainSource = null;
-    this.bgmVolume = 0.55;
+    this.bgmVolume = 0.70;
     this.rainVolume = 0.60;
     this.sfxVolume = 0.65;
 
