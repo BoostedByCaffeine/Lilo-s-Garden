@@ -95,7 +95,13 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (::webView.isInitialized) webView.onResume()
+        if (::webView.isInitialized) {
+            webView.onResume()
+            webView.evaluateJavascript(
+                "(function(){ try { if (window.sound && typeof window.sound.onAppForeground === 'function') { window.sound.onAppForeground(); } else if (typeof sound !== 'undefined' && typeof sound.onAppForeground === 'function') { sound.onAppForeground(); } } catch(e){} })();",
+                null
+            )
+        }
         syncTasksFromWidget()
     }
 
@@ -263,8 +269,24 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onPause() {
-        if (::webView.isInitialized) webView.onPause()
+        if (::webView.isInitialized) {
+            webView.evaluateJavascript(
+                "(function(){ try { if (window.sound && typeof window.sound.onAppBackground === 'function') { window.sound.onAppBackground(); } else if (typeof sound !== 'undefined' && typeof sound.onAppBackground === 'function') { sound.onAppBackground(); } } catch(e){} })();",
+                null
+            )
+            webView.onPause()
+        }
         super.onPause()
+    }
+
+    override fun onStop() {
+        if (::webView.isInitialized) {
+            webView.evaluateJavascript(
+                "(function(){ try { if (window.sound && typeof window.sound.onAppBackground === 'function') { window.sound.onAppBackground(); } else if (typeof sound !== 'undefined' && typeof sound.onAppBackground === 'function') { sound.onAppBackground(); } } catch(e){} })();",
+                null
+            )
+        }
+        super.onStop()
     }
 
     override fun onDestroy() {

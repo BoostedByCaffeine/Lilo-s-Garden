@@ -206,6 +206,9 @@ class CozyAudio {
   constructor() {
     this.ctx = null;
     this.enabled = true;
+    this.isAppHidden = false;
+    this.wasBgmPlaying = false;
+    this.wasRainPlaying = false;
     this.rainGain = null;
     this.rainSource = null;
     this.bgmVolume = 0.70;
@@ -274,7 +277,7 @@ class CozyAudio {
   }
 
   playMeow(catTypeOrIndex = 'lilo') {
-    if (!this.enabled) return;
+    if (!this.enabled || this.isAppHidden) return;
     this.init();
 
     const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
@@ -320,7 +323,7 @@ class CozyAudio {
   }
 
   synthesizeMeow(catType = 'lilo') {
-    if (!this.ctx) return;
+    if (!this.enabled || this.isAppHidden || !this.ctx) return;
     try {
       const now = this.ctx.currentTime;
       const osc1 = this.ctx.createOscillator();
@@ -358,7 +361,7 @@ class CozyAudio {
   }
 
   playPurr() {
-    if (!this.enabled) return;
+    if (!this.enabled || this.isAppHidden) return;
     this.init();
 
     const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
@@ -435,7 +438,7 @@ class CozyAudio {
   }
 
   synthesizePurr() {
-    if (!this.ctx) return;
+    if (!this.enabled || this.isAppHidden || !this.ctx) return;
     try {
       const now = this.ctx.currentTime;
       const osc = this.ctx.createOscillator();
@@ -482,6 +485,10 @@ class CozyAudio {
 
   startRain() {
     if (!this.enabled) return;
+    if (this.isAppHidden) {
+      this.wasRainPlaying = true;
+      return;
+    }
     this.init();
     if (this.rainFadeInterval) {
       clearInterval(this.rainFadeInterval);
@@ -500,7 +507,7 @@ class CozyAudio {
   }
 
   synthesizeRain() {
-    if (!this.ctx || this.rainSource) return;
+    if (!this.enabled || this.isAppHidden || !this.ctx || this.rainSource) return;
     try {
       const bufferSize = this.ctx.sampleRate * 2;
       const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
@@ -578,6 +585,11 @@ class CozyAudio {
       return;
     }
 
+    if (this.isAppHidden) {
+      this.wasBgmPlaying = true;
+      return;
+    }
+
     const isRain = (typeof world !== 'undefined' && world && world.weather === 'RAIN');
     const isNight = (typeof world !== 'undefined' && world && (world.weather === 'NIGHT' || world.isNight));
     const targetKey = (isRain || isNight) ? 'cats_in_the_cold' : 'sun_and_moon';
@@ -619,6 +631,11 @@ class CozyAudio {
 
     if (this.fadeInterval) clearInterval(this.fadeInterval);
     this.fadeInterval = setInterval(() => {
+      if (this.isAppHidden) {
+        clearInterval(this.fadeInterval);
+        this.fadeInterval = null;
+        return;
+      }
       step++;
       const ratio = step / steps;
       if (prevAudio && !prevAudio.paused) {
@@ -640,11 +657,107 @@ class CozyAudio {
   }
 
   pauseAllBgm() {
-    if (this.fadeInterval) clearInterval(this.fadeInterval);
+    if (this.fadeInterval) {
+      clearInterval(this.fadeInterval);
+      this.fadeInterval = null;
+    }
     for (const key in this.bgmTracks) {
       const a = this.bgmTracks[key];
-      a.pause();
-      a.volume = 0;
+      try {
+        a.pause();
+        a.volume = 0;
+      } catch (_) {}
+    }
+  }
+
+  onAppBackground() {
+    if (this.isAppHidden) return;
+    this.isAppHidden = true;
+
+    // Check if any BGM track is actively playing before pausing
+    const activeAudio = this.activeBgmKey ? this.bgmTracks[this.activeBgmKey] : null;
+    this.wasBgmPlaying = Boolean(this.enabled && activeAudio && !activeAudio.paused);
+    this.wasRainPlaying = Boolean(this.enabled && ((this.sfx.rain && !this.sfx.rain.paused) || this.rainSource));
+
+    if (this.fadeInterval) {
+      clearInterval(this.fadeInterval);
+      this.fadeInterval = null;
+    }
+
+    // Pause all BGM immediately
+    for (const key in this.bgmTracks) {
+      const a = this.bgmTracks[key];
+      try {
+        if (!a.paused) {
+          a.pause();
+        }
+      } catch (_) {}
+    }
+
+    // Pause looping rain immediately
+    if (this.rainFadeInterval) {
+      clearInterval(this.rainFadeInterval);
+      this.rainFadeInterval = null;
+    }
+    if (this.sfx.rain) {
+      try {
+        if (!this.sfx.rain.paused) {
+          this.sfx.rain.pause();
+        }
+      } catch (_) {}
+    }
+    if (this.rainSource) {
+      try {
+        this.rainSource.stop();
+        this.rainSource.disconnect();
+      } catch (_) {}
+      this.rainSource = null;
+    }
+
+    // Stop purr and meows
+    this.stopPurr();
+    if (Array.isArray(this.meows)) {
+      this.meows.forEach((m) => {
+        try {
+          if (!m.paused) {
+            m.pause();
+            m.currentTime = 0;
+          }
+        } catch (_) {}
+      });
+    }
+
+    // Suspend Web Audio context to halt audio processing
+    if (this.ctx && this.ctx.state === 'running') {
+      try {
+        this.ctx.suspend().catch(() => {});
+      } catch (_) {}
+    }
+  }
+
+  onAppForeground() {
+    if (!this.isAppHidden) return;
+    this.isAppHidden = false;
+
+    // Resume AudioContext if suspended
+    if (this.ctx && this.ctx.state === 'suspended') {
+      try {
+        this.ctx.resume().catch(() => {});
+      } catch (_) {}
+    }
+
+    if (!this.enabled) return;
+
+    // Resume background music if it was playing when minimized
+    if (this.wasBgmPlaying) {
+      this.wasBgmPlaying = false;
+      this.updateBgm();
+    }
+
+    // Resume rain if it was playing and weather is rainy
+    if (this.wasRainPlaying && typeof world !== 'undefined' && world && world.weather === 'RAIN') {
+      this.wasRainPlaying = false;
+      this.startRain();
     }
   }
 
@@ -672,7 +785,7 @@ class CozyAudio {
   }
 
   playFeedSound() {
-    if (!this.enabled) return;
+    if (!this.enabled || this.isAppHidden) return;
     this.init();
     if (!this.ctx) return;
     try {
@@ -695,7 +808,7 @@ class CozyAudio {
   }
 
   playMunchPop() {
-    if (!this.enabled) return;
+    if (!this.enabled || this.isAppHidden) return;
     this.init();
     if (!this.ctx) return;
     try {
@@ -716,6 +829,9 @@ class CozyAudio {
 }
 
 const sound = new CozyAudio();
+if (typeof window !== 'undefined') {
+  window.sound = sound;
+}
 
 /********************************************************************
  * 3. SAFE DOM HELPERS & TOAST NOTIFICATIONS
@@ -5392,11 +5508,30 @@ function restoreEnvironmentOnResume() {
 }
 
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') {
+  if (document.hidden || document.visibilityState === 'hidden') {
+    if (typeof sound !== 'undefined' && sound) {
+      sound.onAppBackground();
+    }
+  } else if (document.visibilityState === 'visible') {
+    if (typeof sound !== 'undefined' && sound) {
+      sound.onAppForeground();
+    }
     restoreEnvironmentOnResume();
   }
 });
-window.addEventListener('pageshow', restoreEnvironmentOnResume);
+
+window.addEventListener('pagehide', () => {
+  if (typeof sound !== 'undefined' && sound) {
+    sound.onAppBackground();
+  }
+});
+
+window.addEventListener('pageshow', () => {
+  if (typeof sound !== 'undefined' && sound) {
+    sound.onAppForeground();
+  }
+  restoreEnvironmentOnResume();
+});
 
 /********************************************************************
  * 11. MAIN GAME LOOP & INITIALIZATION

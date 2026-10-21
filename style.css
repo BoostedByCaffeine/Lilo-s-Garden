@@ -465,6 +465,7 @@ html.app-mode #studio-loading-screen.dissolve-out.hidden {
   color: #fde68a;
   letter-spacing: 0.03em;
   text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
 }
 
 /* 2. Middle Section (Progress / Button) */
