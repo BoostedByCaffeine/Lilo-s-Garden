@@ -35,7 +35,8 @@
       try {
         var isApk = Boolean(window.AndroidBridge && typeof window.AndroidBridge.isNativeApp === 'function');
         var isPwa = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
-        if (isApk || isPwa) {
+        var isTest = window.location && (window.location.search.indexOf('app=1') !== -1 || window.location.search.indexOf('preview=studio') !== -1);
+        if (isApk || isPwa || isTest) {
           document.documentElement.classList.add('app-mode');
         }
       } catch (e) { }
@@ -1030,7 +1031,7 @@
           <svg class="pixel-icon pixel-icon-lg text-amber-600"><use href="#pi-book"/></svg>
           <div>
             <h2 class="font-pixel text-xs sm:text-sm text-[#4a3525]">SANCTUARY STORY &amp; CREDITS</h2>
-            <p class="text-xs text-[#7c624c] font-semibold">The heart behind Lilo\'s Garden</p>
+            <p class="text-xs text-[#7c624c] font-semibold">The heart behind Lilo's Garden</p>
           </div>
         </div>
         <button type="button" data-close-modal="modalCredits"

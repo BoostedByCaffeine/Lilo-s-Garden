@@ -522,7 +522,7 @@ class CozyAudio {
 
       this.rainGain = this.ctx.createGain();
       this.rainGain.gain.setValueAtTime(0.001, this.ctx.currentTime);
-      this.rainGain.gain.linearRampToValueAtTime(0.18, this.ctx.currentTime + 1.2);
+      this.rainGain.gain.linearRampToValueAtTime(0.18 * (this.rainVolume || 0.50), this.ctx.currentTime + 1.2);
 
       this.rainSource.connect(filter);
       filter.connect(this.rainGain);
@@ -4276,14 +4276,121 @@ function renderIntroCanvas() {
 
 let studioCatsSittingAnimId = null;
 
+function drawStudioSittingCat(ictx, cx, cy, cat, t, facing) {
+  const breath = Math.sin(t * 2.4 + cat.seed) > 0.35 ? -1 : 0;
+  const blinkPhase = (t * 0.38 + cat.seed * 0.8) % 1;
+  const isBlinking = blinkPhase < 0.08;
+  const twitchPhase = (t * 0.22 + cat.seed * 1.4) % 1;
+  const earTwitchL = (twitchPhase > 0.03 && twitchPhase < 0.08) ? -1 : 0;
+  const earTwitchR = (twitchPhase > 0.45 && twitchPhase < 0.50) ? -1 : 0;
+  const tailSway = Math.sin(t * 2.5 + cat.seed);
+  const tailTipX = tailSway > 0.3 ? 1 : (tailSway < -0.3 ? -1 : 0);
+
+  function px(rx, ry, w, h, col) {
+    ictx.fillStyle = col;
+    if (facing < 0) {
+      ictx.fillRect(cx - rx - w, cy + ry, w, h);
+    } else {
+      ictx.fillRect(cx + rx, cy + ry, w, h);
+    }
+  }
+
+  const coat = cat.coatColor;
+  const shade = cat.shadeColor;
+
+  // Ground shadow
+  px(-8, 0, 16, 2, 'rgba(15, 28, 17, 0.40)');
+
+  // Upward curving curled tail with gentle swaying tip
+  px(-7, -4, 2, 4, coat);
+  px(-8, -6, 2, 3, shade);
+  px(-9, -9, 2, 4, coat);
+  px(-8, -12, 2, 3, coat);
+  px(-7 + tailTipX, -14, 2, 2, coat);
+  px(-6 + tailTipX, -13, 2, 2, coat);
+
+  // Rear haunch / hip (smooth sitting silhouette)
+  px(-6, -8 + breath, 5, 8, coat);
+  px(-7, -7 + breath, 3, 6, coat);
+  px(-7, -5 + breath, 2, 4, shade);
+  px(-7, -1, 4, 2, shade);
+
+  // Body torso & chest
+  px(-4, -10 + breath, 8, 9, coat);
+  px(-1, -11 + breath, 5, 10, coat);
+  px(-5, -4, 8, 3, shade);
+
+  // Front legs & paws resting neatly on ground
+  px(0, -6 + breath, 2, 6, coat);
+  px(2, -6 + breath, 2, 6, shade);
+  px(0, 0, 2, 1, coat);
+  px(2, 0, 2, 1, coat);
+  px(2, -1, 1, 2, shade);
+
+  // Head & Neck
+  const hy = -16 + breath;
+  px(-3, hy, 8, 6, coat);
+  px(-2, hy - 1, 6, 1, coat);
+  px(-3, hy + 5, 8, 1, shade);
+
+  // Lilo's Blue Collar & Gold Bell
+  if (cat.collar) {
+    px(-3, hy + 5, 8, 1, cat.collar);
+    px(2, hy + 6, 2, 2, '#fde047');
+    px(2, hy + 6, 1, 1, '#d97706');
+  }
+
+  // Ears with occasional twitch
+  px(-3, hy - 3 + earTwitchL, 2, 2, coat);
+  px(-2, hy - 2 + earTwitchL, 1, 2, '#ff9ebb');
+  px(2, hy - 3 + earTwitchR, 2, 2, coat);
+  px(2, hy - 2 + earTwitchR, 1, 2, '#ff9ebb');
+
+  // Eyes (Heterochromia & Blinking)
+  if (isBlinking) {
+    px(-1, hy + 2, 2, 1, '#334155');
+    px(2, hy + 2, 2, 1, '#334155');
+  } else {
+    px(-1, hy + 2, 2, 2, cat.eyeLeft);
+    px(2, hy + 2, 2, 2, cat.eyeRight);
+    px(-1, hy + 2, 1, 1, '#ffffff');
+    px(2, hy + 2, 1, 1, '#ffffff');
+  }
+
+  // Nose & muzzle
+  px(1, hy + 4, 1, 1, '#ff9ebb');
+  px(0, hy + 4, 1, 1, shade);
+  px(2, hy + 4, 1, 1, shade);
+
+  // Soft rosy cheeks
+  px(-2, hy + 4, 1, 1, 'rgba(251, 113, 133, 0.45)');
+  px(3, hy + 4, 1, 1, 'rgba(251, 113, 133, 0.45)');
+}
+
 function startStudioCatsSittingAnimation() {
   const c = document.getElementById('studio-cats-sitting-canvas');
   if (!c) return;
   const ictx = c.getContext('2d');
   ictx.imageSmoothingEnabled = false;
 
-  const lilo = { ...DEFAULT_LILO, x: 27, y: 31, facing: 1, state: 'IDLE', pose: 'sit', seed: 0, labelAlpha: 0 };
-  const cheeto = { ...DEFAULT_CHEETO, x: 53, y: 31, facing: -1, state: 'IDLE', pose: 'sit', seed: 1.5, labelAlpha: 0 };
+  const lilo = {
+    id: 'lilo',
+    coatColor: '#ffffff',
+    shadeColor: '#dbe7f5',
+    eyeLeft: '#29b6f6',
+    eyeRight: '#29b6f6',
+    collar: '#1e88e5',
+    seed: 0
+  };
+  const cheeto = {
+    id: 'cheeto',
+    coatColor: '#ffffff',
+    shadeColor: '#eee8dc',
+    eyeLeft: '#ffb300',
+    eyeRight: '#29b6f6',
+    collar: null,
+    seed: 1.5
+  };
 
   function render(now) {
     if (studioLoadingDismissed) {
@@ -4301,19 +4408,19 @@ function startStudioCatsSittingAnimation() {
 
     // 1. Soft Sanctuary Grass Patch & Firefly Glow
     ictx.fillStyle = 'rgba(15, 35, 18, 0.45)';
-    ictx.fillRect(12, 29, 56, 7);
+    ictx.fillRect(10, 31, 60, 6);
     ictx.fillStyle = '#2d5a27';
-    ictx.fillRect(15, 31, 50, 4);
+    ictx.fillRect(12, 32, 56, 4);
     ictx.fillStyle = '#3f7d3b';
-    ictx.fillRect(17, 33, 46, 2);
+    ictx.fillRect(14, 34, 52, 2);
 
     // Little flowers / grass tufts
     ictx.fillStyle = '#4ade80';
-    ictx.fillRect(18, 29, 2, 2);
-    ictx.fillRect(38, 30, 1, 2);
-    ictx.fillRect(60, 29, 2, 2);
+    ictx.fillRect(15, 30, 2, 2);
+    ictx.fillRect(39, 31, 2, 2);
+    ictx.fillRect(63, 30, 2, 2);
 
-    // Twinkling warm firefly / butterfly near cats
+    // Twinkling warm firefly near cats
     const flyX = Math.round(39 + Math.sin(t * 1.5) * 8);
     const flyY = Math.round(15 + Math.cos(t * 2.1) * 4);
     const flyTwinkle = Math.sin(t * 8) > 0;
@@ -4321,13 +4428,13 @@ function startStudioCatsSittingAnimation() {
     ictx.fillRect(flyX, flyY, 2, 2);
 
     // 2. Render Sitting Animated Cats
-    drawPixelCat(ictx, lilo, t);
-    drawPixelCat(ictx, cheeto, t);
+    drawStudioSittingCat(ictx, 27, 31, lilo, t, 1);
+    drawStudioSittingCat(ictx, 53, 31, cheeto, t, -1);
 
     // 3. Floating Pink Pixel Heart Between Reunited Brothers
     const heartCycle = (t % 3.6) / 3.6;
     if (heartCycle < 0.65) {
-      const hy = Math.round(20 - heartCycle * 14);
+      const hy = Math.round(18 - heartCycle * 14);
       const hAlpha = heartCycle < 0.1 ? heartCycle / 0.1 : heartCycle > 0.5 ? (0.65 - heartCycle) / 0.15 : 1;
       ictx.save();
       ictx.globalAlpha = Math.max(0, Math.min(1, hAlpha));
@@ -4916,6 +5023,8 @@ function getGitHubUrls() {
 }
 
 function getAppEnvironment() {
+  const isForceApp = typeof window !== 'undefined' && window.location &&
+    (window.location.search.indexOf('app=1') !== -1 || window.location.search.indexOf('preview=studio') !== -1);
   const isNativeApk = Boolean(
     window.AndroidBridge && typeof window.AndroidBridge.isNativeApp === 'function'
   );
@@ -4924,8 +5033,8 @@ function getAppEnvironment() {
     window.navigator.standalone === true;
   return {
     isNativeApk,
-    isStandalonePwa,
-    isLiveBrowserWeb: !isNativeApk && !isStandalonePwa
+    isStandalonePwa: isStandalonePwa || isForceApp,
+    isLiveBrowserWeb: !isNativeApk && !isStandalonePwa && !isForceApp
   };
 }
 

@@ -359,6 +359,11 @@ html.app-mode #studio-loading-screen {
   display: flex !important;
 }
 
+html.app-mode #studio-loading-screen.hidden,
+html.app-mode #studio-loading-screen.dissolve-out.hidden {
+  display: none !important;
+}
+
 #studio-loading-screen.dissolve-out {
   opacity: 0;
   transform: scale(1.04);
@@ -419,7 +424,8 @@ html.app-mode #studio-loading-screen {
 
 .studio-title {
   font-family: 'StardewValleyCaps', 'Press Start 2P', monospace;
-  font-size: clamp(2.6rem, 8vw, 3.2rem);
+  font-size: clamp(2.8rem, 8.5vw, 3.2rem);
+  white-space: nowrap;
   margin: 0 0 10px;
   letter-spacing: 0.04em;
   line-height: 1.15;
@@ -515,7 +521,7 @@ html.app-mode #studio-loading-screen {
 .studio-action-container {
   width: 100%;
   max-width: 320px;
-  margin: 18px 0 8px; /* Slightly lowered */
+  margin: 22px 0 8px; /* Slightly lowered */
   animation: studioButtonEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
