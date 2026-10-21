@@ -1956,12 +1956,57 @@ function areAllSpritesLoaded() {
   });
 }
 
+const PRECOMPUTED_FURNITURE_RECTS = {
+  intWardrobe: { minX: 17, minY: 8, tw: 29, th: 42, backrestOnRight: false },
+  intMirror: { minX: 20, minY: 17, tw: 24, th: 30, backrestOnRight: false },
+  intBedsideTable: { minX: 24, minY: 33, tw: 15, th: 17, backrestOnRight: false },
+  intLampOn: { minX: 25, minY: 29, tw: 13, th: 17, backrestOnRight: false },
+  intLampOff: { minX: 25, minY: 30, tw: 12, th: 17, backrestOnRight: true },
+  intWindow: { minX: 20, minY: 25, tw: 23, th: 20, backrestOnRight: false },
+  intDoubleBed: { minX: 14, minY: 18, tw: 33, th: 33, backrestOnRight: false },
+  intCarpet: { minX: 16, minY: 20, tw: 6, th: 25, backrestOnRight: false },
+  intBookcase: { minX: 14, minY: 11, tw: 36, th: 42, backrestOnRight: false },
+  intBook: { minX: 20, minY: 27, tw: 22, th: 23, backrestOnRight: false },
+  intStudyDesk: { minX: 12, minY: 23, tw: 40, th: 30, backrestOnRight: false },
+  intMiniFlower: { minX: 27, minY: 28, tw: 10, th: 11, backrestOnRight: false },
+  intDiningTable: { minX: 16, minY: 15, tw: 33, th: 39, backrestOnRight: false },
+  intChairTop: { minX: 25, minY: 22, tw: 13, th: 26, backrestOnRight: false },
+  intChairSide1: { minX: 25, minY: 28, tw: 13, th: 25, backrestOnRight: true },
+  intChairSide2: { minX: 26, minY: 28, tw: 13, th: 25, backrestOnRight: false },
+  intChairBottom: { minX: 26, minY: 33, tw: 10, th: 20, backrestOnRight: false },
+  intCoatStand: { minX: 22, minY: 14, tw: 20, th: 47, backrestOnRight: false },
+  intVaseFlower: { minX: 21, minY: 16, tw: 23, th: 38, backrestOnRight: false },
+  intSofaSide1: { minX: 20, minY: 3, tw: 26, th: 60, backrestOnRight: false },
+  intSofaSide2: { minX: 20, minY: 3, tw: 27, th: 60, backrestOnRight: false },
+  intBoxChest: { minX: 22, minY: 32, tw: 1, th: 14, backrestOnRight: false },
+  intBoxBarrel: { minX: 23, minY: 28, tw: 18, th: 18, backrestOnRight: false }
+};
+
 // Automatically crops transparent padding around any Individual/*.png sprite
 // so every piece renders at its exact 1:1 pixel ratio and position!
 function getTrimmedSprite(key) {
   if (trimmedSpriteCache[key]) return trimmedSpriteCache[key];
   const img = loadedSprites[key];
   if (!img || !img.complete || !img.naturalWidth) return null;
+
+  const pre = PRECOMPUTED_FURNITURE_RECTS[key];
+  if (pre) {
+    const cropped = document.createElement('canvas');
+    cropped.width = pre.tw;
+    cropped.height = pre.th;
+    const cctx = cropped.getContext('2d');
+    cctx.imageSmoothingEnabled = false;
+    cctx.drawImage(img, pre.minX, pre.minY, pre.tw, pre.th, 0, 0, pre.tw, pre.th);
+
+    const entry = {
+      canvas: cropped,
+      w: pre.tw,
+      h: pre.th,
+      backrestOnRight: pre.backrestOnRight
+    };
+    trimmedSpriteCache[key] = entry;
+    return entry;
+  }
 
   const w = img.naturalWidth;
   const h = img.naturalHeight;

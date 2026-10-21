@@ -18,12 +18,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.LilosGarden">
 
-        <!-- 1. Full-Screen Offline WebView Sanctuary Activity -->
+        <!-- 1. Offline WebView Sanctuary Activity (matches PWA / Live Web format) -->
         <activity
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:exported="true"
-            android:theme="@style/Theme.LilosGarden.Fullscreen">
+            android:theme="@style/Theme.LilosGarden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

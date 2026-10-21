@@ -63,9 +63,7 @@ class MainActivity : AppCompatActivity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // CRITICAL FIX: Always call setContentView BEFORE accessing window.insetsController
         setContentView(R.layout.activity_main)
-        window.decorView.post { hideSystemUI() }
 
         webView = findViewById(R.id.webView)
         configureWebView()
@@ -93,15 +91,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) {
-            window.decorView.post { hideSystemUI() }
-        }
     }
 
     override fun onResume() {
         super.onResume()
         if (::webView.isInitialized) webView.onResume()
-        window.decorView.post { hideSystemUI() }
         syncTasksFromWidget()
     }
 
@@ -176,28 +170,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun hideSystemUI() {
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                window.insetsController?.let { controller ->
-                    controller.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
-                    controller.systemBarsBehavior =
-                        WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                }
-            } else {
-                @Suppress("DEPRECATION")
-                window.decorView.systemUiVisibility = (
-                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                        or View.SYSTEM_UI_FLAG_FULLSCREEN
-                        or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                        or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                )
-            }
-        } catch (e: Exception) {}
-    }
-
     @SuppressLint("SetJavaScriptEnabled")
     private fun configureWebView() {
         webView.settings.apply {
@@ -207,9 +179,9 @@ class MainActivity : AppCompatActivity() {
             allowFileAccess = true
             allowContentAccess = true
             @Suppress("DEPRECATION")
-            allowFileAccessFromFileURLs = false
+            allowFileAccessFromFileURLs = true
             @Suppress("DEPRECATION")
-            allowUniversalAccessFromFileURLs = false
+            allowUniversalAccessFromFileURLs = true
             mediaPlaybackRequiresUserGesture = false
             cacheMode = WebSettings.LOAD_NO_CACHE
             useWideViewPort = true
