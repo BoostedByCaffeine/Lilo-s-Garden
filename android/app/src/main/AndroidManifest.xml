@@ -174,6 +174,25 @@
                 android:resource="@xml/lilo_music_widget_info" />
         </receiver>
 
+        <!-- 10. Pixel Weather Forecast & Sky Clock Widget Provider -->
+        <receiver
+            android:name=".LiloWeatherWidgetProvider"
+            android:exported="true"
+            android:label="@string/weather_widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="com.valois.lilosgarden.ACTION_WEATHER_REFRESH" />
+                <action android:name="com.valois.lilosgarden.ACTION_WEATHER_SWITCH_CAT" />
+                <action android:name="com.valois.lilosgarden.ACTION_WEATHER_PET" />
+                <action android:name="com.valois.lilosgarden.ACTION_WEATHER_TICK" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/lilo_weather_widget_info" />
+        </receiver>
+
     </application>
 
 </manifest>

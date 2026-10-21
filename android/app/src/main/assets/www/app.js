@@ -209,7 +209,7 @@ class CozyAudio {
     this.rainGain = null;
     this.rainSource = null;
     this.bgmVolume = 0.70;
-    this.rainVolume = 0.60;
+    this.rainVolume = 0.50;
     this.sfxVolume = 0.65;
 
     // Background Music Tracks (.ogg)
@@ -808,9 +808,84 @@ function showToast(message, icon = 'heart-solid', iconColor = '') {
 }
 
 /********************************************************************
- * 4. ENHANCED OPEN-METEO LIVE WEATHER INTEGRATION (GPS + IP FALLBACK)
+ * 4. ENHANCED OPEN-METEO LIVE WEATHER & FORECAST SYSTEM
  ********************************************************************/
 const WEATHER_CACHE_KEY = 'lilos_garden_weather_cache_v1';
+const WEATHER_CUSTOM_LOC_KEY = 'lilos_garden_custom_loc';
+const WEATHER_TEMP_UNIT_KEY = 'lilos_garden_temp_unit';
+const WEATHER_FULL_FORECAST_KEY = 'lilos_garden_full_forecast_v1';
+
+function getTempUnit() {
+  try {
+    return localStorage.getItem(WEATHER_TEMP_UNIT_KEY) || 'C';
+  } catch (e) {
+    return 'C';
+  }
+}
+
+function setTempUnit(unit) {
+  try {
+    localStorage.setItem(WEATHER_TEMP_UNIT_KEY, unit);
+  } catch (e) {}
+}
+
+function convertTemp(celsius, unit) {
+  if (typeof celsius !== 'number' || Number.isNaN(celsius)) return '--';
+  if (unit === 'F') {
+    return Math.round((celsius * 9) / 5 + 32);
+  }
+  return Math.round(celsius);
+}
+
+function formatTemp(celsius, unit = getTempUnit()) {
+  if (typeof celsius !== 'number' || Number.isNaN(celsius)) return '--°' + unit;
+  return `${convertTemp(celsius, unit)}°${unit}`;
+}
+
+function toggleTempUnit() {
+  const current = getTempUnit();
+  const next = current === 'C' ? 'F' : 'C';
+  setTempUnit(next);
+
+  const lbl = document.getElementById('lblTempUnit');
+  if (lbl) lbl.textContent = `°${next}`;
+
+  if (typeof world !== 'undefined') {
+    world.syncUI();
+    if (window.AndroidBridge && typeof window.AndroidBridge.syncGardenToWidget === 'function') {
+      try {
+        window.AndroidBridge.syncGardenToWidget(JSON.stringify(world.serialize()));
+      } catch (e) {}
+    }
+  }
+
+  const cachedForecast = loadCachedFullForecast();
+  if (cachedForecast) {
+    renderWeatherForecastModal(cachedForecast);
+  }
+  showToast(`Temperature unit: °${next}`, 'sun');
+}
+
+function getCustomLocation() {
+  try {
+    const raw = localStorage.getItem(WEATHER_CUSTOM_LOC_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function setCustomLocation(loc) {
+  try {
+    localStorage.setItem(WEATHER_CUSTOM_LOC_KEY, JSON.stringify(loc));
+  } catch (e) {}
+}
+
+function clearCustomLocation() {
+  try {
+    localStorage.removeItem(WEATHER_CUSTOM_LOC_KEY);
+  } catch (e) {}
+}
 
 function loadCachedWeather() {
   try {
@@ -821,7 +896,7 @@ function loadCachedWeather() {
   }
 }
 
-function saveCachedWeather(lat, lon, tempC, weather, skyDesc) {
+function saveCachedWeather(lat, lon, tempC, weather, skyDesc, city = '') {
   try {
     localStorage.setItem(
       WEATHER_CACHE_KEY,
@@ -831,10 +906,85 @@ function saveCachedWeather(lat, lon, tempC, weather, skyDesc) {
         tempC,
         weather,
         skyDesc,
+        city,
         updatedAt: Date.now()
       })
     );
   } catch (e) {}
+}
+
+function loadCachedFullForecast() {
+  try {
+    const raw = localStorage.getItem(WEATHER_FULL_FORECAST_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function saveCachedFullForecast(data) {
+  try {
+    localStorage.setItem(WEATHER_FULL_FORECAST_KEY, JSON.stringify(data));
+  } catch (e) {}
+}
+
+async function searchOpenMeteoCities(query) {
+  const trimmed = (query || '').trim();
+  if (trimmed.length < 2) return [];
+  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(trimmed)}&count=6&language=en&format=json`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (!data || !Array.isArray(data.results)) return [];
+    return data.results.map((r) => ({
+      name: r.name,
+      country: r.country || '',
+      admin1: r.admin1 || '',
+      lat: r.latitude,
+      lon: r.longitude
+    }));
+  } catch (e) {
+    return [];
+  }
+}
+
+function mapWeatherCodeToCondition(code, isDay, precip = 0, cloudCover = 0) {
+  const rainCodes = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99];
+  const cloudyCodes = [2, 3, 45, 48];
+  const isRain = rainCodes.includes(code) || precip > 0.05;
+  const isCloudy = cloudyCodes.includes(code) || cloudCover >= 65;
+
+  if (isRain) {
+    return {
+      weather: 'RAIN',
+      desc: [95, 96, 99].includes(code) ? 'Thunderstorm' : 'Rain Shower',
+      icon: 'waves',
+      color: '#38bdf8'
+    };
+  }
+  if (!isDay) {
+    return {
+      weather: 'NIGHT',
+      desc: isCloudy ? 'Cloudy Night' : 'Starry Night',
+      icon: 'moon',
+      color: '#fef08a'
+    };
+  }
+  if (isCloudy) {
+    return {
+      weather: 'CLOUDY',
+      desc: code === 3 ? 'Overcast Sky' : 'Cloudy Sky',
+      icon: 'cloud-sun',
+      color: '#cbd5e1'
+    };
+  }
+  return {
+    weather: 'SUNNY',
+    desc: code === 1 ? 'Mostly Sunny' : 'Sunny Sky',
+    icon: 'sun',
+    color: '#fbbf24'
+  };
 }
 
 function getDeviceCoordinates() {
@@ -865,7 +1015,7 @@ async function getIpCoordinatesFallback() {
       const lat = parseFloat(data.latitude);
       const lon = parseFloat(data.longitude);
       if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
-        return { lat, lon, source: 'IP' };
+        return { lat, lon, city: data.city || '', country: data.country || '', source: 'IP' };
       }
     }
   } catch (e) {}
@@ -877,70 +1027,291 @@ async function getIpCoordinatesFallback() {
       const lat = parseFloat(data.latitude);
       const lon = parseFloat(data.longitude);
       if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
-        return { lat, lon, source: 'IP' };
+        return { lat, lon, city: data.city || '', country: data.country || '', source: 'IP' };
       }
     }
   } catch (e) {}
 
   const cached = loadCachedWeather();
   if (cached && typeof cached.lat === 'number' && typeof cached.lon === 'number') {
-    return { lat: cached.lat, lon: cached.lon, source: 'CACHE' };
+    return { lat: cached.lat, lon: cached.lon, city: cached.city || '', source: 'CACHE' };
   }
   throw new Error('All location providers failed');
 }
 
-async function fetchOpenMeteoForCoords(w, lat, lon) {
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day,precipitation,rain,showers,cloud_cover&timezone=auto`;
+async function fetchFullWeatherForecast(w, lat, lon, locationLabel = null) {
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,showers,weather_code,cloud_cover,is_day&hourly=temperature_2m,weather_code,precipitation_probability,is_day&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=7`;
   const res = await fetch(url);
-  if (!res.ok) throw new Error('Open-Meteo HTTP error');
+  if (!res.ok) throw new Error('Open-Meteo HTTP error: ' + res.status);
   const data = await res.json();
   const cur = data.current;
   if (!cur) throw new Error('Missing current weather payload');
 
-  w.lat = lat;
-  w.lon = lon;
-  w.tempC = Math.round(cur.temperature_2m);
-
-  const code = Number(cur.weather_code);
+  const curTemp = Math.round(cur.temperature_2m);
+  const code = Number(cur.weather_code || 0);
   const isDay = Number(cur.is_day) === 1;
   const precip = Number(cur.precipitation || 0) + Number(cur.rain || 0) + Number(cur.showers || 0);
   const cloudCover = Number(cur.cloud_cover || 0);
 
-  const isRainCode = [
-    51, 53, 55, 56, 57,
-    61, 63, 65, 66, 67,
-    80, 81, 82,
-    95, 96, 99
-  ].includes(code);
+  const mapped = mapWeatherCodeToCondition(code, isDay, precip, cloudCover);
 
-  const isCloudyCode = [2, 3, 45, 48].includes(code) || cloudCover >= 65;
-
-  if (isRainCode || precip > 0.05) {
-    w.weather = 'RAIN';
-    w.skyDesc = [95, 96, 99].includes(code) ? 'Thunderstorm' : 'Rain Shower';
-  } else if (!isDay) {
-    w.weather = 'NIGHT';
-    w.skyDesc = isCloudyCode ? 'Cloudy Night' : 'Starry Night';
-  } else if (isCloudyCode) {
-    w.weather = 'CLOUDY';
-    w.skyDesc = code === 3 ? 'Overcast Sky' : 'Cloudy Sky';
-  } else {
-    w.weather = 'SUNNY';
-    w.skyDesc = code === 1 ? 'Mostly Sunny' : 'Sunny Sky';
+  let finalCity = locationLabel;
+  if (!finalCity) {
+    const custom = getCustomLocation();
+    finalCity = custom ? custom.city : (w.city || 'My Location');
   }
 
-  saveCachedWeather(lat, lon, w.tempC, w.weather, w.skyDesc);
+  w.lat = lat;
+  w.lon = lon;
+  w.tempC = curTemp;
+  w.weather = mapped.weather;
+  w.skyDesc = mapped.desc;
+  w.city = finalCity;
+
+  saveCachedWeather(lat, lon, w.tempC, w.weather, w.skyDesc, finalCity);
+
+  const payload = {
+    city: finalCity,
+    lat,
+    lon,
+    current: {
+      tempC: curTemp,
+      humidity: Math.round(cur.relative_humidity_2m || 50),
+      weather: mapped.weather,
+      skyDesc: mapped.desc,
+      icon: mapped.icon,
+      color: mapped.color,
+      isDay,
+      precipProb: Math.round(data.daily?.precipitation_probability_max?.[0] || 0),
+      tempMax: Math.round(data.daily?.temperature_2m_max?.[0] || curTemp),
+      tempMin: Math.round(data.daily?.temperature_2m_min?.[0] || curTemp - 4)
+    },
+    hourly: (data.hourly?.time || []).slice(0, 24).map((timeStr, idx) => {
+      const hTemp = Math.round(data.hourly.temperature_2m[idx]);
+      const hCode = Number(data.hourly.weather_code[idx]);
+      const hIsDay = Number(data.hourly.is_day[idx]) === 1;
+      const hProb = Math.round(data.hourly.precipitation_probability?.[idx] || 0);
+      const hMap = mapWeatherCodeToCondition(hCode, hIsDay, hProb > 30 ? 1 : 0);
+      const hourDate = new Date(timeStr);
+      let hourLabel = hourDate.toLocaleTimeString([], { hour: 'numeric', hour12: true });
+      if (idx === 0) hourLabel = 'Now';
+      return {
+        time: hourLabel,
+        tempC: hTemp,
+        weather: hMap.weather,
+        icon: hMap.icon,
+        color: hMap.color,
+        prob: hProb
+      };
+    }),
+    daily: (data.daily?.time || []).map((dateStr, idx) => {
+      const dCode = Number(data.daily.weather_code[idx]);
+      const dMax = Math.round(data.daily.temperature_2m_max[idx]);
+      const dMin = Math.round(data.daily.temperature_2m_min[idx]);
+      const dProb = Math.round(data.daily.precipitation_probability_max?.[idx] || 0);
+      const dMap = mapWeatherCodeToCondition(dCode, true, dProb > 40 ? 1 : 0);
+      const dateObj = new Date(dateStr + 'T12:00:00');
+      const dayName = idx === 0 ? 'Today' : dateObj.toLocaleDateString([], { weekday: 'short' });
+      return {
+        day: dayName,
+        maxTempC: dMax,
+        minTempC: dMin,
+        weather: dMap.weather,
+        desc: dMap.desc,
+        icon: dMap.icon,
+        color: dMap.color,
+        prob: dProb
+      };
+    }),
+    updatedAt: Date.now()
+  };
+
+  saveCachedFullForecast(payload);
   w.onWeatherUpdated();
+  renderWeatherForecastModal(payload);
+  return payload;
+}
+
+function renderWeatherForecastModal(payload) {
+  if (!payload || !payload.current) return;
+  const unit = getTempUnit();
+
+  safeText('lblTempUnit', `°${unit}`);
+  safeText('wfLocationName', payload.city || 'Sanctuary Haven');
+  safeText('wfCurrentTemp', formatTemp(payload.current.tempC, unit));
+  safeText('wfSkyDesc', payload.current.skyDesc);
+  safeText('wfHighLow', `${formatTemp(payload.current.tempMax, unit)} / ${formatTemp(payload.current.tempMin, unit)}`);
+  safeText('wfHumidity', `${payload.current.humidity}%`);
+  safeText('wfRainProb', `${payload.current.precipProb}%`);
+
+  const glyphEl = document.getElementById('wfBigSkyGlyph');
+  if (glyphEl) {
+    glyphEl.innerHTML = `<svg class="w-12 h-12" style="color:${payload.current.color || '#38bdf8'};"><use href="#pi-${payload.current.icon || 'sun'}"/></svg>`;
+  }
+
+  const hourlyEl = document.getElementById('wfHourlyScroll');
+  if (hourlyEl && Array.isArray(payload.hourly)) {
+    hourlyEl.innerHTML = payload.hourly
+      .map(
+        (h) => `
+      <div class="forecast-hourly-card">
+        <span class="text-[10px] font-bold text-[#7c624c] whitespace-nowrap">${h.time}</span>
+        <svg class="pixel-icon pixel-icon-lg" style="color:${h.color};"><use href="#pi-${h.icon}"/></svg>
+        <span class="text-xs font-pixel font-bold text-[#3b1d0a]">${formatTemp(h.tempC, unit)}</span>
+        ${h.prob > 0 ? `<span class="text-[9px] font-bold text-sky-600">${h.prob}%</span>` : ''}
+      </div>`
+      )
+      .join('');
+  }
+
+  const dailyEl = document.getElementById('wfDailyList');
+  if (dailyEl && Array.isArray(payload.daily)) {
+    dailyEl.innerHTML = payload.daily
+      .map(
+        (d) => `
+      <div class="forecast-daily-card">
+        <div class="flex items-center gap-2 min-w-[72px]">
+          <span class="text-xs font-bold text-[#3b1d0a]">${d.day}</span>
+        </div>
+        <div class="flex items-center gap-1.5 flex-1">
+          <svg class="pixel-icon" style="color:${d.color};"><use href="#pi-${d.icon}"/></svg>
+          <span class="text-[11px] font-semibold text-[#5c3820] truncate">${d.desc}</span>
+        </div>
+        <div class="flex items-center gap-2 text-xs font-pixel font-bold text-right">
+          <span class="text-[#0c4a6e]">${formatTemp(d.maxTempC, unit)}</span>
+          <span class="text-[#64748b] text-[10px]">${formatTemp(d.minTempC, unit)}</span>
+          ${d.prob > 15 ? `<span class="text-[9px] font-bold text-sky-600 min-w-[28px]">${d.prob}%</span>` : `<span class="min-w-[28px]"></span>`}
+        </div>
+      </div>`
+      )
+      .join('');
+  }
+}
+
+function openWeatherForecastModal() {
+  openModal('modalWeatherForecast');
+  const cached = loadCachedFullForecast();
+  if (cached) {
+    renderWeatherForecastModal(cached);
+  }
+  const custom = getCustomLocation();
+  if (custom) {
+    fetchFullWeatherForecast(world, custom.lat, custom.lon, custom.city).catch(() => {});
+  } else if (world.lat && world.lon) {
+    fetchFullWeatherForecast(world, world.lat, world.lon, world.city).catch(() => {});
+  } else {
+    syncLiveWeather(world);
+  }
+}
+
+let citySearchDebounceTimer = null;
+
+function setupCitySearchAutocomplete() {
+  const input = document.getElementById('inputCitySearch');
+  const resultsContainer = document.getElementById('citySearchResults');
+  if (!input || !resultsContainer) return;
+
+  input.addEventListener('input', () => {
+    clearTimeout(citySearchDebounceTimer);
+    const query = input.value.trim();
+    if (query.length < 2) {
+      resultsContainer.classList.add('hidden');
+      resultsContainer.innerHTML = '';
+      return;
+    }
+
+    citySearchDebounceTimer = setTimeout(async () => {
+      const cities = await searchOpenMeteoCities(query);
+      if (cities.length === 0) {
+        resultsContainer.innerHTML = '<div class="p-2.5 text-xs text-[#7c624c] italic">No cities found</div>';
+        resultsContainer.classList.remove('hidden');
+        return;
+      }
+      resultsContainer.innerHTML = cities
+        .map(
+          (c, idx) => `
+        <div class="city-search-item" data-city-idx="${idx}">
+          <div class="font-bold">${c.name}</div>
+          <div class="text-[10px] text-[#7c624c]">${c.admin1 ? c.admin1 + ', ' : ''}${c.country}</div>
+        </div>`
+        )
+        .join('');
+      resultsContainer.classList.remove('hidden');
+
+      resultsContainer.querySelectorAll('.city-search-item').forEach((item) => {
+        item.addEventListener('click', async () => {
+          const idx = Number(item.getAttribute('data-city-idx'));
+          const selected = cities[idx];
+          if (!selected) return;
+
+          input.value = `${selected.name}${selected.country ? ', ' + selected.country : ''}`;
+          resultsContainer.classList.add('hidden');
+
+          const locObj = {
+            city: selected.name,
+            country: selected.country,
+            lat: selected.lat,
+            lon: selected.lon,
+            custom: true
+          };
+          setCustomLocation(locObj);
+
+          try {
+            await fetchFullWeatherForecast(world, selected.lat, selected.lon, selected.name);
+            showToast(`Weather updated to ${selected.name}!`, 'map');
+          } catch (e) {
+            showToast(`Failed to fetch weather for ${selected.name}`, 'cloud-sun');
+          }
+        });
+      });
+    }, 280);
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!input.contains(e.target) && !resultsContainer.contains(e.target)) {
+      resultsContainer.classList.add('hidden');
+    }
+  });
+
+  safeOn('btnWeatherUseGps', 'click', async () => {
+    clearCustomLocation();
+    if (input) input.value = '';
+    resultsContainer.classList.add('hidden');
+    showToast('Locating with GPS...', 'target');
+    try {
+      const loc = await getDeviceCoordinates();
+      await fetchFullWeatherForecast(world, loc.lat, loc.lon, 'Device GPS');
+      showToast('Switched to Live GPS weather!', 'map');
+    } catch (e1) {
+      try {
+        const ipLoc = await getIpCoordinatesFallback();
+        await fetchFullWeatherForecast(world, ipLoc.lat, ipLoc.lon, ipLoc.city || 'IP Location');
+        showToast('Switched to IP Location weather!', 'map');
+      } catch (e2) {
+        showToast('Could not detect location', 'cloud-sun');
+      }
+    }
+  });
 }
 
 async function syncLiveWeather(w) {
   if (w.weatherMode !== 'AUTO') return;
+
+  const custom = getCustomLocation();
+  if (custom && typeof custom.lat === 'number' && typeof custom.lon === 'number') {
+    w.city = custom.city;
+    try {
+      await fetchFullWeatherForecast(w, custom.lat, custom.lon, custom.city);
+      return;
+    } catch (e) {}
+  }
 
   const cached = loadCachedWeather();
   if (cached && typeof cached.tempC === 'number') {
     w.tempC = cached.tempC;
     w.lat = cached.lat;
     w.lon = cached.lon;
+    w.city = cached.city || 'GPS Location';
     const hour = new Date().getHours();
     const isNightNow = hour < 6 || hour >= 18;
     if (cached.weather === 'RAIN') {
@@ -956,17 +1327,13 @@ async function syncLiveWeather(w) {
     w.syncUI();
   }
 
-  if (cached && typeof cached.lat === 'number' && typeof cached.lon === 'number') {
-    fetchOpenMeteoForCoords(w, cached.lat, cached.lon).catch(() => {});
-  }
-
   try {
     const loc = await getDeviceCoordinates();
-    await fetchOpenMeteoForCoords(w, loc.lat, loc.lon);
+    await fetchFullWeatherForecast(w, loc.lat, loc.lon, 'Device GPS');
   } catch (gpsErr) {
     try {
       const ipLoc = await getIpCoordinatesFallback();
-      await fetchOpenMeteoForCoords(w, ipLoc.lat, ipLoc.lon);
+      await fetchFullWeatherForecast(w, ipLoc.lat, ipLoc.lon, ipLoc.city || 'IP Location');
     } catch (ipErr) {
       w.applyClockFallback();
     }
@@ -1357,7 +1724,10 @@ const world = {
       bowlLevel: this.bowlLevel,
       weatherMode: this.weatherMode,
       weather: this.weather,
+      skyDesc: this.skyDesc || 'Sunny Sky',
       tempC: this.tempC,
+      city: this.city || '',
+      tempUnit: getTempUnit(),
       tributeNote: this.tributeNote,
       tasks: this.tasks || [],
       stickyNote: this.stickyNote || '',
@@ -1891,9 +2261,13 @@ const world = {
       const w = weatherMap[this.weather] || weatherMap.SUNNY;
       weatherIconEl.innerHTML = getPixelIcon(w.icon, '', `color: ${w.color};`);
     }
+    const unit = getTempUnit();
+    const formattedTemp = formatTemp(this.tempC, unit);
+    const customLoc = getCustomLocation();
+    const locTag = customLoc ? customLoc.city : (this.weatherMode === 'AUTO' ? (this.city || 'Live') : '');
     safeText(
       'weatherText',
-      `${this.tempC}°C • ${this.skyDesc}${this.weatherMode === 'AUTO' ? ' (Live)' : ''}`
+      `${formattedTemp} • ${this.skyDesc}${locTag ? ` (${locTag})` : ''}`
     );
 
     renderFriendsList();
@@ -3900,43 +4274,83 @@ function renderIntroCanvas() {
   ictx.fillRect(55, 29, 1, 1);
 }
 
-function renderStudioCatsCanvas() {
-  const c = document.getElementById('studio-cats-canvas');
+let studioCatsSittingAnimId = null;
+
+function startStudioCatsSittingAnimation() {
+  const c = document.getElementById('studio-cats-sitting-canvas');
   if (!c) return;
   const ictx = c.getContext('2d');
   ictx.imageSmoothingEnabled = false;
-  ictx.clearRect(0, 0, c.width, c.height);
 
-  // Night sanctuary sky
-  ictx.fillStyle = '#142918';
-  ictx.fillRect(0, 0, c.width, c.height);
+  const lilo = { ...DEFAULT_LILO, x: 27, y: 31, facing: 1, state: 'IDLE', pose: 'sit', seed: 0, labelAlpha: 0 };
+  const cheeto = { ...DEFAULT_CHEETO, x: 53, y: 31, facing: -1, state: 'IDLE', pose: 'sit', seed: 1.5, labelAlpha: 0 };
 
-  // Twinkling stars / fireflies
-  ictx.fillStyle = '#fef08a';
-  ictx.fillRect(16, 12, 2, 2);
-  ictx.fillRect(98, 14, 2, 2);
-  ictx.fillRect(34, 20, 1, 1);
-  ictx.fillRect(86, 24, 1, 1);
-  ictx.fillRect(58, 8, 2, 2);
+  function render(now) {
+    if (studioLoadingDismissed) {
+      if (studioCatsSittingAnimId) {
+        cancelAnimationFrame(studioCatsSittingAnimId);
+        studioCatsSittingAnimId = null;
+      }
+      return;
+    }
+    const t = now / 1000;
+    ictx.clearRect(0, 0, c.width, c.height);
 
-  // Soft lush grass
-  ictx.fillStyle = '#2d5a27';
-  ictx.fillRect(0, 42, c.width, 26);
-  ictx.fillStyle = '#3f7d3b';
-  ictx.fillRect(0, 45, c.width, 23);
+    ictx.save();
+    ictx.scale(2, 2);
 
-  // Lilo & Cheeto sitting peacefully facing each other
-  drawPixelCat(ictx, { ...DEFAULT_LILO, x: 48, y: 48, facing: 1, state: 'IDLE', pose: 'sit', seed: 0, labelAlpha: 0 }, 0);
-  drawPixelCat(ictx, { ...DEFAULT_CHEETO, x: 72, y: 48, facing: -1, state: 'IDLE', pose: 'sit', seed: 1, labelAlpha: 0 }, 0);
+    // 1. Soft Sanctuary Grass Patch & Firefly Glow
+    ictx.fillStyle = 'rgba(15, 35, 18, 0.45)';
+    ictx.fillRect(12, 29, 56, 7);
+    ictx.fillStyle = '#2d5a27';
+    ictx.fillRect(15, 31, 50, 4);
+    ictx.fillStyle = '#3f7d3b';
+    ictx.fillRect(17, 33, 46, 2);
 
-  // Floating pink pixel heart above them
-  ictx.fillStyle = '#fb7185';
-  ictx.fillRect(58, 26, 2, 2);
-  ictx.fillRect(61, 26, 2, 2);
-  ictx.fillRect(57, 27, 7, 2);
-  ictx.fillRect(58, 29, 5, 1);
-  ictx.fillRect(59, 30, 3, 1);
-  ictx.fillRect(60, 31, 1, 1);
+    // Little flowers / grass tufts
+    ictx.fillStyle = '#4ade80';
+    ictx.fillRect(18, 29, 2, 2);
+    ictx.fillRect(38, 30, 1, 2);
+    ictx.fillRect(60, 29, 2, 2);
+
+    // Twinkling warm firefly / butterfly near cats
+    const flyX = Math.round(39 + Math.sin(t * 1.5) * 8);
+    const flyY = Math.round(15 + Math.cos(t * 2.1) * 4);
+    const flyTwinkle = Math.sin(t * 8) > 0;
+    ictx.fillStyle = flyTwinkle ? '#fde047' : '#fef08a';
+    ictx.fillRect(flyX, flyY, 2, 2);
+
+    // 2. Render Sitting Animated Cats
+    drawPixelCat(ictx, lilo, t);
+    drawPixelCat(ictx, cheeto, t);
+
+    // 3. Floating Pink Pixel Heart Between Reunited Brothers
+    const heartCycle = (t % 3.6) / 3.6;
+    if (heartCycle < 0.65) {
+      const hy = Math.round(20 - heartCycle * 14);
+      const hAlpha = heartCycle < 0.1 ? heartCycle / 0.1 : heartCycle > 0.5 ? (0.65 - heartCycle) / 0.15 : 1;
+      ictx.save();
+      ictx.globalAlpha = Math.max(0, Math.min(1, hAlpha));
+      ictx.fillStyle = '#fb7185';
+      ictx.fillRect(39, hy, 2, 2);
+      ictx.fillRect(42, hy, 2, 2);
+      ictx.fillRect(38, hy + 1, 7, 2);
+      ictx.fillRect(39, hy + 3, 5, 1);
+      ictx.fillRect(40, hy + 4, 3, 1);
+      ictx.fillRect(41, hy + 5, 1, 1);
+      ictx.restore();
+    }
+
+    ictx.restore();
+    studioCatsSittingAnimId = requestAnimationFrame(render);
+  }
+
+  if (studioCatsSittingAnimId) cancelAnimationFrame(studioCatsSittingAnimId);
+  studioCatsSittingAnimId = requestAnimationFrame(render);
+}
+
+function renderStudioCatsCanvas() {
+  startStudioCatsSittingAnimation();
 }
 
 /********************************************************************
@@ -4307,6 +4721,8 @@ function initStudioLoadingScreen() {
   const env = getAppEnvironment();
   const isApp = env.isNativeApk || env.isStandalonePwa;
 
+  startStudioCatsSittingAnimation();
+
   if (isApp) {
     document.documentElement.classList.add('app-mode');
     const introOverlay = document.getElementById('intro-overlay');
@@ -4314,8 +4730,6 @@ function initStudioLoadingScreen() {
       introOverlay.style.display = 'none';
       introOverlay.classList.add('hidden-intro');
     }
-
-    renderStudioCatsCanvas();
 
     const screen = document.getElementById('studio-loading-screen');
     const fill = document.getElementById('studio-progress-fill');
@@ -4399,7 +4813,9 @@ safeOn('btnSaveCaretaker', 'click', () => {
   closeModal('modalCaretaker');
   showToast(`${world.caretaker.name}'s look saved!`, 'sparkle');
 });
-safeOn('btnWeather', 'click', () => world.cycleWeather());
+safeOn('btnWeather', 'click', () => openWeatherForecastModal());
+safeOn('btnOpenCredits', 'click', () => openModal('modalCredits'));
+safeOn('btnToggleTempUnit', 'click', () => toggleTempUnit());
 
 safeOn('btnAudio', 'click', () => {
   const isEnabled = sound.toggleMaster();
@@ -4695,6 +5111,24 @@ safeOn('btnPinMusicWidget', 'click', () => {
   }
 });
 
+safeOn('btnPinWeatherWidget', 'click', () => {
+  closeModal('widget-choice-modal');
+  if (window.AndroidBridge && typeof window.AndroidBridge.pinWeatherWidget === 'function') {
+    window.AndroidBridge.pinWeatherWidget();
+  } else {
+    showToast('Available in Lilo Garden Android APK!', 'grid-2x2');
+  }
+});
+
+safeOn('btnPinWeatherWidgetFromModal', 'click', () => {
+  closeModal('modalWeatherForecast');
+  if (window.AndroidBridge && typeof window.AndroidBridge.pinWeatherWidget === 'function') {
+    window.AndroidBridge.pinWeatherWidget();
+  } else {
+    showToast('Available in Lilo Garden Android APK!', 'grid-2x2');
+  }
+});
+
 window.addEventListener('focus', () => {
   if (window.AndroidBridge && typeof window.AndroidBridge.getWidgetBlooms === 'function') {
     try {
@@ -4894,6 +5328,7 @@ function initGame() {
   renderIntroCanvas();
   syncInstallButtonsVisibility();
   initStudioLoadingScreen();
+  setupCitySearchAutocomplete();
 
   initPolaroidFrame(
     'lilo',

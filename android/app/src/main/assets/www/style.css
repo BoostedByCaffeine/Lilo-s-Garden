@@ -401,39 +401,44 @@ html.app-mode #studio-loading-screen {
   }
 }
 
-.studio-portrait-wrap {
-  width: 136px;
-  height: 76px;
-  margin-bottom: 14px;
-  background: #142918;
-  border: 3px solid var(--sv-border-dark);
-  border-radius: 6px;
-  box-shadow:
-    inset 0 0 0 2px #0f1f12,
-    0 4px 14px rgba(0, 0, 0, 0.6);
-  overflow: hidden;
+.studio-cats-sitting-wrap {
+  width: 160px;
+  height: 80px;
+  margin: 10px auto 6px;
   display: flex;
   align-items: center;
   justify-content: center;
+  pointer-events: none;
 }
 
-#studio-cats-canvas {
-  width: 100%;
-  height: 100%;
+#studio-cats-sitting-canvas {
+  width: 160px;
+  height: 80px;
   image-rendering: pixelated;
 }
 
 .studio-title {
   font-family: 'StardewValleyCaps', 'Press Start 2P', monospace;
-  font-size: 2.35rem;
-  color: #ffeb99;
-  text-shadow:
-    3px 3px 0 #3b1d0a,
-    4px 4px 0 rgba(0, 0, 0, 0.6),
-    0 0 20px rgba(255, 235, 153, 0.35);
-  margin: 0 0 8px;
-  letter-spacing: 0.03em;
+  font-size: clamp(2.6rem, 8vw, 3.2rem);
+  margin: 0 0 10px;
+  letter-spacing: 0.04em;
   line-height: 1.15;
+}
+
+.studio-title .title-lilo {
+  color: #38bdf8;
+  text-shadow:
+    3px 3px 0 #075985,
+    4px 4px 0 rgba(0, 0, 0, 0.75),
+    0 0 24px rgba(56, 189, 248, 0.5);
+}
+
+.studio-title .title-garden {
+  color: #fbbf24;
+  text-shadow:
+    3px 3px 0 #78350f,
+    4px 4px 0 rgba(0, 0, 0, 0.75),
+    0 0 24px rgba(251, 191, 36, 0.5);
 }
 
 .studio-subtitle {
@@ -510,7 +515,7 @@ html.app-mode #studio-loading-screen {
 .studio-action-container {
   width: 100%;
   max-width: 320px;
-  margin: 8px 0;
+  margin: 18px 0 8px; /* Slightly lowered */
   animation: studioButtonEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
@@ -1126,4 +1131,67 @@ body.wallpaper-mode #toastBox {
 
 .task-del-btn:hover {
   background: #fee2e2;
+}
+
+/* ==================== WEATHER FORECAST & AUTOCOMPLETE ==================== */
+#citySearchResults {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.city-search-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #ebd3b7;
+  transition: background 0.15s ease;
+  font-size: 0.75rem;
+  color: #3b1d0a;
+}
+
+.city-search-item:last-child {
+  border-bottom: none;
+}
+
+.city-search-item:hover {
+  background: #fde68a;
+}
+
+#wfHourlyScroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+#wfHourlyScroll::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 9999px;
+}
+
+#wfHourlyScroll::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 9999px;
+}
+
+.forecast-hourly-card {
+  min-width: 68px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 6px;
+  border-radius: 8px;
+  background: #fffdf7;
+  border: 1.5px solid #d8bfa3;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.forecast-daily-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #fffdf7;
+  border: 1.5px solid #d8bfa3;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }

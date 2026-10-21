@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/weather_widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="154dp"
+        android:layout_gravity="center">
+
+        <TextClock
+            android:id="@+id/weather_clock_tick"
+            android:layout_width="1dp"
+            android:layout_height="1dp"
+            android:alpha="0"
+            android:format12Hour="hh:mm a"
+            android:format24Hour="HH:mm" />
+
+        <!-- LAYER 1: Animated Multi-Frame Pixel Sky & Sanctuary Pass -->
+        <ViewFlipper
+            android:id="@+id/weather_flipper"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true"
+            android:autoStart="true"
+            android:flipInterval="300" />
+
+        <!-- LAYER 2: High-Resolution Pixel Typography HUD Overlay -->
+        <ImageView
+            android:id="@+id/weather_hud_overlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true"
+            android:scaleType="fitCenter" />
+
+        <!-- Interactive Touch Hotspots -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:weightSum="100">
+
+            <!-- Top Row (55%): Tap to Open Lilo's Garden Sanctuary -->
+            <FrameLayout
+                android:id="@+id/weather_open_app_area"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="55"
+                android:background="@android:color/transparent" />
+
+            <!-- Bottom Row (45%): Action Controls (Pet Cat, Refresh Weather, Switch Cat) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="45"
+                android:orientation="horizontal"
+                android:weightSum="100">
+
+                <!-- Left 50%: Tap Cat to Pet -->
+                <FrameLayout
+                    android:id="@+id/weather_btn_pet"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="50"
+                    android:background="@android:color/transparent" />
+
+                <!-- Middle 25%: Tap to Refresh Weather Forecast -->
+                <FrameLayout
+                    android:id="@+id/weather_btn_refresh"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="25"
+                    android:background="@android:color/transparent" />
+
+                <!-- Right 25%: Tap to Switch Active Companion Cat -->
+                <FrameLayout
+                    android:id="@+id/weather_btn_switch_cat"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="25"
+                    android:background="@android:color/transparent" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+</FrameLayout>

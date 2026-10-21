@@ -75,6 +75,7 @@
       <symbol id="pi-coffee" viewBox="0 0 24 24"><path d="M2 19h16v2H2v-2Zm16-2H2V5h16v4h4v6h-4v2Zm0-6h2V7h-2v4Zm-2-4H4v8h12V7Z"/></symbol>
       <symbol id="pi-check" viewBox="0 0 24 24"><path d="M18 6h2v2h-2V6zm-2 2h2v2h-2V8zm-2 2h2v2h-2v-2zm-2 2h2v2h-2v-2zm-2 2h2v2h-2v-2zm-2-2h2v2H8v-2zm-2-2h2v2H6v-2zm-2-2h2v2H4V8h2z"/></symbol>
       <symbol id="pi-music" viewBox="0 0 24 24"><path d="M19 3H9v2H7v11H4v6h6v-6H9V5h8v9h-3v6h6V3h-1z"/></symbol>
+      <symbol id="pi-book" viewBox="0 0 24 24"><path d="M4 2h14v2h2v14h-2v2H4V2zm2 2v14h12V4H6zm2 3h8v2H8V7zm0 4h8v2H8v-2zm0 4h5v2H8v-2z"/></symbol>
     </defs>
   </svg>
 
@@ -119,12 +120,9 @@
   <div id="studio-loading-screen" aria-label="Loading Studio Screen">
     <div class="studio-loading-container">
       
-      <!-- Top Section: Title Card & Animated Lilo & Cheeto Portrait -->
+      <!-- Top Section: Title Card & Subtitle Badge -->
       <div class="studio-header-wrap">
-        <div class="studio-portrait-wrap">
-          <canvas id="studio-cats-canvas" width="120" height="68"></canvas>
-        </div>
-        <h1 class="studio-title">Lilo's Garden</h1>
+        <h1 class="studio-title"><span class="title-lilo">Lilo's</span> <span class="title-garden">Garden</span></h1>
         <p class="studio-subtitle">
           <span class="studio-sub-badge">
             <span class="inline-flex items-center gap-1">
@@ -136,8 +134,13 @@
         </p>
       </div>
 
-      <!-- Middle Section: Loading Bar & Step into Garden Action Button -->
+      <!-- Middle Section: Animated Sitting Cats, Loading Bar & Step into Garden Action Button -->
       <div class="studio-middle-wrap">
+        <!-- Animated Lilo & Cheeto Sitting Together -->
+        <div class="studio-cats-sitting-wrap" id="studio-cats-sitting-wrap">
+          <canvas id="studio-cats-sitting-canvas" width="160" height="80"></canvas>
+        </div>
+
         <!-- Progress Bar & Status (Active while game initializes) -->
         <div id="studio-progress-container" class="studio-progress-container">
           <div class="studio-progress-bar">
@@ -170,7 +173,7 @@
   <aside id="whisper-pill">
     <div class="whisper-container">
       <button type="button" id="btnWeather" class="whisper-btn"
-        title="Tap to cycle: Live GPS / Sunny / Cloudy / Rain / Night">
+        title="Sanctuary Weather & Forecast">
         <span id="weatherIcon" class="inline-flex items-center text-amber-400">
           <svg class="pixel-icon"><use href="#pi-sun"/></svg>
         </span>
@@ -186,6 +189,11 @@
       <button type="button" id="btnOpenTasks" class="whisper-btn" title="Cozy Tasks &amp; Sticky Notes">
         <svg class="pixel-icon text-amber-300"><use href="#pi-check"/></svg>
         <span class="hidden sm:inline">Tasks</span>
+      </button>
+
+      <button type="button" id="btnOpenCredits" class="whisper-btn" title="Sanctuary Story &amp; Credits">
+        <svg class="pixel-icon text-amber-300"><use href="#pi-book"/></svg>
+        <span class="hidden sm:inline">Story</span>
       </button>
 
       <button type="button" id="btnAudio" class="whisper-icon-btn" title="Toggle Cozy Audio">
@@ -727,6 +735,25 @@
             <span>Add Vinyl &amp; Spotify Widget</span>
           </button>
         </div>
+
+        <!-- Widget Option 8: Pixel Weather Forecast Widget -->
+        <div class="p-3.5 rounded-lg border-2 border-[#5c3820] bg-[#e0f2fe] flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-xs sm:text-sm text-[#3b1d0a] flex items-center gap-1.5">
+              <svg class="pixel-icon text-sky-600"><use href="#pi-cloud-sun"/></svg>
+              Pixel Weather Forecast Widget
+            </span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-sky-700 text-white">LIVE FORECAST</span>
+          </div>
+          <p class="text-xs text-[#3b1d0a] leading-relaxed">
+            Live local weather, temperature, sky condition, and companion cat right on your home screen with Open-Meteo live sync and one-tap refresh.
+          </p>
+          <button type="button" id="btnPinWeatherWidget"
+            class="w-full stardew-btn-sky py-2.5 px-4 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer">
+            <svg class="pixel-icon"><use href="#pi-cloud-sun"/></svg>
+            <span>Add Weather Forecast Widget</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -864,6 +891,212 @@
         <button type="button" id="btnSaveTasksAndNote" class="flex-1 stardew-btn-green py-2.5 text-xs font-bold cursor-pointer">
           Save &amp; Sync to Widget
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 8: WEATHER FORECAST & LOCATION ==================== -->
+  <div id="modalWeatherForecast" class="modal-overlay">
+    <div class="cozy-card max-w-lg">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between border-b-2 border-[#d8bfa3] pb-3 mb-3">
+        <div class="flex items-center gap-2">
+          <svg class="pixel-icon pixel-icon-lg text-sky-600"><use href="#pi-cloud-sun"/></svg>
+          <div>
+            <h2 class="font-pixel text-xs sm:text-sm text-[#4a3525]">SANCTUARY SKY FORECAST</h2>
+            <p class="text-xs text-[#7c624c] font-semibold" id="wfSubTitle">Live Open-Meteo Weather</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <!-- Temp Unit Toggle Button -->
+          <button type="button" id="btnToggleTempUnit"
+            class="px-2.5 py-1 rounded-lg bg-[#f0e2cd] hover:bg-[#e2ceb0] border border-[#b88b5a] text-[#3d2516] font-bold text-xs cursor-pointer"
+            title="Toggle °C / °F">
+            <span id="lblTempUnit">°C</span>
+          </button>
+          <button type="button" data-close-modal="modalWeatherForecast"
+            class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center cursor-pointer">
+            <svg class="pixel-icon"><use href="#pi-close"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-3.5">
+        <!-- 1. Search Bar & Location Controls -->
+        <div class="relative flex flex-col gap-1.5">
+          <div class="flex items-center gap-2">
+            <div class="relative flex-1">
+              <input type="text" id="inputCitySearch" placeholder="Search city (e.g. Tokyo, London, Paris)..."
+                class="w-full pl-8 pr-3 py-2 rounded-lg bg-[#fffdf7] border-2 border-[#8c5832] text-xs font-semibold text-[#3d2516] placeholder-[#9c7857] outline-none focus:border-[#4ade80]" />
+              <svg class="pixel-icon absolute left-2.5 top-2.5 text-[#8c5832]"><use href="#pi-target"/></svg>
+            </div>
+            <button type="button" id="btnWeatherUseGps"
+              class="stardew-btn-sky py-2 px-3 text-xs font-bold whitespace-nowrap flex items-center gap-1 cursor-pointer"
+              title="Detect GPS / IP Location">
+              <svg class="pixel-icon text-sky-800"><use href="#pi-map"/></svg>
+              <span class="hidden sm:inline">Use GPS</span>
+            </button>
+          </div>
+          <!-- Autocomplete Dropdown List -->
+          <div id="citySearchResults"
+            class="absolute top-full left-0 right-16 z-30 bg-[#fff9ea] border-2 border-[#8c5832] rounded-lg shadow-xl max-h-48 overflow-y-auto hidden">
+          </div>
+        </div>
+
+        <!-- 2. Current Conditions Header Card -->
+        <div class="p-3.5 rounded-lg border-2 border-[#5c3820] bg-gradient-to-br from-[#e0f2fe] to-[#bae6fd] text-[#1e293b] shadow-sm flex flex-col gap-2.5">
+          <div class="flex items-start justify-between">
+            <div>
+              <div class="flex items-center gap-1 text-xs font-bold text-[#0369a1]" id="wfLocationBadge">
+                <svg class="pixel-icon"><use href="#pi-map"/></svg>
+                <span id="wfLocationName">Detecting Location...</span>
+              </div>
+              <div class="text-2xl sm:text-3xl font-pixel font-bold text-[#0c4a6e] mt-1" id="wfCurrentTemp">
+                --°C
+              </div>
+              <div class="text-xs font-semibold text-[#0369a1]" id="wfSkyDesc">
+                Clear Sky
+              </div>
+            </div>
+            <div id="wfBigSkyGlyph" class="text-sky-600 p-2 flex items-center justify-center">
+              <svg class="w-12 h-12"><use href="#pi-sun"/></svg>
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-2 pt-2 border-t border-[#7dd3fc]/50 text-[11px] font-semibold text-[#075985]">
+            <div class="flex flex-col">
+              <span class="text-[#0284c7] font-bold">High / Low</span>
+              <span id="wfHighLow">-- / --</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-[#0284c7] font-bold">Humidity</span>
+              <span id="wfHumidity">--%</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-[#0284c7] font-bold">Rain Chance</span>
+              <span id="wfRainProb">--%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. 24-Hour Hourly Scrollable Forecast -->
+        <div class="flex flex-col gap-1.5">
+          <div class="text-xs font-bold text-[#5c3820] flex items-center justify-between">
+            <span class="flex items-center gap-1"><svg class="pixel-icon"><use href="#pi-sparkle"/></svg> 24-Hour Forecast</span>
+            <span class="text-[10px] text-[#7c624c]">Scroll &rarr;</span>
+          </div>
+          <div id="wfHourlyScroll" class="flex gap-2 overflow-x-auto pb-1.5 -mx-1 px-1">
+            <!-- Hourly pills dynamically injected -->
+          </div>
+        </div>
+
+        <!-- 4. 7-Day Daily Forecast Cards -->
+        <div class="flex flex-col gap-1.5">
+          <div class="text-xs font-bold text-[#5c3820] flex items-center gap-1">
+            <svg class="pixel-icon"><use href="#pi-leaf"/></svg> 7-Day Sanctuary Outlook
+          </div>
+          <div id="wfDailyList" class="flex flex-col gap-1.5">
+            <!-- Daily cards dynamically injected -->
+          </div>
+        </div>
+
+        <!-- 5. Android Home Screen Weather Widget Promotion -->
+        <div class="p-3 rounded-lg border-2 border-[#5c3820] bg-[#ffefc7] flex flex-col gap-2 shadow-sm">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-xs text-[#3b1d0a] flex items-center gap-1.5">
+              <svg class="pixel-icon text-sky-600"><use href="#pi-grid-2x2"/></svg>
+              Home Screen Weather Widget
+            </span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-sky-700 text-white">ANDROID</span>
+          </div>
+          <p class="text-[11px] text-[#6e3f1d] leading-relaxed">
+            Keep live temperature, sky conditions, and peeking Lilo &amp; Cheeto right on your phone's home screen!
+          </p>
+          <button type="button" id="btnPinWeatherWidgetFromModal"
+            class="w-full stardew-btn-sky py-2 px-3 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer">
+            <svg class="pixel-icon"><use href="#pi-cloud-sun"/></svg>
+            <span>Pin Weather Forecast Widget</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 9: SANCTUARY STORY & CREDITS ==================== -->
+  <div id="modalCredits" class="modal-overlay">
+    <div class="cozy-card max-w-lg">
+      <div class="flex items-center justify-between border-b-2 border-[#d8bfa3] pb-3 mb-3">
+        <div class="flex items-center gap-2">
+          <svg class="pixel-icon pixel-icon-lg text-amber-600"><use href="#pi-book"/></svg>
+          <div>
+            <h2 class="font-pixel text-xs sm:text-sm text-[#4a3525]">SANCTUARY STORY &amp; CREDITS</h2>
+            <p class="text-xs text-[#7c624c] font-semibold">The heart behind Lilo\'s Garden</p>
+          </div>
+        </div>
+        <button type="button" data-close-modal="modalCredits"
+          class="w-8 h-8 rounded-lg bg-[#e5cca8] hover:bg-[#d8b88c] text-[#3d2516] font-bold text-sm flex items-center justify-center cursor-pointer">
+          <svg class="pixel-icon"><use href="#pi-close"/></svg>
+        </button>
+      </div>
+
+      <div class="flex flex-col gap-4 text-xs text-[#52331b] leading-relaxed">
+        <!-- 1. The Story: Dedication to Lilo & Cheeto -->
+        <div class="p-3.5 rounded-lg border-2 border-[#8f4d22] bg-[#fff9ea] flex flex-col gap-2 shadow-sm">
+          <div class="flex items-center gap-1.5 font-bold text-[#3b1d0a] text-sm">
+            <svg class="pixel-icon text-rose-500"><use href="#pi-heart-solid"/></svg>
+            <span>The Eternal Brothers Sanctuary</span>
+          </div>
+          <p>
+            <strong>Lilo's Garden</strong> was born out of deep love and remembrance. <strong>Lilo</strong> (the pure white cat with bright blue eyes and collar) and <strong>Cheeto</strong> (the warm white cat with captivating amber and blue heterochromia) were more than just cats—they were inseparable brothers whose playful spirits and comforting purrs brought warmth to every day.
+          </p>
+          <p>
+            In this eternal pixel sanctuary, winter never chills their paws, rain is gentle and refreshing, and bowls of warm soup and fish are forever replenished. Here, they wander freely beneath open skies, waiting to greet you whenever you need a peaceful breath.
+          </p>
+        </div>
+
+        <!-- 2. Music Credits: Mage Tears -->
+        <div class="p-3.5 rounded-lg border-2 border-[#5c3820] bg-[#e0f2fe] flex flex-col gap-2 shadow-sm">
+          <div class="flex items-center gap-1.5 font-bold text-[#1e3a8a] text-sm">
+            <svg class="pixel-icon text-indigo-600"><use href="#pi-music"/></svg>
+            <span>Music Attribution</span>
+          </div>
+          <p>
+            The serene acoustic guitar and lo-fi melodies echoing through the sanctuary are created by the wonderful artist <strong>Mage Tears</strong>:
+          </p>
+          <ul class="list-disc list-inside space-y-1 font-semibold text-[#1e40af] pl-1">
+            <li><em>"Sun and moon (Instrumental)"</em> — Daytime &amp; Sunny sanctuary theme</li>
+            <li><em>"Cats In The Cold (Instrumental)"</em> — Night, Sunset &amp; Rainy contemplation theme</li>
+          </ul>
+          <p class="text-[11px] text-[#3b82f6]">
+            All instrumental music rights belong to <strong>Mage Tears</strong>. Used with heartfelt gratitude.
+          </p>
+        </div>
+
+        <!-- 3. Developer & Project Information -->
+        <div class="p-3.5 rounded-lg border-2 border-[#5c3820] bg-[#ffefc7] flex flex-col gap-2.5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1.5 font-bold text-[#3b1d0a] text-sm">
+              <svg class="pixel-icon text-amber-700"><use href="#pi-coffee"/></svg>
+              <span>Developer &amp; Open Source</span>
+            </div>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-[#8f4d22] text-[#fff9ea]">v2.6 Remastered</span>
+          </div>
+          <p>
+            Crafted with passion, coffee, and pixel art by <strong>BoostedByCaffeine</strong>. Lilo's Garden is built with pure web technologies and native Android Kotlin widget integration.
+          </p>
+          <div class="flex flex-wrap gap-2 pt-1">
+            <a href="https://github.com/BoostedByCaffeine" target="_blank" rel="noopener noreferrer"
+              class="stardew-btn py-1.5 px-3 text-[11px] font-bold inline-flex items-center gap-1.5 no-underline">
+              <svg class="pixel-icon text-[#3b1d0a]"><use href="#pi-link"/></svg>
+              <span>GitHub: BoostedByCaffeine</span>
+            </a>
+            <a href="https://github.com/BoostedByCaffeine/Lilo-s-Garden" target="_blank" rel="noopener noreferrer"
+              class="stardew-btn-sky py-1.5 px-3 text-[11px] font-bold inline-flex items-center gap-1.5 no-underline">
+              <svg class="pixel-icon text-[#0369a1]"><use href="#pi-sparkle"/></svg>
+              <span>Star Repository</span>
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   </div>

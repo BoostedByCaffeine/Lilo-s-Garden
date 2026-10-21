@@ -83,6 +83,7 @@ object WeatherSyncHelper {
                         LiloWidgetProvider.refreshAllWidgets(appCtx)
                         LiloCompanionWidgetProvider.refreshAllCompanionWidgets(appCtx)
                         LiloWindowWidgetProvider.refreshAllWindowWidgets(appCtx)
+                        LiloWeatherWidgetProvider.refreshAllWeatherWidgets(appCtx)
                     }
                 }
                 conn.disconnect()

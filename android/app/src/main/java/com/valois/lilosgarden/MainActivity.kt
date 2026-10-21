@@ -299,6 +299,15 @@ class MainActivity : AppCompatActivity() {
                 if (obj.has("stickyNote")) {
                     editor.putString("sticky_note", obj.optString("stickyNote", ""))
                 }
+                if (obj.has("city")) {
+                    editor.putString("weather_city", obj.optString("city", "Sanctuary"))
+                }
+                if (obj.has("skyDesc")) {
+                    editor.putString("weather_sky_desc", obj.optString("skyDesc", "Sunny Sky"))
+                }
+                if (obj.has("tempUnit")) {
+                    editor.putString("temp_unit", obj.optString("tempUnit", "C"))
+                }
                 editor.apply()
                 LiloWidgetProvider.refreshAllWidgets(activity)
                 LiloCompanionWidgetProvider.refreshAllCompanionWidgets(activity)
@@ -307,6 +316,7 @@ class MainActivity : AppCompatActivity() {
                 LiloPomodoroWidgetProvider.refreshAllPomodoroWidgets(activity)
                 LiloNotesWidgetProvider.refreshAllNotesWidgets(activity)
                 LiloMusicWidgetProvider.refreshAllMusicWidgets(activity)
+                LiloWeatherWidgetProvider.refreshAllWeatherWidgets(activity)
             } catch (e: Exception) {}
         }
 
@@ -500,6 +510,27 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(
                     activity,
                     "Long-press Home Screen -> Widgets -> Lilo's Vinyl & Spotify Widget",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+
+        @JavascriptInterface
+        fun pinWeatherWidget() {
+            activity.runOnUiThread {
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        val appWidgetManager = AppWidgetManager.getInstance(activity)
+                        val widgetProvider = ComponentName(activity, LiloWeatherWidgetProvider::class.java)
+                        if (appWidgetManager.isRequestPinAppWidgetSupported) {
+                            appWidgetManager.requestPinAppWidget(widgetProvider, null, null)
+                            return@runOnUiThread
+                        }
+                    }
+                } catch (_: Exception) {}
+                Toast.makeText(
+                    activity,
+                    "Long-press Home Screen -> Widgets -> Lilo's Pixel Weather Widget",
                     Toast.LENGTH_LONG
                 ).show()
             }
