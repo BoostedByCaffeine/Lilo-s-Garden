@@ -208,9 +208,9 @@ class CozyAudio {
     this.enabled = true;
     this.rainGain = null;
     this.rainSource = null;
-    this.bgmVolume = 0.38;
-    this.rainVolume = 0.28;
-    this.sfxVolume = 0.75;
+    this.bgmVolume = 0.55;
+    this.rainVolume = 0.60;
+    this.sfxVolume = 0.65;
 
     // Background Music Tracks (.ogg)
     this.bgmTracks = {
@@ -227,20 +227,38 @@ class CozyAudio {
       a.preload = 'auto';
     }
 
-    // Offline Sound Effects (.wav)
+    // High quality real recorded Sound Effects (.wav)
     this.sfx = {
-      lilo: new Audio('./assets/sfx/meow-lilo.wav'),
-      cheeto: new Audio('./assets/sfx/meow-cheeto.wav'),
-      purr: new Audio('./assets/sfx/purr.wav'),
-      rain: new Audio('./assets/sfx/rain.wav')
+      purr: new Audio('./assets/sfx/newsfx/catpurr.wav'),
+      rain: new Audio('./assets/sfx/newsfx/rainsfx.wav')
     };
 
-    if (this.sfx.purr) this.sfx.purr.loop = true;
-    if (this.sfx.rain) this.sfx.rain.loop = true;
-
-    for (const key in this.sfx) {
-      if (this.sfx[key]) this.sfx[key].preload = 'auto';
+    // 9 Unique realistic cat meows (meow1.wav - meow9.wav)
+    this.meows = [];
+    for (let i = 1; i <= 9; i++) {
+      const m = new Audio(`./assets/sfx/newsfx/meow${i}.wav`);
+      m.preload = 'auto';
+      this.meows.push(m);
     }
+
+    // Direct references for compatibility
+    this.sfx.lilo = this.meows[0]; // meow1
+    this.sfx.cheeto = this.meows[3]; // meow4
+
+    // Rain loops continuously during storms
+    if (this.sfx.rain) {
+      this.sfx.rain.loop = true;
+      this.sfx.rain.preload = 'auto';
+    }
+    // Cat purrs on pet or feed - NOT infinite loop!
+    if (this.sfx.purr) {
+      this.sfx.purr.loop = false;
+      this.sfx.purr.preload = 'auto';
+    }
+
+    this.lastPurrTime = 0;
+    this.purrFadeTimer = null;
+    this.lastMeowTime = 0;
   }
 
   init() {
@@ -253,20 +271,43 @@ class CozyAudio {
     }
   }
 
-  playMeow(catType = 'lilo') {
+  playMeow(catTypeOrIndex = 'lilo') {
     if (!this.enabled) return;
     this.init();
+
+    const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    // Reduce meowing frequency: enforce cooldown to avoid sound stacking/annoyance
+    if (now - this.lastMeowTime < 2500) return;
+    this.lastMeowTime = now;
+
     try {
-      const soundObj = (catType === 'cheeto') ? this.sfx.cheeto : this.sfx.lilo;
+      let soundObj = null;
+      if (typeof catTypeOrIndex === 'number') {
+        const idx = Math.abs(catTypeOrIndex) % this.meows.length;
+        soundObj = this.meows[idx];
+      } else if (typeof catTypeOrIndex === 'string') {
+        if (catTypeOrIndex === 'lilo') soundObj = this.meows[0];
+        else if (catTypeOrIndex === 'cheeto') soundObj = this.meows[3];
+        else {
+          let hash = 0;
+          for (let i = 0; i < catTypeOrIndex.length; i++) {
+            hash = (hash * 31 + catTypeOrIndex.charCodeAt(i)) >>> 0;
+          }
+          soundObj = this.meows[hash % this.meows.length];
+        }
+      } else {
+        soundObj = this.meows[Math.floor(Math.random() * this.meows.length)];
+      }
+
       if (soundObj) {
         soundObj.currentTime = 0;
         soundObj.volume = this.sfxVolume;
         const playPromise = soundObj.play();
-        if (playPromise) playPromise.catch(() => this.synthesizeMeow(catType));
+        if (playPromise) playPromise.catch(() => this.synthesizeMeow(catTypeOrIndex));
         return;
       }
     } catch (_) {}
-    this.synthesizeMeow(catType);
+    this.synthesizeMeow(catTypeOrIndex);
   }
 
   synthesizeMeow(catType = 'lilo') {
@@ -310,6 +351,19 @@ class CozyAudio {
   playPurr() {
     if (!this.enabled) return;
     this.init();
+
+    const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    // Debounce re-trigger within 1.8s so rapid taps do not stutter-restart audio
+    if (now - this.lastPurrTime < 1800) {
+      return;
+    }
+    this.lastPurrTime = now;
+
+    if (this.purrFadeTimer) {
+      clearTimeout(this.purrFadeTimer);
+      this.purrFadeTimer = null;
+    }
+
     try {
       const p = this.sfx.purr;
       if (p) {
@@ -317,10 +371,32 @@ class CozyAudio {
         p.volume = this.sfxVolume;
         const playPromise = p.play();
         if (playPromise) playPromise.catch(() => this.synthesizePurr());
+
+        // Cozy purr plays comfortably for ~4.2s (2 breath cycles), then softly fades
+        this.purrFadeTimer = setTimeout(() => {
+          this.fadeAndStopPurr();
+        }, 4200);
         return;
       }
     } catch (_) {}
     this.synthesizePurr();
+  }
+
+  fadeAndStopPurr() {
+    const p = this.sfx.purr;
+    if (!p || p.paused) return;
+    let vol = p.volume;
+    const fade = setInterval(() => {
+      vol -= 0.05;
+      if (vol <= 0.05) {
+        clearInterval(fade);
+        p.pause();
+        p.currentTime = 0;
+        p.volume = this.sfxVolume;
+      } else {
+        p.volume = Math.max(0, vol);
+      }
+    }, 50);
   }
 
   synthesizePurr() {
@@ -427,6 +503,7 @@ class CozyAudio {
             clearInterval(fade);
             r.pause();
             r.currentTime = 0;
+            r.volume = this.rainVolume;
           } else {
             r.volume = Math.max(0, vol);
           }
@@ -893,6 +970,7 @@ const world = {
     this.caretaker.labelAlpha = 2.0;
     this.spawnHeart(this.caretaker.x, this.caretaker.y - 16, 'heart');
     sound.playFeedSound();
+    sound.playPurr();
     this.cats.forEach((cat, idx) => {
       cat.state = 'WANDER';
       cat.pose = 'sit';
@@ -1330,11 +1408,13 @@ const world = {
     this.stats.pets++;
     this.petProgress = (this.petProgress || 0) + 1;
 
-    sound.playMeow(cat.id === 'cheeto' ? 'cheeto' : 'lilo');
-    setTimeout(() => sound.playPurr(), 150);
+    // Cats always purr when petted/tapped
+    sound.playPurr();
 
     if (this.petProgress >= 3) {
       this.petProgress = 0;
+      // Happy meow on 3-pet milestone
+      sound.playMeow(cat.id);
       if (this.blooms < 24) {
         this.blooms++;
         this.spawnHeart(LANDMARKS.shrine.x, LANDMARKS.shrine.y - 10, 'sparkle');
@@ -1343,7 +1423,11 @@ const world = {
         showToast(`${cat.name} purred warmly!`, 'heart-solid', '#f43f5e');
       }
     } else {
-      showToast(`${cat.name} chirped & purred!`, 'heart-solid', '#38bdf8');
+      // Significantly reduced meowing frequency: 15% chance to chirp/meow
+      if (Math.random() < 0.15) {
+        sound.playMeow(cat.id);
+      }
+      showToast(`${cat.name} purred warmly!`, 'heart-solid', '#f43f5e');
     }
 
     this.spawnHeart(cat.x, cat.y - 6, 'heart');
@@ -1353,6 +1437,7 @@ const world = {
   feedBowl() {
     this.bowlLevel = 3;
     sound.playFeedSound();
+    sound.playPurr();
     const total = this.cats.length;
     this.cats.forEach((cat, idx) => {
       cat.bowlLevel = 3;
@@ -1573,9 +1658,18 @@ const world = {
               a.socialCooldown = 18;
               b.socialCooldown = 18;
               this.spawnHeart((a.x + b.x) / 2, Math.min(a.y, b.y) - 8, 'heart');
+              sound.playPurr();
             }
           }
         }
+      }
+    }
+
+    // Rare ambient meow across the entire garden (~once every 45-60s max)
+    if (Math.random() < dt * 0.015 && typeof performance !== 'undefined' && performance.now() - sound.lastMeowTime > 45000) {
+      const sittingCat = this.cats.find((c) => c.state === 'IDLE' && c.pose === 'sit');
+      if (sittingCat) {
+        sound.playMeow(sittingCat.id);
       }
     }
 
@@ -1957,28 +2051,28 @@ function areAllSpritesLoaded() {
 }
 
 const PRECOMPUTED_FURNITURE_RECTS = {
-  intWardrobe: { minX: 17, minY: 8, tw: 29, th: 42, backrestOnRight: false },
+  intWardrobe: { minX: 17, minY: 8, tw: 31, th: 42, backrestOnRight: false },
   intMirror: { minX: 20, minY: 17, tw: 24, th: 30, backrestOnRight: false },
-  intBedsideTable: { minX: 24, minY: 33, tw: 15, th: 17, backrestOnRight: false },
-  intLampOn: { minX: 25, minY: 29, tw: 13, th: 17, backrestOnRight: false },
-  intLampOff: { minX: 25, minY: 30, tw: 12, th: 17, backrestOnRight: true },
+  intBedsideTable: { minX: 24, minY: 33, tw: 17, th: 17, backrestOnRight: false },
+  intLampOn: { minX: 25, minY: 29, tw: 14, th: 17, backrestOnRight: false },
+  intLampOff: { minX: 25, minY: 30, tw: 14, th: 17, backrestOnRight: false },
   intWindow: { minX: 20, minY: 25, tw: 23, th: 20, backrestOnRight: false },
-  intDoubleBed: { minX: 14, minY: 18, tw: 33, th: 33, backrestOnRight: false },
-  intCarpet: { minX: 16, minY: 20, tw: 6, th: 25, backrestOnRight: false },
+  intDoubleBed: { minX: 14, minY: 18, tw: 37, th: 33, backrestOnRight: false },
+  intCarpet: { minX: 16, minY: 20, tw: 32, th: 25, backrestOnRight: false },
   intBookcase: { minX: 14, minY: 11, tw: 36, th: 42, backrestOnRight: false },
-  intBook: { minX: 20, minY: 27, tw: 22, th: 23, backrestOnRight: false },
+  intBook: { minX: 20, minY: 27, tw: 23, th: 23, backrestOnRight: false },
   intStudyDesk: { minX: 12, minY: 23, tw: 40, th: 30, backrestOnRight: false },
-  intMiniFlower: { minX: 27, minY: 28, tw: 10, th: 11, backrestOnRight: false },
+  intMiniFlower: { minX: 27, minY: 28, tw: 11, th: 11, backrestOnRight: false },
   intDiningTable: { minX: 16, minY: 15, tw: 33, th: 39, backrestOnRight: false },
-  intChairTop: { minX: 25, minY: 22, tw: 13, th: 26, backrestOnRight: false },
+  intChairTop: { minX: 25, minY: 22, tw: 14, th: 26, backrestOnRight: false },
   intChairSide1: { minX: 25, minY: 28, tw: 13, th: 25, backrestOnRight: true },
   intChairSide2: { minX: 26, minY: 28, tw: 13, th: 25, backrestOnRight: false },
-  intChairBottom: { minX: 26, minY: 33, tw: 10, th: 20, backrestOnRight: false },
+  intChairBottom: { minX: 26, minY: 33, tw: 12, th: 20, backrestOnRight: false },
   intCoatStand: { minX: 22, minY: 14, tw: 20, th: 47, backrestOnRight: false },
   intVaseFlower: { minX: 21, minY: 16, tw: 23, th: 38, backrestOnRight: false },
-  intSofaSide1: { minX: 20, minY: 3, tw: 26, th: 60, backrestOnRight: false },
+  intSofaSide1: { minX: 20, minY: 3, tw: 27, th: 60, backrestOnRight: true },
   intSofaSide2: { minX: 20, minY: 3, tw: 27, th: 60, backrestOnRight: false },
-  intBoxChest: { minX: 22, minY: 32, tw: 1, th: 14, backrestOnRight: false },
+  intBoxChest: { minX: 22, minY: 32, tw: 20, th: 17, backrestOnRight: false },
   intBoxBarrel: { minX: 23, minY: 28, tw: 18, th: 18, backrestOnRight: false }
 };
 
@@ -4146,8 +4240,7 @@ function renderMiniCanvases(time) {
 function dismissIntroOverlay() {
   sound.init();
   sound.playMeow('lilo');
-  setTimeout(() => sound.playMeow('cheeto'), 240);
-  setTimeout(() => sound.playPurr(), 480);
+  setTimeout(() => sound.playPurr(), 400);
   setTimeout(() => sound.updateBgm(), 600);
   if (typeof world !== 'undefined' && world && world.weather === 'RAIN') {
     setTimeout(() => sound.startRain(), 600);
@@ -4224,8 +4317,7 @@ function dismissStudioLoadingScreen() {
 
   sound.init();
   sound.playMeow('lilo');
-  setTimeout(() => sound.playMeow('cheeto'), 240);
-  setTimeout(() => sound.playPurr(), 480);
+  setTimeout(() => sound.playPurr(), 400);
   setTimeout(() => sound.updateBgm(), 600);
   if (typeof world !== 'undefined' && world && world.weather === 'RAIN') {
     setTimeout(() => sound.startRain(), 600);
