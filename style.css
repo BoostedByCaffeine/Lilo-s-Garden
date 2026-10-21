@@ -342,12 +342,13 @@ canvas#garden-canvas:active {
   background-color: #181a1b;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 0;
   opacity: 1;
   transform: scale(1);
   visibility: visible;
   transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.6s ease;
   will-change: opacity, transform;
+  overflow: hidden;
 }
 
 html.app-mode #intro-overlay {
@@ -365,38 +366,34 @@ html.app-mode #studio-loading-screen {
   pointer-events: none;
 }
 
-.studio-loading-content {
+.studio-loading-container {
   width: 100%;
   max-width: 440px;
+  height: 100%;
+  max-height: 860px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
+  padding: calc(36px + var(--safe-top, 0px)) 20px calc(28px + var(--safe-bottom, 0px));
+  box-sizing: border-box;
+}
+
+/* 1. Header Section (Title Card + Portrait) */
+.studio-header-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  text-align: center;
+  margin-top: auto;
+  margin-bottom: 24px;
+  animation: studioHeaderEntrance 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.studio-logo-wrap {
-  width: 100%;
-  max-width: 320px;
-  margin-bottom: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: studioLogoEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.studio-logo-img {
-  width: 100%;
-  height: auto;
-  max-height: 96px;
-  filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.65));
-  object-fit: contain;
-}
-
-@keyframes studioLogoEntrance {
+@keyframes studioHeaderEntrance {
   0% {
     opacity: 0;
-    transform: translateY(14px) scale(0.95);
+    transform: translateY(-16px) scale(0.96);
   }
   100% {
     opacity: 1;
@@ -404,10 +401,76 @@ html.app-mode #studio-loading-screen {
   }
 }
 
+.studio-portrait-wrap {
+  width: 136px;
+  height: 76px;
+  margin-bottom: 14px;
+  background: #142918;
+  border: 3px solid var(--sv-border-dark);
+  border-radius: 6px;
+  box-shadow:
+    inset 0 0 0 2px #0f1f12,
+    0 4px 14px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#studio-cats-canvas {
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+.studio-title {
+  font-family: 'StardewValleyCaps', 'Press Start 2P', monospace;
+  font-size: 2.35rem;
+  color: #ffeb99;
+  text-shadow:
+    3px 3px 0 #3b1d0a,
+    4px 4px 0 rgba(0, 0, 0, 0.6),
+    0 0 20px rgba(255, 235, 153, 0.35);
+  margin: 0 0 8px;
+  letter-spacing: 0.03em;
+  line-height: 1.15;
+}
+
+.studio-subtitle {
+  margin: 0;
+}
+
+.studio-sub-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: rgba(255, 239, 199, 0.10);
+  border: 1.5px solid rgba(255, 239, 199, 0.22);
+  border-radius: 9999px;
+  font-family: 'StardewValley', 'Quicksand', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fde68a;
+  letter-spacing: 0.03em;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.6);
+}
+
+/* 2. Middle Section (Progress / Button) */
+.studio-middle-wrap {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: auto;
+}
+
 .studio-progress-container {
   width: 100%;
   max-width: 260px;
-  margin-top: 8px;
+  margin: 8px 0;
   transition: opacity 0.35s ease, transform 0.35s ease;
 }
 
@@ -419,7 +482,7 @@ html.app-mode #studio-loading-screen {
 
 .studio-progress-bar {
   width: 100%;
-  height: 6px;
+  height: 7px;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 9999px;
   overflow: hidden;
@@ -441,13 +504,13 @@ html.app-mode #studio-loading-screen {
   font-family: 'StardewValleyCaps', 'Press Start 2P', monospace;
   font-size: 0.72rem;
   letter-spacing: 0.06em;
-  color: #8b949e;
+  color: #9ca3af;
 }
 
 .studio-action-container {
   width: 100%;
   max-width: 320px;
-  margin-top: 8px;
+  margin: 8px 0;
   animation: studioButtonEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
@@ -468,7 +531,7 @@ html.app-mode #studio-loading-screen {
 
 .studio-enter-btn {
   width: 100%;
-  font-size: 1rem;
+  font-size: 1.05rem;
   padding: 16px 20px;
   letter-spacing: 0.04em;
   box-shadow:
@@ -483,6 +546,47 @@ html.app-mode #studio-loading-screen {
   font-size: 0.72rem;
   font-weight: 600;
   color: #6e7681;
+}
+
+/* 3. Footer Section (Compact Studio Logo) */
+.studio-footer-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: 12px;
+  margin-top: auto;
+}
+
+.studio-produced-by {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.52rem;
+  color: #6e7681;
+  letter-spacing: 0.16em;
+  margin: 0 0 6px;
+}
+
+.studio-logo-wrap {
+  width: 100%;
+  max-width: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.studio-logo-footer-img {
+  width: 100%;
+  max-width: 140px;
+  height: auto;
+  max-height: 42px;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
+  opacity: 0.88;
+  object-fit: contain;
+  transition: opacity 0.2s ease;
+}
+
+.studio-logo-footer-img:hover {
+  opacity: 1;
 }
 
 /* ==================== TOP STARDEW WEATHER & MOOD PLAQUE ==================== */

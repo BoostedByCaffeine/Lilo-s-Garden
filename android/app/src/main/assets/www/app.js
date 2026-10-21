@@ -208,6 +208,39 @@ class CozyAudio {
     this.enabled = true;
     this.rainGain = null;
     this.rainSource = null;
+    this.bgmVolume = 0.38;
+    this.rainVolume = 0.28;
+    this.sfxVolume = 0.75;
+
+    // Background Music Tracks (.ogg)
+    this.bgmTracks = {
+      sun_and_moon: new Audio('./assets/bgm/Mage tears - Sun and moonInstrumental.ogg'),
+      cats_in_the_cold: new Audio('./assets/bgm/Cats In The Cold - Mage Tears (Instrumental).ogg')
+    };
+    this.activeBgmKey = null;
+    this.fadeInterval = null;
+
+    for (const key in this.bgmTracks) {
+      const a = this.bgmTracks[key];
+      a.loop = true;
+      a.volume = 0;
+      a.preload = 'auto';
+    }
+
+    // Offline Sound Effects (.wav)
+    this.sfx = {
+      lilo: new Audio('./assets/sfx/meow-lilo.wav'),
+      cheeto: new Audio('./assets/sfx/meow-cheeto.wav'),
+      purr: new Audio('./assets/sfx/purr.wav'),
+      rain: new Audio('./assets/sfx/rain.wav')
+    };
+
+    if (this.sfx.purr) this.sfx.purr.loop = true;
+    if (this.sfx.rain) this.sfx.rain.loop = true;
+
+    for (const key in this.sfx) {
+      if (this.sfx[key]) this.sfx[key].preload = 'auto';
+    }
   }
 
   init() {
@@ -216,13 +249,27 @@ class CozyAudio {
       if (AudioCtx) this.ctx = new AudioCtx();
     }
     if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
+      this.ctx.resume().catch(() => {});
     }
   }
 
   playMeow(catType = 'lilo') {
     if (!this.enabled) return;
     this.init();
+    try {
+      const soundObj = (catType === 'cheeto') ? this.sfx.cheeto : this.sfx.lilo;
+      if (soundObj) {
+        soundObj.currentTime = 0;
+        soundObj.volume = this.sfxVolume;
+        const playPromise = soundObj.play();
+        if (playPromise) playPromise.catch(() => this.synthesizeMeow(catType));
+        return;
+      }
+    } catch (_) {}
+    this.synthesizeMeow(catType);
+  }
+
+  synthesizeMeow(catType = 'lilo') {
     if (!this.ctx) return;
     try {
       const now = this.ctx.currentTime;
@@ -246,7 +293,7 @@ class CozyAudio {
       osc2.frequency.exponentialRampToValueAtTime(endFreq * 1.5, now + 0.36);
 
       gain.gain.setValueAtTime(0.001, now);
-      gain.gain.linearRampToValueAtTime(0.24, now + 0.04);
+      gain.gain.linearRampToValueAtTime(0.35, now + 0.04);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
 
       osc1.connect(gain);
@@ -263,6 +310,20 @@ class CozyAudio {
   playPurr() {
     if (!this.enabled) return;
     this.init();
+    try {
+      const p = this.sfx.purr;
+      if (p) {
+        p.currentTime = 0;
+        p.volume = this.sfxVolume;
+        const playPromise = p.play();
+        if (playPromise) playPromise.catch(() => this.synthesizePurr());
+        return;
+      }
+    } catch (_) {}
+    this.synthesizePurr();
+  }
+
+  synthesizePurr() {
     if (!this.ctx) return;
     try {
       const now = this.ctx.currentTime;
@@ -273,7 +334,6 @@ class CozyAudio {
       const filter = this.ctx.createBiquadFilter();
       const masterGain = this.ctx.createGain();
 
-      // Audible upper-harmonic purr (145Hz - 210Hz) so phone/laptop speakers play it clearly
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(145, now);
       osc.frequency.linearRampToValueAtTime(170, now + 0.6);
@@ -290,7 +350,7 @@ class CozyAudio {
       filter.frequency.setValueAtTime(340, now);
 
       masterGain.gain.setValueAtTime(0.001, now);
-      masterGain.gain.linearRampToValueAtTime(0.20, now + 0.15);
+      masterGain.gain.linearRampToValueAtTime(0.28, now + 0.15);
       masterGain.gain.exponentialRampToValueAtTime(0.001, now + 1.4);
 
       lfo.connect(lfoGain);
@@ -312,6 +372,19 @@ class CozyAudio {
   startRain() {
     if (!this.enabled) return;
     this.init();
+    try {
+      const r = this.sfx.rain;
+      if (r) {
+        r.volume = this.rainVolume;
+        const playPromise = r.play();
+        if (playPromise) playPromise.catch(() => this.synthesizeRain());
+        return;
+      }
+    } catch (_) {}
+    this.synthesizeRain();
+  }
+
+  synthesizeRain() {
     if (!this.ctx || this.rainSource) return;
     try {
       const bufferSize = this.ctx.sampleRate * 2;
@@ -330,11 +403,11 @@ class CozyAudio {
 
       const filter = this.ctx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(750, this.ctx.currentTime);
+      filter.frequency.setValueAtTime(850, this.ctx.currentTime);
 
       this.rainGain = this.ctx.createGain();
       this.rainGain.gain.setValueAtTime(0.001, this.ctx.currentTime);
-      this.rainGain.gain.linearRampToValueAtTime(0.05, this.ctx.currentTime + 1.2);
+      this.rainGain.gain.linearRampToValueAtTime(0.18, this.ctx.currentTime + 1.2);
 
       this.rainSource.connect(filter);
       filter.connect(this.rainGain);
@@ -344,19 +417,128 @@ class CozyAudio {
   }
 
   stopRain() {
-    if (!this.rainGain || !this.ctx) return;
     try {
-      this.rainGain.gain.linearRampToValueAtTime(0.0001, this.ctx.currentTime + 0.8);
-      setTimeout(() => {
-        if (this.rainSource) {
-          try {
-            this.rainSource.stop();
-            this.rainSource.disconnect();
-          } catch (e) { }
-          this.rainSource = null;
+      const r = this.sfx.rain;
+      if (r && !r.paused) {
+        let vol = r.volume;
+        const fade = setInterval(() => {
+          vol -= 0.04;
+          if (vol <= 0.02) {
+            clearInterval(fade);
+            r.pause();
+            r.currentTime = 0;
+          } else {
+            r.volume = Math.max(0, vol);
+          }
+        }, 50);
+      }
+    } catch (_) {}
+
+    if (this.rainGain && this.ctx) {
+      try {
+        this.rainGain.gain.linearRampToValueAtTime(0.0001, this.ctx.currentTime + 0.8);
+        setTimeout(() => {
+          if (this.rainSource) {
+            try {
+              this.rainSource.stop();
+              this.rainSource.disconnect();
+            } catch (e) { }
+            this.rainSource = null;
+          }
+        }, 900);
+      } catch (e) { }
+    }
+  }
+
+  // Dynamic Background Music (BGM) Manager with 1.5s crossfade
+  updateBgm(immediate = false) {
+    if (!this.enabled) {
+      this.pauseAllBgm();
+      return;
+    }
+
+    const isRain = (typeof world !== 'undefined' && world && world.weather === 'RAIN');
+    const isNight = (typeof world !== 'undefined' && world && (world.weather === 'NIGHT' || world.isNight));
+    const targetKey = (isRain || isNight) ? 'cats_in_the_cold' : 'sun_and_moon';
+
+    if (this.activeBgmKey === targetKey) {
+      const activeAudio = this.bgmTracks[this.activeBgmKey];
+      if (activeAudio && activeAudio.paused) {
+        activeAudio.volume = this.bgmVolume;
+        activeAudio.play().catch(() => {});
+      }
+      return;
+    }
+
+    const prevAudio = this.activeBgmKey ? this.bgmTracks[this.activeBgmKey] : null;
+    const nextAudio = this.bgmTracks[targetKey];
+    this.activeBgmKey = targetKey;
+
+    if (!nextAudio) return;
+
+    if (immediate || !prevAudio) {
+      if (prevAudio) {
+        prevAudio.pause();
+        prevAudio.currentTime = 0;
+      }
+      nextAudio.currentTime = 0;
+      nextAudio.volume = this.bgmVolume;
+      nextAudio.play().catch(() => {});
+      return;
+    }
+
+    // Smooth 1.5s crossfade
+    nextAudio.currentTime = 0;
+    nextAudio.volume = 0;
+    nextAudio.play().catch(() => {});
+
+    const steps = 15;
+    const intervalTime = 100;
+    let step = 0;
+
+    if (this.fadeInterval) clearInterval(this.fadeInterval);
+    this.fadeInterval = setInterval(() => {
+      step++;
+      const ratio = step / steps;
+      if (prevAudio && !prevAudio.paused) {
+        prevAudio.volume = Math.max(0, this.bgmVolume * (1.0 - ratio));
+      }
+      if (nextAudio && !nextAudio.paused) {
+        nextAudio.volume = Math.min(this.bgmVolume, this.bgmVolume * ratio);
+      }
+      if (step >= steps) {
+        clearInterval(this.fadeInterval);
+        this.fadeInterval = null;
+        if (prevAudio) {
+          prevAudio.pause();
+          prevAudio.currentTime = 0;
         }
-      }, 900);
-    } catch (e) { }
+        nextAudio.volume = this.bgmVolume;
+      }
+    }, intervalTime);
+  }
+
+  pauseAllBgm() {
+    if (this.fadeInterval) clearInterval(this.fadeInterval);
+    for (const key in this.bgmTracks) {
+      const a = this.bgmTracks[key];
+      a.pause();
+      a.volume = 0;
+    }
+  }
+
+  toggleMaster() {
+    this.enabled = !this.enabled;
+    if (!this.enabled) {
+      this.pauseAllBgm();
+      this.stopRain();
+    } else {
+      this.updateBgm(true);
+      if (typeof world !== 'undefined' && world && world.weather === 'RAIN') {
+        this.startRain();
+      }
+    }
+    return this.enabled;
   }
 
   playFeedSound() {
@@ -879,6 +1061,7 @@ const world = {
   },
 
   onWeatherUpdated() {
+    sound.updateBgm();
     if (this.weather === 'RAIN') {
       sound.startRain();
       this.cats.forEach((c, idx) => {
@@ -3530,6 +3713,45 @@ function renderIntroCanvas() {
   ictx.fillRect(55, 29, 1, 1);
 }
 
+function renderStudioCatsCanvas() {
+  const c = document.getElementById('studio-cats-canvas');
+  if (!c) return;
+  const ictx = c.getContext('2d');
+  ictx.imageSmoothingEnabled = false;
+  ictx.clearRect(0, 0, c.width, c.height);
+
+  // Night sanctuary sky
+  ictx.fillStyle = '#142918';
+  ictx.fillRect(0, 0, c.width, c.height);
+
+  // Twinkling stars / fireflies
+  ictx.fillStyle = '#fef08a';
+  ictx.fillRect(16, 12, 2, 2);
+  ictx.fillRect(98, 14, 2, 2);
+  ictx.fillRect(34, 20, 1, 1);
+  ictx.fillRect(86, 24, 1, 1);
+  ictx.fillRect(58, 8, 2, 2);
+
+  // Soft lush grass
+  ictx.fillStyle = '#2d5a27';
+  ictx.fillRect(0, 42, c.width, 26);
+  ictx.fillStyle = '#3f7d3b';
+  ictx.fillRect(0, 45, c.width, 23);
+
+  // Lilo & Cheeto sitting peacefully facing each other
+  drawPixelCat(ictx, { ...DEFAULT_LILO, x: 48, y: 48, facing: 1, state: 'IDLE', pose: 'sit', seed: 0, labelAlpha: 0 }, 0);
+  drawPixelCat(ictx, { ...DEFAULT_CHEETO, x: 72, y: 48, facing: -1, state: 'IDLE', pose: 'sit', seed: 1, labelAlpha: 0 }, 0);
+
+  // Floating pink pixel heart above them
+  ictx.fillStyle = '#fb7185';
+  ictx.fillRect(58, 26, 2, 2);
+  ictx.fillRect(61, 26, 2, 2);
+  ictx.fillRect(57, 27, 7, 2);
+  ictx.fillRect(58, 29, 5, 1);
+  ictx.fillRect(59, 30, 3, 1);
+  ictx.fillRect(60, 31, 1, 1);
+}
+
 /********************************************************************
  * 10. MODALS, CUSTOMIZER & BUTTON BINDINGS
  ********************************************************************/
@@ -3879,9 +4101,12 @@ function renderMiniCanvases(time) {
 function dismissIntroOverlay() {
   sound.init();
   sound.playMeow('lilo');
-  setTimeout(() => sound.playMeow('cheeto'), 220);
-  setTimeout(() => sound.playPurr(), 420);
-  setTimeout(() => sound.startRain(), 600);
+  setTimeout(() => sound.playMeow('cheeto'), 240);
+  setTimeout(() => sound.playPurr(), 480);
+  setTimeout(() => sound.updateBgm(), 600);
+  if (typeof world !== 'undefined' && world && world.weather === 'RAIN') {
+    setTimeout(() => sound.startRain(), 600);
+  }
 
   const overlay = document.getElementById('intro-overlay');
   if (overlay) {
@@ -3903,6 +4128,8 @@ function initStudioLoadingScreen() {
       introOverlay.style.display = 'none';
       introOverlay.classList.add('hidden-intro');
     }
+
+    renderStudioCatsCanvas();
 
     const screen = document.getElementById('studio-loading-screen');
     const fill = document.getElementById('studio-progress-fill');
@@ -3952,9 +4179,12 @@ function dismissStudioLoadingScreen() {
 
   sound.init();
   sound.playMeow('lilo');
-  setTimeout(() => sound.playMeow('cheeto'), 220);
-  setTimeout(() => sound.playPurr(), 420);
-  setTimeout(() => sound.startRain(), 600);
+  setTimeout(() => sound.playMeow('cheeto'), 240);
+  setTimeout(() => sound.playPurr(), 480);
+  setTimeout(() => sound.updateBgm(), 600);
+  if (typeof world !== 'undefined' && world && world.weather === 'RAIN') {
+    setTimeout(() => sound.startRain(), 600);
+  }
 
   const screen = document.getElementById('studio-loading-screen');
   if (screen) {
@@ -3987,14 +4217,12 @@ safeOn('btnSaveCaretaker', 'click', () => {
 safeOn('btnWeather', 'click', () => world.cycleWeather());
 
 safeOn('btnAudio', 'click', () => {
-  sound.enabled = !sound.enabled;
+  const isEnabled = sound.toggleMaster();
   const audioEl = document.getElementById('audioIcon');
   if (audioEl) {
-    audioEl.innerHTML = getPixelIcon(sound.enabled ? 'volume-3' : 'volume-x');
+    audioEl.innerHTML = getPixelIcon(isEnabled ? 'volume-3' : 'volume-x');
   }
-  if (!sound.enabled) sound.stopRain();
-  else if (world.weather === 'RAIN') sound.startRain();
-  showToast(sound.enabled ? 'Cozy audio enabled' : 'Cozy audio muted', sound.enabled ? 'volume-3' : 'volume-x');
+  showToast(isEnabled ? 'Cozy audio enabled' : 'Cozy audio muted', isEnabled ? 'volume-3' : 'volume-x');
 });
 
 safeOn('btnCameraMode', 'click', () => {

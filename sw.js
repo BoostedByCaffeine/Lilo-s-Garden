@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lilos-garden-pwa-v20';
+const CACHE_NAME = 'lilos-garden-pwa-v21';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -10,6 +10,12 @@ const CORE_ASSETS = [
   './manifest.json',
   './favicon.png',
   './assets/studiologo.svg',
+  './assets/bgm/Cats In The Cold - Mage Tears (Instrumental).ogg',
+  './assets/bgm/Mage tears - Sun and moonInstrumental.ogg',
+  './assets/sfx/meow-lilo.wav',
+  './assets/sfx/meow-cheeto.wav',
+  './assets/sfx/purr.wav',
+  './assets/sfx/rain.wav',
   './assets/lilo.jpg',
   './assets/cheeto.jpg',
   './assets/icon-192.png',
