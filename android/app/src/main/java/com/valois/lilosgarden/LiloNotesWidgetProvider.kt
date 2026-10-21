@@ -89,24 +89,6 @@ class LiloNotesWidgetProvider : AppWidgetProvider() {
                     }
                 } catch (_: Exception) {}
             }
-            ACTION_NOTES_SYNC_CLIPBOARD -> {
-                try {
-                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
-                    val clip = clipboard?.primaryClip
-                    if (clip != null && clip.itemCount > 0) {
-                        val text = clip.getItemAt(0).coerceToText(context)?.toString()?.trim()
-                        if (!text.isNullOrBlank()) {
-                            MainActivity.addDeviceNote(context, text)
-                            Toast.makeText(context, "Note imported from clipboard!", Toast.LENGTH_SHORT).show()
-                            refreshAllNotesWidgets(context)
-                        } else {
-                            Toast.makeText(context, "Clipboard is empty", Toast.LENGTH_SHORT).show()
-                        }
-                    } else {
-                        Toast.makeText(context, "Clipboard is empty", Toast.LENGTH_SHORT).show()
-                    }
-                } catch (_: Exception) {}
-            }
             ACTION_NOTES_REFRESH -> {
                 refreshAllNotesWidgets(context)
             }
@@ -224,7 +206,6 @@ class LiloNotesWidgetProvider : AppWidgetProvider() {
         const val ACTION_NOTES_TOGGLE_ROW_2 = "com.valois.lilosgarden.ACTION_NOTES_TOGGLE_ROW_2"
         const val ACTION_NOTES_TOGGLE_TOP = "com.valois.lilosgarden.ACTION_NOTES_TOGGLE_TOP"
         const val ACTION_NOTES_OPEN_DEFAULT_APP = "com.valois.lilosgarden.ACTION_NOTES_OPEN_DEFAULT_APP"
-        const val ACTION_NOTES_SYNC_CLIPBOARD = "com.valois.lilosgarden.ACTION_NOTES_SYNC_CLIPBOARD"
         const val ACTION_NOTES_REFRESH = "com.valois.lilosgarden.ACTION_NOTES_REFRESH"
         private const val TOTAL_FRAMES = 12
 

@@ -84,6 +84,13 @@ class MainActivity : AppCompatActivity() {
         handleIncomingNoteIntent(intent)
     }
 
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIncomingNoteIntent(intent)
+        checkIntentModal()
+    }
+
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) {
@@ -200,9 +207,9 @@ class MainActivity : AppCompatActivity() {
             allowFileAccess = true
             allowContentAccess = true
             @Suppress("DEPRECATION")
-            allowFileAccessFromFileURLs = true
+            allowFileAccessFromFileURLs = false
             @Suppress("DEPRECATION")
-            allowUniversalAccessFromFileURLs = true
+            allowUniversalAccessFromFileURLs = false
             mediaPlaybackRequiresUserGesture = false
             cacheMode = WebSettings.LOAD_NO_CACHE
             useWideViewPort = true
@@ -509,16 +516,6 @@ class MainActivity : AppCompatActivity() {
         fun pinMusicWidget() {
             activity.runOnUiThread {
                 try {
-                    val enabled = android.provider.Settings.Secure.getString(activity.contentResolver, "enabled_notification_listeners") ?: ""
-                    if (!enabled.contains(activity.packageName)) {
-                        Toast.makeText(
-                            activity,
-                            "Please enable 'Lilo\'s Garden' in Notification Access to sync live Spotify music!",
-                            Toast.LENGTH_LONG
-                        ).show()
-                        activity.startActivity(Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                    }
-
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         val appWidgetManager = AppWidgetManager.getInstance(activity)
                         val widgetProvider = ComponentName(activity, LiloMusicWidgetProvider::class.java)

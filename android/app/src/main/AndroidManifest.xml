@@ -151,14 +151,13 @@
                 <action android:name="com.valois.lilosgarden.ACTION_NOTES_TOGGLE_TOP" />
                 <action android:name="com.valois.lilosgarden.ACTION_NOTES_REFRESH" />
                 <action android:name="com.valois.lilosgarden.ACTION_NOTES_OPEN_DEFAULT_APP" />
-                <action android:name="com.valois.lilosgarden.ACTION_NOTES_SYNC_CLIPBOARD" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/lilo_notes_widget_info" />
         </receiver>
 
-        <!-- 9. Vinyl Turntable & Live Spotify / Music Player Widget Provider -->
+        <!-- 9. Vinyl Turntable & Cozy Music Player Widget Provider -->
         <receiver
             android:name=".LiloMusicWidgetProvider"
             android:exported="true"
@@ -169,27 +168,11 @@
                 <action android:name="com.valois.lilosgarden.ACTION_MUSIC_PREV" />
                 <action android:name="com.valois.lilosgarden.ACTION_MUSIC_NEXT" />
                 <action android:name="com.valois.lilosgarden.ACTION_MUSIC_REFRESH" />
-                <action android:name="com.spotify.music.metadatachanged" />
-                <action android:name="com.spotify.music.playbackstatechanged" />
-                <action android:name="com.spotify.music.queuechanged" />
-                <action android:name="com.android.music.metadatachanged" />
-                <action android:name="com.android.music.playstatechanged" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/lilo_music_widget_info" />
         </receiver>
-
-        <!-- 10. Live Media Notification Listener Service -->
-        <service
-            android:name=".LiloMediaListenerService"
-            android:exported="true"
-            android:label="@string/music_widget_name"
-            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
-            <intent-filter>
-                <action android:name="android.service.notification.NotificationListenerService" />
-            </intent-filter>
-        </service>
 
     </application>
 
