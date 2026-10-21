@@ -258,6 +258,8 @@ class CozyAudio {
 
     this.lastPurrTime = 0;
     this.purrFadeTimer = null;
+    this.purrFadeInterval = null;
+    this.rainFadeInterval = null;
     this.lastMeowTime = 0;
   }
 
@@ -286,14 +288,21 @@ class CozyAudio {
         const idx = Math.abs(catTypeOrIndex) % this.meows.length;
         soundObj = this.meows[idx];
       } else if (typeof catTypeOrIndex === 'string') {
-        if (catTypeOrIndex === 'lilo') soundObj = this.meows[0];
-        else if (catTypeOrIndex === 'cheeto') soundObj = this.meows[3];
-        else {
+        if (catTypeOrIndex === 'lilo') {
+          // Lilo signature meow voice pool: meow1, meow2, meow3
+          const liloPool = [0, 1, 2];
+          soundObj = this.meows[liloPool[Math.floor(Math.random() * liloPool.length)]];
+        } else if (catTypeOrIndex === 'cheeto') {
+          // Cheeto signature meow voice pool: meow4, meow5, meow6
+          const cheetoPool = [3, 4, 5];
+          soundObj = this.meows[cheetoPool[Math.floor(Math.random() * cheetoPool.length)]];
+        } else {
           let hash = 0;
           for (let i = 0; i < catTypeOrIndex.length; i++) {
             hash = (hash * 31 + catTypeOrIndex.charCodeAt(i)) >>> 0;
           }
-          soundObj = this.meows[hash % this.meows.length];
+          // Companions & custom cats pool across meow7, meow8, meow9 or full 9
+          soundObj = this.meows[(hash + Math.floor(Math.random() * 2)) % this.meows.length];
         }
       } else {
         soundObj = this.meows[Math.floor(Math.random() * this.meows.length)];
@@ -363,6 +372,10 @@ class CozyAudio {
       clearTimeout(this.purrFadeTimer);
       this.purrFadeTimer = null;
     }
+    if (this.purrFadeInterval) {
+      clearInterval(this.purrFadeInterval);
+      this.purrFadeInterval = null;
+    }
 
     try {
       const p = this.sfx.purr;
@@ -385,11 +398,16 @@ class CozyAudio {
   fadeAndStopPurr() {
     const p = this.sfx.purr;
     if (!p || p.paused) return;
+    if (this.purrFadeInterval) {
+      clearInterval(this.purrFadeInterval);
+      this.purrFadeInterval = null;
+    }
     let vol = p.volume;
-    const fade = setInterval(() => {
+    this.purrFadeInterval = setInterval(() => {
       vol -= 0.05;
       if (vol <= 0.05) {
-        clearInterval(fade);
+        clearInterval(this.purrFadeInterval);
+        this.purrFadeInterval = null;
         p.pause();
         p.currentTime = 0;
         p.volume = this.sfxVolume;
@@ -397,6 +415,23 @@ class CozyAudio {
         p.volume = Math.max(0, vol);
       }
     }, 50);
+  }
+
+  stopPurr() {
+    if (this.purrFadeTimer) {
+      clearTimeout(this.purrFadeTimer);
+      this.purrFadeTimer = null;
+    }
+    if (this.purrFadeInterval) {
+      clearInterval(this.purrFadeInterval);
+      this.purrFadeInterval = null;
+    }
+    const p = this.sfx.purr;
+    if (p) {
+      p.pause();
+      p.currentTime = 0;
+      p.volume = this.sfxVolume;
+    }
   }
 
   synthesizePurr() {
@@ -448,6 +483,10 @@ class CozyAudio {
   startRain() {
     if (!this.enabled) return;
     this.init();
+    if (this.rainFadeInterval) {
+      clearInterval(this.rainFadeInterval);
+      this.rainFadeInterval = null;
+    }
     try {
       const r = this.sfx.rain;
       if (r) {
@@ -493,14 +532,19 @@ class CozyAudio {
   }
 
   stopRain() {
+    if (this.rainFadeInterval) {
+      clearInterval(this.rainFadeInterval);
+      this.rainFadeInterval = null;
+    }
     try {
       const r = this.sfx.rain;
       if (r && !r.paused) {
         let vol = r.volume;
-        const fade = setInterval(() => {
+        this.rainFadeInterval = setInterval(() => {
           vol -= 0.04;
           if (vol <= 0.02) {
-            clearInterval(fade);
+            clearInterval(this.rainFadeInterval);
+            this.rainFadeInterval = null;
             r.pause();
             r.currentTime = 0;
             r.volume = this.rainVolume;
@@ -609,6 +653,15 @@ class CozyAudio {
     if (!this.enabled) {
       this.pauseAllBgm();
       this.stopRain();
+      this.stopPurr();
+      if (Array.isArray(this.meows)) {
+        this.meows.forEach((m) => {
+          try {
+            m.pause();
+            m.currentTime = 0;
+          } catch (_) {}
+        });
+      }
     } else {
       this.updateBgm(true);
       if (typeof world !== 'undefined' && world && world.weather === 'RAIN') {
@@ -1423,10 +1476,6 @@ const world = {
         showToast(`${cat.name} purred warmly!`, 'heart-solid', '#f43f5e');
       }
     } else {
-      // Significantly reduced meowing frequency: 15% chance to chirp/meow
-      if (Math.random() < 0.15) {
-        sound.playMeow(cat.id);
-      }
       showToast(`${cat.name} purred warmly!`, 'heart-solid', '#f43f5e');
     }
 
@@ -1658,7 +1707,6 @@ const world = {
               a.socialCooldown = 18;
               b.socialCooldown = 18;
               this.spawnHeart((a.x + b.x) / 2, Math.min(a.y, b.y) - 8, 'heart');
-              sound.playPurr();
             }
           }
         }
