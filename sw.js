@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lilos-garden-pwa-v19';
+const CACHE_NAME = 'lilos-garden-pwa-v20';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -9,6 +9,7 @@ const CORE_ASSETS = [
   './app.js',
   './manifest.json',
   './favicon.png',
+  './assets/studiologo.svg',
   './assets/lilo.jpg',
   './assets/cheeto.jpg',
   './assets/icon-192.png',

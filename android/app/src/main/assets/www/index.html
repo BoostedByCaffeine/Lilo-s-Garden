@@ -30,6 +30,17 @@
 
   <!-- Local Tailwind CSS Compiler (Offline Fallback for dynamic classes) -->
   <script src="./assets/vendor/tailwindcss.js" defer></script>
+  <script>
+    (function () {
+      try {
+        var isApk = Boolean(window.AndroidBridge && typeof window.AndroidBridge.isNativeApp === 'function');
+        var isPwa = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+        if (isApk || isPwa) {
+          document.documentElement.classList.add('app-mode');
+        }
+      } catch (e) { }
+    })();
+  </script>
 </head>
 
 <body>
@@ -101,6 +112,31 @@
         <svg class="pixel-icon mr-1.5"><use href="#pi-leaf"/></svg>Step into the Garden
       </button>
       <div class="intro-stats-note" id="intro-stats-note">Drag to pan • Pinch to zoom • Tap cats to pet</div>
+    </div>
+  </div>
+
+  <!-- ==================== MINIMALIST STUDIO LOGO LOADING SCREEN (PWA & APK) ==================== -->
+  <div id="studio-loading-screen" aria-label="Loading Studio Screen">
+    <div class="studio-loading-content">
+      <div class="studio-logo-wrap">
+        <img src="./assets/studiologo.svg" alt="Boosted By Caffeine" class="studio-logo-img" />
+      </div>
+      
+      <!-- Progress Bar & Status (Active while game initializes) -->
+      <div id="studio-progress-container" class="studio-progress-container">
+        <div class="studio-progress-bar">
+          <div id="studio-progress-fill" class="studio-progress-fill"></div>
+        </div>
+        <p id="studio-status-text" class="studio-status-text">Loading Sanctuary...</p>
+      </div>
+
+      <!-- Step into Garden Action (Revealed when game is ready) -->
+      <div id="studio-action-container" class="studio-action-container hidden">
+        <button type="button" class="enter-garden-btn studio-enter-btn" id="studio-enter-btn">
+          <svg class="pixel-icon mr-1.5"><use href="#pi-leaf"/></svg>Step into the Garden
+        </button>
+        <div class="studio-hint-text">Drag to pan • Pinch to zoom • Tap cats to pet</div>
+      </div>
     </div>
   </div>
 

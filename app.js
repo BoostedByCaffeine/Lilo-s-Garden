@@ -3875,12 +3875,13 @@ function renderMiniCanvases(time) {
   }
 }
 
-// Dismiss Intro Overlay & Play Welcome Duet
+// Dismiss Intro Overlay & Play Welcome Duet (Web Version)
 function dismissIntroOverlay() {
   sound.init();
   sound.playMeow('lilo');
   setTimeout(() => sound.playMeow('cheeto'), 220);
   setTimeout(() => sound.playPurr(), 420);
+  setTimeout(() => sound.startRain(), 600);
 
   const overlay = document.getElementById('intro-overlay');
   if (overlay) {
@@ -3888,7 +3889,85 @@ function dismissIntroOverlay() {
   }
 }
 
+// ==================== STUDIO LOGO LOADING SCREEN (PWA & APK) ====================
+let studioLoadingDismissed = false;
+
+function initStudioLoadingScreen() {
+  const env = getAppEnvironment();
+  const isApp = env.isNativeApk || env.isStandalonePwa;
+
+  if (isApp) {
+    document.documentElement.classList.add('app-mode');
+    const introOverlay = document.getElementById('intro-overlay');
+    if (introOverlay) {
+      introOverlay.style.display = 'none';
+      introOverlay.classList.add('hidden-intro');
+    }
+
+    const screen = document.getElementById('studio-loading-screen');
+    const fill = document.getElementById('studio-progress-fill');
+    const statusText = document.getElementById('studio-status-text');
+    const progressContainer = document.getElementById('studio-progress-container');
+    const actionContainer = document.getElementById('studio-action-container');
+
+    if (!screen || studioLoadingDismissed) return;
+
+    // Smoothly animate the loading progress bar over ~1.4s
+    const startTime = performance.now();
+    const duration = 1400; // 1.4 seconds minimum branding presentation
+
+    function updateProgress(now) {
+      if (studioLoadingDismissed) return;
+      const elapsed = now - startTime;
+      const pct = Math.min(100, Math.floor((elapsed / duration) * 100));
+      if (fill) fill.style.width = pct + '%';
+
+      if (pct < 100) {
+        requestAnimationFrame(updateProgress);
+      } else {
+        // Loading complete! Transition from progress bar to "Step into the Garden"
+        if (statusText) statusText.textContent = 'Sanctuary Ready';
+        setTimeout(() => {
+          if (studioLoadingDismissed) return;
+          if (progressContainer) {
+            progressContainer.classList.add('fade-out');
+            setTimeout(() => {
+              progressContainer.style.display = 'none';
+            }, 300);
+          }
+          if (actionContainer) {
+            actionContainer.classList.remove('hidden');
+          }
+        }, 150);
+      }
+    }
+
+    requestAnimationFrame(updateProgress);
+  }
+}
+
+function dismissStudioLoadingScreen() {
+  if (studioLoadingDismissed) return;
+  studioLoadingDismissed = true;
+
+  sound.init();
+  sound.playMeow('lilo');
+  setTimeout(() => sound.playMeow('cheeto'), 220);
+  setTimeout(() => sound.playPurr(), 420);
+  setTimeout(() => sound.startRain(), 600);
+
+  const screen = document.getElementById('studio-loading-screen');
+  if (screen) {
+    screen.classList.add('dissolve-out');
+    setTimeout(() => {
+      screen.style.display = 'none';
+      screen.classList.add('hidden');
+    }, 620);
+  }
+}
+
 safeOn('enter-garden-btn', 'click', dismissIntroOverlay);
+safeOn('studio-enter-btn', 'click', dismissStudioLoadingScreen);
 safeOn('btnFeed', 'click', () => world.feedBowl());
 safeOn('btnOpenFriends', 'click', () => openModal('modalFriends'));
 safeOn('btnOpenCaretaker', 'click', () => {
@@ -4401,6 +4480,7 @@ function initGame() {
   updateCameraBtnUI();
   renderIntroCanvas();
   syncInstallButtonsVisibility();
+  initStudioLoadingScreen();
 
   initPolaroidFrame(
     'lilo',

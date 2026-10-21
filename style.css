@@ -333,6 +333,158 @@ canvas#garden-canvas:active {
   color: var(--sv-ink-muted);
 }
 
+/* ==================== MINIMALIST STUDIO LOGO LOADING SCREEN (PWA & APK) ==================== */
+#studio-loading-screen {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  background-color: #181a1b;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 1;
+  transform: scale(1);
+  visibility: visible;
+  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.6s ease;
+  will-change: opacity, transform;
+}
+
+html.app-mode #intro-overlay {
+  display: none !important;
+}
+
+html.app-mode #studio-loading-screen {
+  display: flex !important;
+}
+
+#studio-loading-screen.dissolve-out {
+  opacity: 0;
+  transform: scale(1.04);
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.studio-loading-content {
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.studio-logo-wrap {
+  width: 100%;
+  max-width: 320px;
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: studioLogoEntrance 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.studio-logo-img {
+  width: 100%;
+  height: auto;
+  max-height: 96px;
+  filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.65));
+  object-fit: contain;
+}
+
+@keyframes studioLogoEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.studio-progress-container {
+  width: 100%;
+  max-width: 260px;
+  margin-top: 8px;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.studio-progress-container.fade-out {
+  opacity: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
+}
+
+.studio-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.studio-progress-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #4ade80 0%, #22c55e 100%);
+  border-radius: 9999px;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+  transition: width 0.25s ease-out;
+}
+
+.studio-status-text {
+  margin-top: 12px;
+  font-family: 'StardewValleyCaps', 'Press Start 2P', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: #8b949e;
+}
+
+.studio-action-container {
+  width: 100%;
+  max-width: 320px;
+  margin-top: 8px;
+  animation: studioButtonEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.studio-action-container.hidden {
+  display: none !important;
+}
+
+@keyframes studioButtonEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.studio-enter-btn {
+  width: 100%;
+  font-size: 1rem;
+  padding: 16px 20px;
+  letter-spacing: 0.04em;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.25),
+    0 8px 24px rgba(34, 197, 94, 0.25),
+    0 4px 0 var(--sv-border-dark);
+}
+
+.studio-hint-text {
+  margin-top: 14px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #6e7681;
+}
+
 /* ==================== TOP STARDEW WEATHER & MOOD PLAQUE ==================== */
 #whisper-pill {
   position: fixed;
@@ -679,6 +831,7 @@ canvas#garden-canvas:active {
 
 /* ==================== WIDGET & WALLPAPER MODES ==================== */
 body.widget-mode #intro-overlay,
+body.widget-mode #studio-loading-screen,
 body.widget-mode #cozy-dock,
 body.widget-mode #whisperBlooms,
 body.widget-mode #btnAudio {
@@ -695,6 +848,7 @@ body.widget-mode #whisper-pill {
 }
 
 body.wallpaper-mode #intro-overlay,
+body.wallpaper-mode #studio-loading-screen,
 body.wallpaper-mode #whisper-pill,
 body.wallpaper-mode #cozy-dock,
 body.wallpaper-mode #toastBox {
